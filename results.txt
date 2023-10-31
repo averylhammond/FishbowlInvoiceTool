@@ -1,0 +1,16 @@
+***********************************
+Processed Invoice Results:
+Customer Name:    DOUBLE A GLASS
+Invoice Date:     10/17/2023
+Invoice Number:   S17271
+PO Number:        671
+Payment Terms:    Net 30
+Sales Rep:        Jackie
+Labor Cost:       $0.0
+Material Cost:    $924.47
+Shipping Cost:    $0.0
+Subtotal:         $924.47
+Sales Tax:        $0.0
+Calculated Total: $924.47
+Listed Total:     $924.47
+***********************************

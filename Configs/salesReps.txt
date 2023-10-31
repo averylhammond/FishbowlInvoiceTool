@@ -1,0 +1,8 @@
+****************************************
+* Make sure to keep this text file updated
+* with all sales reps that can appear on
+* an invoice. Make sure that each line has
+* at most one sales rep.
+****************************************
+jaccoo=Jackie
+jonwil=John
