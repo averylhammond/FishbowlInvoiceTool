@@ -1,12 +1,26 @@
 
-Processing file: SO-17271.pdf
-Number of Pages in invoice: 1
+Processing file: SO-15082.pdf
+Number of Pages in invoice: 2
 Processing sales on page 1
-Line 1: Adding MATERIAL COST of: $325.62
-Line 2: Adding MATERIAL COST of: $0.0
-Line 3: Adding MATERIAL COST of: $0.0
-Line 5: Adding MATERIAL COST of: $325.62
-Line 6: Adding MATERIAL COST of: $0.0
-Line 7: Adding MATERIAL COST of: $0.0
-Line 9: Adding MATERIAL COST of: $273.23
+Processing sales on page 2
+Finished processing sales on current invoice!
+
+Processing file: SO-16192.pdf
+Number of Pages in invoice: 2
+Processing sales on page 1
+Processing sales on page 2
+Finished processing sales on current invoice!
+
+Processing file: SO-16884.pdf
+Number of Pages in invoice: 2
+Processing sales on page 1
+Processing sales on page 2
+Finished processing sales on current invoice!
+
+Processing file: SO-16923.pdf
+Number of Pages in invoice: 4
+Processing sales on page 1
+Processing sales on page 2
+Processing sales on page 3
+Processing sales on page 4
 Finished processing sales on current invoice!

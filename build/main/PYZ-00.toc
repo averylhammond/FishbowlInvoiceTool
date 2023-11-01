@@ -1,4 +1,4 @@
-('C:\\Users\\avery\\OneDrive\\Desktop\\QBAPI\\build\\main\\PYZ-00.pyz',
+('C:\\Users\\avery\\OneDrive\\Documents\\GitHub\\QBAPI\\build\\main\\PYZ-00.pyz',
  [('PyPDF2',
    'C:\\Users\\avery\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python311\\site-packages\\PyPDF2\\__init__.py',
    'PYMODULE'),
@@ -289,7 +289,9 @@
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.1520.0_x64__qbz5n2kfra8p0\\Lib\\email\\utils.py',
    'PYMODULE'),
-  ('fio', 'C:\\Users\\avery\\OneDrive\\Desktop\\QBAPI\\fio.py', 'PYMODULE'),
+  ('fio',
+   'C:\\Users\\avery\\OneDrive\\Documents\\GitHub\\QBAPI\\fio.py',
+   'PYMODULE'),
   ('fnmatch',
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.1520.0_x64__qbz5n2kfra8p0\\Lib\\fnmatch.py',
@@ -318,7 +320,9 @@
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.1520.0_x64__qbz5n2kfra8p0\\Lib\\glob.py',
    'PYMODULE'),
-  ('gui', 'C:\\Users\\avery\\OneDrive\\Desktop\\QBAPI\\gui.py', 'PYMODULE'),
+  ('gui',
+   'C:\\Users\\avery\\OneDrive\\Documents\\GitHub\\QBAPI\\gui.py',
+   'PYMODULE'),
   ('gzip',
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.1520.0_x64__qbz5n2kfra8p0\\Lib\\gzip.py',
@@ -444,7 +448,7 @@
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.1520.0_x64__qbz5n2kfra8p0\\Lib\\inspect.py',
    'PYMODULE'),
   ('invoice',
-   'C:\\Users\\avery\\OneDrive\\Desktop\\QBAPI\\invoice.py',
+   'C:\\Users\\avery\\OneDrive\\Documents\\GitHub\\QBAPI\\invoice.py',
    'PYMODULE'),
   ('ipaddress',
    'C:\\Program '
@@ -543,7 +547,7 @@
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.1520.0_x64__qbz5n2kfra8p0\\Lib\\random.py',
    'PYMODULE'),
   ('search',
-   'C:\\Users\\avery\\OneDrive\\Desktop\\QBAPI\\search.py',
+   'C:\\Users\\avery\\OneDrive\\Documents\\GitHub\\QBAPI\\search.py',
    'PYMODULE'),
   ('selectors',
    'C:\\Program '

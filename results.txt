@@ -1,16 +1,16 @@
 ***********************************
 Processed Invoice Results:
-Customer Name:    DOUBLE A GLASS
-Invoice Date:     10/17/2023
-Invoice Number:   S17271
-PO Number:        671
+Customer Name:    INDUSTRIAL DOOR COMPANY
+Invoice Date:     10/11/2023
+Invoice Number:   S16923
+PO Number:        00077877
 Payment Terms:    Net 30
-Sales Rep:        Jackie
-Labor Cost:       $0.0
-Material Cost:    $924.47
+Sales Rep:        John
+Labor Cost:       $254.0
+Material Cost:    $3042.27
 Shipping Cost:    $0.0
-Subtotal:         $924.47
+Subtotal:         $3296.27
 Sales Tax:        $0.0
-Calculated Total: $924.47
-Listed Total:     $924.47
+Calculated Total: $3296.27
+Listed Total:     $3296.28
 ***********************************

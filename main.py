@@ -7,8 +7,8 @@ from gui import *
 
 # Uncomment these lines when running pyinstaller to hide the windows terminal
 # upon program execution
-#hide = win32gui.GetForegroundWindow()
-#win32gui.ShowWindow(hide, win32con.SW_HIDE)
+hide = win32gui.GetForegroundWindow()
+win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
 # Find all possible sales reps and payment terms, built from "Config" folder
 allSalesReps = buildDictSalesReps()
@@ -40,17 +40,9 @@ def processInvoice(invoicePath, filename):
     # Create Invoice object and populate initial fields
     invoice = Invoice()
     invoice.populateInvoice(text, allSalesReps, allPaymentTerms)
-
-     # Keep track of the next expected line number
-    totalLines = 0
-    isLaborCost = False
-    foundSalesTax = False
-    nextLineIsTotal = False
         
-    # Tens index of the line number, since the program only reads
-    # the first index of the number, need to hold the tens place
-    lineTens = 0
-    lineOnes = 1
+    # Keep track of next expected payment line number
+    nextLineNum = 1
     
     # Loop through each page to read purchase table
     for i in range(1, numPages + 1):
@@ -71,96 +63,15 @@ def processInvoice(invoicePath, filename):
         # Loop through each line in the table. Some table entries may have multiple lines that need
         # to be processed
         for line in text.splitlines():
-            skipLine = False
 
-            if nextLineIsTotal:
-                invoice.listedTotal = float(line.replace('$', '').replace(',', ''))
-                nextLineIsTotal = False
-
-            # The previous line contained sales tax, read the tax this time
-            if foundSalesTax == True:
-                invoice.salesTax = float((line.replace('$', '')).replace(',', ''))
-                foundSalesTax = False
-                nextLineIsTotal = True
-
-            # If this line contains the sales tax, read it and exit
-            j = searchForSalesTax(line)
-
-            if j == True:
-                foundSalesTax = True
-
-            # If the line counter hits 10, increase index by 1 and reset counter to 0
-            # This allows the program to read up to 2 index spots by remembering the 10s
-            # digit and reading the 1s digit
-            if (totalLines + 1) % 10 == 0:
-                lineOnes = 0
-                lineTens =1
-
-            # Check if at beginning of the line in the table
-            if len(line) > lineTens and line[lineTens] == str(lineOnes):
-                lineOnes += 1
-                totalLines += 1
-
-                # Find if this line is a labor cost
-                if searchForLabor(line):
-                    isLaborCost = True
-
-            # If the cost is found in the same line, good, keep going
-            # If not, skip this line and go to the next line
-            if not re.search("\$ \d{1}", line):
-                skipLine = True
-
+            # Check if at beginning of the line in the table. If so, process this payment item
+            if line.startswith(f"{nextLineNum} "):
+                invoice = processPaymentLine(text, line, invoice, nextLineNum)
+                nextLineNum += 1  # Update nextLineNum
             
-            # If the cost was found in the line, process which kind of cost
-            if not skipLine:
-                isDeliveryCost = False
-                
-                # Search for FREIGHT cost
-                cost = searchPaymentLine(line, "[0-9]+hr(.*)")
-                if cost > -1:
-                    if __debug__:
-                        printToDebugFile(f"Line {totalLines}: Adding FREIGHT COST of:  ${cost}")
-                    
-                    invoice.shippingCost += cost
-                    invoice.subTotal += cost
-                    isLaborCost = False
-                    skipLine = False
-                    isDeliveryCost = True
-                elif "DELIVERY" in line:
-                    cost = searchPaymentLine(line, "[0-9]+ea(.*)")
-                    if __debug__:
-                        printToDebugFile(f"Line {totalLines}: Adding FREIGHT COST of:  ${cost}")
-                    invoice.shippingCost += cost
-                    invoice.subTotal += cost
-                    isLaborCost = False
-                    skipLine = False
-                    isDeliveryCost = True
-                elif "UPS GOUND" in line:
-                    cost = searchPaymentLine(line, "[0-9]+ea(.*)")
-                    if __debug__:
-                        printToDebugFile(f"Line {totalLines}: Adding FREIGHT COST of:  ${cost}")
-                    invoice.shippingCost += cost
-                    invoice.subTotal += cost
-                    isLaborCost = False
-                    skipLine = False
-                    isDeliveryCost = True
-                
-                # Search for LABOR or MATERIAL cost
-                cost = searchPaymentLine(line, "[0-9]+ea(.*)")
-                if cost > -1 and not isDeliveryCost:
-                    if isLaborCost:
-                        if __debug__:
-                            printToDebugFile(f"Line {totalLines}: Adding LABOR COST of:    ${cost}")
-                        
-                        invoice.laborCost += cost
-                    else:
-                        if __debug__:
-                            printToDebugFile(f"Line {totalLines}: Adding MATERIAL COST of: ${cost}")
-                        invoice.materialCost += cost
-                    
-                    invoice.subTotal += cost
-                    isLaborCost = False
-                    skipLine = False
+            # "Total:Subtotal" is the beginning of the end of the invoice
+            if "Total:Subtotal" in line:
+                invoice = processEndOfInvoice(text, line, invoice)
 
     if __debug__:
         printToDebugFile("Finished processing sales on current invoice!")
@@ -172,7 +83,6 @@ def processInvoice(invoicePath, filename):
     printToOutputFile(invoice)
 
     #invoice.dumpInvoice()
-
     return invoice
 
 
