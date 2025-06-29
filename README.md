@@ -1,5 +1,6 @@
-FOR DEVELOPMENT
-
+******************************************
+* INSTRUCTIONS TO SET UP FOR DEVELOPMENT *
+******************************************
 1) Clone repo
 
 2) Open a Python virtual environment
@@ -16,3 +17,28 @@ FOR DEVELOPMENT
 
 5) Run script
     - python main.py
+
+
+**************************************
+* INSTRUCTIONS TO SET UP FOR RELEASE *
+**************************************
+
+1) Follow above instructions for development to set the repo
+
+2) In virtual environment, install PyInstaller
+    - pip install PyInstaller
+
+3) Convert main.py into an exe
+    - pyinstaller --onefile --noconsole --name AutoInvoiceProc main.py
+
+4) This will generate several files, including AutoInvoiceProc.exe. Save this file.
+
+5) If in a python virtual environment, exit it and run the following git commands
+    - deactivate ( exit virtual environment if needed )
+    - git reset --hard
+    - git clean -fdxf
+
+6) Now paste the previously copied AutoInvoiceProc.exe into the clean repo. The
+   folder can now be zipped up and packaged as a release on GitHub.
+
+   https://github.com/averylhammond/FishbowlInvoiceTool#
