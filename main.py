@@ -119,7 +119,8 @@ def run():
                 initial_folder=working_dir, file_types=[("PDF Files", "*.pdf")]
             ),
         ],
-        [sg.Button("Process This Invoice"), sg.Exit()],  # Exit button
+        [sg.Button("Process This Invoice"), sg.Exit()],
+        [sg.Button("Process All Invoices (Only Writes to 'results.txt' File)")],
         [output],  # Output text window
     ]
 
@@ -149,6 +150,20 @@ def run():
                 sg.popup(
                     f"The calculated invoice total was different than the listed invoice total, with a difference of {diff}!"
                 )
+        elif event == "Process All Invoices (Only Writes to 'results.txt' File)":
+            # Process all invoices in the Invoices folder
+            if __debug__:
+                print_to_debug_file("Processing all invoices in Invoices folder...")
+
+            # Get all files in the Invoices folder
+            for filename in os.listdir(working_dir):
+                if filename.endswith(".pdf"):
+                    invoice_path = os.path.join(working_dir, filename)
+                    process_invoice(invoice_path, filename)
+
+            # Notify user that all invoices have been processed
+            sg.popup("All invoices processed! Check results.txt for output.")
+            
 
     # If break, close app
     window.close()

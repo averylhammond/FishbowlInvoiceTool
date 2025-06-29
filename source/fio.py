@@ -50,7 +50,7 @@ def print_to_output_file(invoice):
         f.write(f"Processed Invoice Results:\n")
         f.write(f"Customer Name:    {invoice.customer_name}\n")
         f.write(f"Invoice Date:     {invoice.date}\n")
-        f.write(f"Order Number:   {invoice.order_number}\n")
+        f.write(f"Order Number:     {invoice.order_number}\n")
         f.write(f"PO Number:        {invoice.po_number}\n")
         f.write(f"Payment Terms:    {invoice.payment_terms}\n")
         f.write(f"Sales Rep:        {invoice.sales_rep}\n")
