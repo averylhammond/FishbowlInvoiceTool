@@ -1,8 +1,8 @@
 import PyPDF2, logging, os
 import PySimpleGUI as sg
-from search import *
-from invoice import *
-from fio import *
+from source.search import *
+from source.invoice import *
+from source.fio import *
 
 # Uncomment these lines when running pyinstaller to hide the windows terminal
 # upon program execution
