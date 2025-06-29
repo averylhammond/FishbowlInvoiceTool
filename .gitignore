@@ -1,0 +1,14 @@
+# No need to track cache files, build artifacts, or IDE-specific files
+__pycache__/
+.vscode/
+build/
+
+# Ignore generated txt files and logs
+debug.txt
+results.txt
+
+# Ignore built binary
+dist/
+
+# Ignore invoices moved into this folder for testing
+Invoices/*/

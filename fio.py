@@ -1,5 +1,6 @@
 import os
 
+
 # resetDebugFile deletes debug.txt that was created from the previous program execution
 # params: N/A
 # returns: N/A
@@ -20,12 +21,12 @@ def resetOutputFile():
 # params: contents: str, the contents to be written to file
 # returns: N/A
 def printToDebugFile(contents):
-    
+
     # If debug.txt already exists, append to it, otherwise write from beginning
     if os.path.isfile("./debug.txt"):
-        writeOrAppend = 'a'
+        writeOrAppend = "a"
     else:
-        writeOrAppend = 'w'
+        writeOrAppend = "w"
 
     # Write contents to file
     with open("debug.txt", writeOrAppend) as f:
@@ -36,12 +37,12 @@ def printToDebugFile(contents):
 # params: invoice: Invoice object, the invoice whose fields are to be output
 # returns: N/A
 def printToOutputFile(invoice):
-    
+
     # If results.txt already exists, append to it, otherwise write from beginning
     if os.path.isfile("./results.txt"):
-        writeOrAppend = 'a'
+        writeOrAppend = "a"
     else:
-        writeOrAppend = 'w'
+        writeOrAppend = "w"
 
     # Write invoice contents to file
     with open("results.txt", writeOrAppend) as f:
@@ -68,30 +69,31 @@ def printToOutputFile(invoice):
 # params: N/A
 # returns: dict, the populated dictionary with all codes as keys and names as values
 def buildDictSalesReps():
-    
-    with open("Configs/salesReps.txt", 'r') as f:
+
+    with open("Configs/salesReps.txt", "r") as f:
         dict = {}
 
         # Search through text file, only take non-comment entries
         for line in f:
-            if line[0] != '*':
-                res = line.partition('=')
-                dict[res[0]] = res[2].replace('\n', '')  # Strip '\n' from all entries
-        
+            if line[0] != "*":
+                res = line.partition("=")
+                dict[res[0]] = res[2].replace("\n", "")  # Strip '\n' from all entries
+
     return dict
+
 
 # buildListPaymentTerms builds the paymentTerms list that contains each possible
 # payment term as defined in Configs/paymentTerms.txt
 # params: N/A
 # returns: list, contains each possible payment term that could be found in the invoice
 def buildListPaymentTerms():
-    
-    with open("Configs/paymentTerms.txt", 'r') as f:
+
+    with open("Configs/paymentTerms.txt", "r") as f:
         list = []
 
         # Search through text file, only take non-comment entries
         for line in f:
-            if line[0] != '*':
-                list.append(line.replace('\n','')) # Strip '\n' from all entries
+            if line[0] != "*":
+                list.append(line.replace("\n", ""))  # Strip '\n' from all entries
 
     return list

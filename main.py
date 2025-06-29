@@ -14,6 +14,7 @@ win32gui.ShowWindow(hide, win32con.SW_HIDE)
 allSalesReps = buildDictSalesReps()
 allPaymentTerms = buildListPaymentTerms()
 
+
 # processInvoice is the main function that process the invoice pdf
 # params: invoicePath: str, path to invoice pdf file to be processed
 # params: filename: str, the name of the file to be processed
@@ -40,13 +41,13 @@ def processInvoice(invoicePath, filename):
     # Create Invoice object and populate initial fields
     invoice = Invoice()
     invoice.populateInvoice(text, allSalesReps, allPaymentTerms)
-        
+
     # Keep track of next expected payment line number
     nextLineNum = 1
-    
+
     # Loop through each page to read purchase table
     for i in range(1, numPages + 1):
-        
+
         if __debug__:
             printToDebugFile(f"Processing sales on page {i}")
 
@@ -57,8 +58,8 @@ def processInvoice(invoicePath, filename):
 
         # At this point, can disregard everything before the purchase table
         # Trim off everything before purchase table (before the line Ordered Total Price)
-        if (len(text[(text.find("Ordered Total Price")):]) > 1):
-            text = text[(text.find("Ordered Total Price")):]
+        if len(text[(text.find("Ordered Total Price")) :]) > 1:
+            text = text[(text.find("Ordered Total Price")) :]
 
         # Loop through each line in the table. Some table entries may have multiple lines that need
         # to be processed
@@ -68,7 +69,7 @@ def processInvoice(invoicePath, filename):
             if line.startswith(f"{nextLineNum} "):
                 invoice = processPaymentLine(text, line, invoice, nextLineNum)
                 nextLineNum += 1  # Update nextLineNum
-            
+
             # "Total:Subtotal" is the beginning of the end of the invoice
             if "Total:Subtotal" in line:
                 invoice = processEndOfInvoice(text, line, invoice)
@@ -82,7 +83,7 @@ def processInvoice(invoicePath, filename):
     # Print output to results.txt
     printToOutputFile(invoice)
 
-    #invoice.dumpInvoice()
+    # invoice.dumpInvoice()
     return invoice
 
 
@@ -95,7 +96,7 @@ def updateInvoiceGui(invoicePath):
     # If an empty path was given, ask for valid input
     if invoicePath == "":
         return ("Please Select a valid Invoice to Process...", 0.0)
-    
+
     # Clear output file incase previous invoice was listed
     resetOutputFile()
     invoice = processInvoice(invoicePath, getFilenameFromFilepath(invoicePath))
@@ -110,7 +111,6 @@ def updateInvoiceGui(invoicePath):
         return results, diff
 
 
-
 # run is the main loop of the program. It builds the GUI and then sits in a while
 # True loop and processes invoices as they are selected by the user
 # params: N/A
@@ -123,17 +123,21 @@ def run():
 
     layout = [
         [sg.Text("Choose an invoice PDF to process...")],  # First text window
-        [sg.InputText(key = "-FILE_PATH-"),  # File browser GUI element
-        sg.FileBrowse(initial_folder=workingDir, file_types=[("PDF Files", "*.pdf")])],
+        [
+            sg.InputText(key="-FILE_PATH-"),  # File browser GUI element
+            sg.FileBrowse(
+                initial_folder=workingDir, file_types=[("PDF Files", "*.pdf")]
+            ),
+        ],
         [sg.Button("Process This Invoice"), sg.Exit()],  # Exit button
-        [output]  # Output text window
+        [output],  # Output text window
     ]
 
     # Set theme for big style
     sg.theme("TealMono")
 
     # Create window
-    window = sg.Window("Automated Invoice Processor Tool", layout, size=(500,500))
+    window = sg.Window("Automated Invoice Processor Tool", layout, size=(500, 500))
 
     # Main program loop
     while True:
@@ -152,7 +156,9 @@ def run():
             # If there is a discrepancy between the listed total and the
             # calculated total, let the user know with a popup window
             if diff != 0.0:
-                sg.popup(f"The calculated invoice total was different than the listed invoice total, with a difference of {diff}!")
+                sg.popup(
+                    f"The calculated invoice total was different than the listed invoice total, with a difference of {diff}!"
+                )
 
     # If break, close app
     window.close()
@@ -162,7 +168,9 @@ def run():
 if __name__ == "__main__":
 
     # Setup logging
-    logging.basicConfig(level = logging.DEBUG, format = "[%(levelname)s] %(asctime)s - %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG, format="[%(levelname)s] %(asctime)s - %(message)s"
+    )
 
     # If running in debug mode, reset debug.txt
     if __debug__:

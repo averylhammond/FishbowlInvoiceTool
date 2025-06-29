@@ -1,18 +1,19 @@
 import re
 from fio import *
 
+
 # searchInvoice takes a given regex and searches the invoice for a match
 # params: text: str, first page of the invoice
 # params: regex: str, regex to be matched
 # returns: Either returns the str match of the regex if successful, or None
 def searchInvoice(text, regex):
     res = re.search(regex, text)
-    
+
     if res:
         return res.group()
     else:
         return None
-    
+
 
 # searchPaymentLine takes a given regex and searches one line of payment text
 # from the purchase table of the invoice
@@ -23,13 +24,13 @@ def searchPaymentLine(line, regex):
     res = re.search(regex, line)
 
     if res:
-        return float((res.group().split()[2]).replace(',', ''))
+        return float((res.group().split()[2]).replace(",", ""))
     else:
         return -1
-    
 
-# processPaymentLine takes a given line from the payment table and processes it. This includes 
-# reading the entire row, determining if the payment line refers to a labor, shipping, or 
+
+# processPaymentLine takes a given line from the payment table and processes it. This includes
+# reading the entire row, determining if the payment line refers to a labor, shipping, or
 # material cost, and find the cost. It then adds that cost to the invoice total
 # params: text: str, the current page of the invoice
 # params: line: str, the line at which the payment line starts
@@ -37,15 +38,15 @@ def searchPaymentLine(line, regex):
 # params: currLineNum: int, the current payment line number being processed
 # returns: Invoice, the invoice that was modified
 def processPaymentLine(text, line, invoice, currLineNum):
-    
+
     # If this line contains a subtotal, do nothing
     if "Subtotal" in line:
         return invoice
 
     # Only take the current payment line, remove everything before line,
     # and everything right after the next payment line
-    text = text[(text.find(line)):]
-    text = text[:text.find(f"\n{currLineNum+1} ")]
+    text = text[(text.find(line)) :]
+    text = text[: text.find(f"\n{currLineNum+1} ")]
 
     # Determine if the payment line is a labor, shipping, or material cost
     isLaborCost = searchForLabor(line)
@@ -61,12 +62,16 @@ def processPaymentLine(text, line, invoice, currLineNum):
             invoice.laborCost += eaCost
             invoice.subTotal += eaCost
             if __debug__:
-                printToDebugFile(f"Line {currLineNum}: Adding LABOR COST of:    ${eaCost}")
+                printToDebugFile(
+                    f"Line {currLineNum}: Adding LABOR COST of:    ${eaCost}"
+                )
         elif hrCost > -1:
             invoice.laborCost += hrCost
             invoice.subTotal += hrCost
             if __debug__:
-                printToDebugFile(f"Line {currLineNum}: Adding LABOR COST of:    ${hrCost}")
+                printToDebugFile(
+                    f"Line {currLineNum}: Adding LABOR COST of:    ${hrCost}"
+                )
 
     # Case: Payment line is a shipping cost
     elif isShippingCost:
@@ -74,12 +79,16 @@ def processPaymentLine(text, line, invoice, currLineNum):
             invoice.shippingCost += eaCost
             invoice.subTotal += eaCost
             if __debug__:
-                printToDebugFile(f"Line {currLineNum}: Adding SHIPPING COST of:    ${eaCost}")
+                printToDebugFile(
+                    f"Line {currLineNum}: Adding SHIPPING COST of:    ${eaCost}"
+                )
         elif hrCost > -1:
             invoice.shippingCost += hrCost
             invoice.subTotal += hrCost
             if __debug__:
-                printToDebugFile(f"Line {currLineNum}: Adding SHIPPING COST of:    ${hrCost}")
+                printToDebugFile(
+                    f"Line {currLineNum}: Adding SHIPPING COST of:    ${hrCost}"
+                )
 
     # Case: Payment line is a material cost
     else:
@@ -87,14 +96,19 @@ def processPaymentLine(text, line, invoice, currLineNum):
             invoice.materialCost += eaCost
             invoice.subTotal += eaCost
             if __debug__:
-                printToDebugFile(f"Line {currLineNum}: Adding MATERIAL COST of:    ${eaCost}")
+                printToDebugFile(
+                    f"Line {currLineNum}: Adding MATERIAL COST of:    ${eaCost}"
+                )
         elif hrCost > -1:
             invoice.materialCost += hrCost
             invoice.subTotal += hrCost
             if __debug__:
-                printToDebugFile(f"Line {currLineNum}: Adding MATERIAL COST of:    ${hrCost}")
+                printToDebugFile(
+                    f"Line {currLineNum}: Adding MATERIAL COST of:    ${hrCost}"
+                )
 
     return invoice
+
 
 # findEaCost searches the paymentLines for any listing of cost listed in quantity
 # params: paymentLines: str, the lines of text that make up the payment line
@@ -105,7 +119,7 @@ def findEaCost(paymentLines):
         cost = searchPaymentLine(line, "[0-9]+ea(.*)")
         if cost > -1:
             return cost
-        
+
     return -1
 
 
@@ -113,14 +127,14 @@ def findEaCost(paymentLines):
 # params: paymentLines: str, the lines of text that make up the payment line
 # returns: double, the cost if found, -1 if otherwise
 def findHrCost(paymentLines):
-    
+
     for line in paymentLines.splitlines():
         cost = searchPaymentLine(line, "[0-9]+hr(.*)")
         if cost > -1:
             return cost
-        
+
     return -1
-    
+
 
 # processEndOfInvoice takes the ending of the invoice starting at "Total:Subtotal" and searches for
 # the sales tax and the listed total on the invoice
@@ -131,36 +145,41 @@ def findHrCost(paymentLines):
 def processEndOfInvoice(text, startingLine, invoice):
 
     # Only need to process from the start of the subtotal to the end
-    text = text[(text.find(startingLine)):]
+    text = text[(text.find(startingLine)) :]
 
     # Find sales tax and listed total and place into invoice
-    invoice.salesTax = float(text.splitlines()[2].replace('$', '').replace(',', ''))
-    invoice.listedTotal = float(text.splitlines()[3].replace('$', '').replace(',', ''))
+    invoice.salesTax = float(text.splitlines()[2].replace("$", "").replace(",", ""))
+    invoice.listedTotal = float(text.splitlines()[3].replace("$", "").replace(",", ""))
 
     return invoice
+
 
 # searchForLabor takes a given payment line and searches it for markers
 # that would indicate that this line contains a labor cost
 # params: line, str, one line of text from the purchase table
 # returns: True if a labor cost, False otherwise
 def searchForLabor(line):
-    
+
     # Only return true is MF/ or MD/ was found in the line. Does not include
     # MF/RHR or MF/LHR or MD/RHR or MD/LHR
-    if ((("MF/" in line) or ("MD/" in line)) and 
-        (("MF/RHR" not in line) and ("MF/LHR" not in line) and 
-         ("MD/RHR" not in line) and ("MD/LHR" not in line))):
+    if (("MF/" in line) or ("MD/" in line)) and (
+        ("MF/RHR" not in line)
+        and ("MF/LHR" not in line)
+        and ("MD/RHR" not in line)
+        and ("MD/LHR" not in line)
+    ):
         return True
     else:
         return False
 
+
 def searchForShipping(line):
 
-    if (("DELIVERY" in line) or ("UPS GROUND" in line)
-        or ("FREIGHT OUT" in line)):
+    if ("DELIVERY" in line) or ("UPS GROUND" in line) or ("FREIGHT OUT" in line):
         return True
 
     return False
+
 
 # findPaymentTerms takes the invoice and searches for an occurance of any
 # of the possible payment terms
@@ -176,7 +195,7 @@ def findPaymentTerms(text, allPaymentTerms):
         # If found, return the term
         if res:
             return term
-        
+
     return "Could Not Find"
 
 
@@ -193,11 +212,11 @@ def findSalesRep(text, allSalesReps):
         # If found, return sales rep name
         if res:
             return val
-        
+
     return "Could Not Find"
 
 
-# getFilenameFromFilepath takes a full filepath to an invoice PDF file and 
+# getFilenameFromFilepath takes a full filepath to an invoice PDF file and
 # isolates the name of the file
 # params: str: filepath, the full path to the invoice pdf
 # returns: the filename "xxxx.pdf" if found, -1 if not found

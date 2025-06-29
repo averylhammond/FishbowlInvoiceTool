@@ -1,24 +1,24 @@
 from search import *
 import logging
 
+
 # Invoice class to hold all attributes of the invoice that must be
 # passes to QuickBooks API
 class Invoice:
     def __init__(self):
-        self.customer     = None  # Name of customer on invoice
-        self.date         = None  # Date of invoice
-        self.invoiceNum   = None  # Invoice number, as S12345
-        self.poNum        = None  # PO Number
+        self.customer = None  # Name of customer on invoice
+        self.date = None  # Date of invoice
+        self.invoiceNum = None  # Invoice number, as S12345
+        self.poNum = None  # PO Number
         self.paymentTerms = None  # Listed payment terms
-        self.rep          = None  # Sales rep identifier
-        self.laborCost    = 0.0   # Total cost of labor
-        self.materialCost = 0.0   # Total cost of material
-        self.shippingCost = 0.0   # Total cost of shipping
-        self.subTotal     = 0.0   # Subtotal, from summing all costs
-        self.salesTax     = 0.0   # Additional sales tax
-        self.total        = 0.0   # Calculated as subtotal plus salesTax
-        self.listedTotal  = 0.0   # Total as listed on the invoice
-
+        self.rep = None  # Sales rep identifier
+        self.laborCost = 0.0  # Total cost of labor
+        self.materialCost = 0.0  # Total cost of material
+        self.shippingCost = 0.0  # Total cost of shipping
+        self.subTotal = 0.0  # Subtotal, from summing all costs
+        self.salesTax = 0.0  # Additional sales tax
+        self.total = 0.0  # Calculated as subtotal plus salesTax
+        self.listedTotal = 0.0  # Total as listed on the invoice
 
     # populateInvoice initializes the appropriate fields of a given Invoice object
     # params: text: str taken from the first page of the invoice
@@ -29,7 +29,9 @@ class Invoice:
         self.invoiceNum = searchInvoice(text, "S(\d{5})")
         self.date = searchInvoice(text, "\d{2}/\d{2}/\d{4}")
         self.customer = searchInvoice(text, "Customer: .+").replace("Customer: ", "")
-        self.poNum = (searchInvoice(text, "PO Number: .+S")[:-1]).replace("PO Number: ", "")
+        self.poNum = (searchInvoice(text, "PO Number: .+S")[:-1]).replace(
+            "PO Number: ", ""
+        )
         self.paymentTerms = findPaymentTerms(text, allPaymentTerms)
         self.rep = findSalesRep(text, allSalesReps)
 
@@ -37,7 +39,9 @@ class Invoice:
     # params: N/A
     # returns: N/A
     def dumpInvoice(self):
-        logging.debug("\n***********************************\nDumping Invoice Contents!")
+        logging.debug(
+            "\n***********************************\nDumping Invoice Contents!"
+        )
         logging.debug(f"Customer: {self.customer}")
         logging.debug(f"Date: {self.date}")
         logging.debug(f"Invoice Number: {self.invoiceNum}")
@@ -52,7 +56,6 @@ class Invoice:
         logging.debug(f"Calculated Total: ${round(self.total, 2)}")
         logging.debug(f"Listed Total: ${round(self.listedTotal, 2)}")
         logging.debug("***********************************")
-
 
     # calculateTotal calculates the total for a fully processed invoice
     # params: N/A
