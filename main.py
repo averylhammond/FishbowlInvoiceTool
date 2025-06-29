@@ -1,14 +1,13 @@
-import PyPDF2, re, logging, os, win32gui, win32con
+import PyPDF2, logging, os
 import PySimpleGUI as sg
 from search import *
 from invoice import *
 from fio import *
-from gui import *
 
 # Uncomment these lines when running pyinstaller to hide the windows terminal
 # upon program execution
-hide = win32gui.GetForegroundWindow()
-win32gui.ShowWindow(hide, win32con.SW_HIDE)
+# hide = win32gui.GetForegroundWindow()
+# win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
 # Find all possible sales reps and payment terms, built from "Config" folder
 allSalesReps = buildDictSalesReps()

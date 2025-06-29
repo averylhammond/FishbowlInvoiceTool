@@ -3,6 +3,9 @@ __pycache__/
 .vscode/
 build/
 
+# Ignore virtual environment files
+venv/
+
 # Ignore generated txt files and logs
 debug.txt
 results.txt
