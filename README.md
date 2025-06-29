@@ -15,6 +15,16 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 4) Install dependencies
     - pip install -r requirements.txt
 
+    - NOTE: If on Linux, you need to install tkinter separately since it's not
+            included in the standard library. Then run step 4.
+
+        - For Debian based distros:
+            - sudo apt-get install python3-tk for deb based distros
+        - For Fedora users:
+            - sudo dnf install python3-tkinter
+        - For Arch based distros:
+            - sudo pacman -S python3-tk
+
 5) Run script
     - python main.py
 
