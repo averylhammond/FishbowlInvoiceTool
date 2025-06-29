@@ -1,74 +1,74 @@
 import os
 
 
-# resetDebugFile deletes debug.txt that was created from the previous program execution
+# reset_debug_file deletes debug.txt that was created from the previous program execution
 # params: N/A
 # returns: N/A
-def resetDebugFile():
+def reset_debug_file():
     if os.path.isfile("./debug.txt"):
         os.remove("./debug.txt")
 
 
-# resetOutputFile deletes results.txt that was created from the previous program execution
+# reset_output_file deletes results.txt that was created from the previous program execution
 # params: N/A
 # returns: N/A
-def resetOutputFile():
+def reset_output_file():
     if os.path.isfile("./results.txt"):
         os.remove("./results.txt")
 
 
-# printToDebugFile writes the str contents to debug.txt
+# print_to_debug_file writes the str contents to debug.txt
 # params: contents: str, the contents to be written to file
 # returns: N/A
-def printToDebugFile(contents):
+def print_to_debug_file(contents):
 
     # If debug.txt already exists, append to it, otherwise write from beginning
     if os.path.isfile("./debug.txt"):
-        writeOrAppend = "a"
+        write_or_append = "a"
     else:
-        writeOrAppend = "w"
+        write_or_append = "w"
 
     # Write contents to file
-    with open("debug.txt", writeOrAppend) as f:
+    with open("debug.txt", write_or_append) as f:
         f.write(contents + "\n")
 
 
-# printToOutputFile writes each field of the invoice object to results.txt
+# print_to_output_file writes each field of the invoice object to results.txt
 # params: invoice: Invoice object, the invoice whose fields are to be output
 # returns: N/A
-def printToOutputFile(invoice):
+def print_to_output_file(invoice):
 
     # If results.txt already exists, append to it, otherwise write from beginning
     if os.path.isfile("./results.txt"):
-        writeOrAppend = "a"
+        write_or_append = "a"
     else:
-        writeOrAppend = "w"
+        write_or_append = "w"
 
     # Write invoice contents to file
-    with open("results.txt", writeOrAppend) as f:
+    with open("results.txt", write_or_append) as f:
         f.write("***********************************\n")
         f.write(f"Processed Invoice Results:\n")
         f.write(f"Customer Name:    {invoice.customer}\n")
         f.write(f"Invoice Date:     {invoice.date}\n")
-        f.write(f"Invoice Number:   {invoice.invoiceNum}\n")
-        f.write(f"PO Number:        {invoice.poNum}\n")
-        f.write(f"Payment Terms:    {invoice.paymentTerms}\n")
+        f.write(f"Invoice Number:   {invoice.invoice_num}\n")
+        f.write(f"PO Number:        {invoice.po_num}\n")
+        f.write(f"Payment Terms:    {invoice.payment_terms}\n")
         f.write(f"Sales Rep:        {invoice.rep}\n")
-        f.write(f"Labor Cost:       ${round(invoice.laborCost, 2)}\n")
-        f.write(f"Material Cost:    ${round(invoice.materialCost, 2)}\n")
-        f.write(f"Shipping Cost:    ${round(invoice.shippingCost, 2)}\n")
-        f.write(f"Subtotal:         ${round(invoice.subTotal, 2)}\n")
-        f.write(f"Sales Tax:        ${round(invoice.salesTax, 2)}\n")
+        f.write(f"Labor Cost:       ${round(invoice.labor_cost, 2)}\n")
+        f.write(f"Material Cost:    ${round(invoice.material_cost, 2)}\n")
+        f.write(f"Shipping Cost:    ${round(invoice.shipping_cost, 2)}\n")
+        f.write(f"subtotal:         ${round(invoice.subtotal, 2)}\n")
+        f.write(f"Sales Tax:        ${round(invoice.sales_tax, 2)}\n")
         f.write(f"Calculated Total: ${round(invoice.total, 2)}\n")
-        f.write(f"Listed Total:     ${round(invoice.listedTotal, 2)}\n")
+        f.write(f"Listed Total:     ${round(invoice.listed_total, 2)}\n")
         f.write("***********************************\n")
 
 
-# buildDictSalesReps builds the salesReps dictionary that contains the
+# build_dict_sales_reps builds the salesReps dictionary that contains the
 # invoice code and matching name for each sales rep as defined in Configs/salesReps.txt
 # params: N/A
 # returns: dict, the populated dictionary with all codes as keys and names as values
-def buildDictSalesReps():
+def build_dict_sales_reps():
 
     with open("Configs/salesReps.txt", "r") as f:
         dict = {}
@@ -82,11 +82,11 @@ def buildDictSalesReps():
     return dict
 
 
-# buildListPaymentTerms builds the paymentTerms list that contains each possible
-# payment term as defined in Configs/paymentTerms.txt
+# build_list_payment_terms builds the payment_terms list that contains each possible
+# payment term as defined in Configs/payment_terms.txt
 # params: N/A
 # returns: list, contains each possible payment term that could be found in the invoice
-def buildListPaymentTerms():
+def build_list_payment_terms():
 
     with open("Configs/paymentTerms.txt", "r") as f:
         list = []
