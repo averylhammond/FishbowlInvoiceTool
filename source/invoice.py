@@ -2,23 +2,22 @@ from source.search import *
 import logging
 
 
-# Invoice class to hold all attributes of the invoice that must be
-# passes to QuickBooks API
+# Invoice class to hold all attributes of the invoice
 class Invoice:
     def __init__(self):
-        self.customer = None  # Name of customer on invoice
-        self.date = None  # Date of invoice
-        self.invoice_num = None  # Invoice number, as S12345
-        self.po_num = None  # PO Number
-        self.payment_terms = None  # Listed payment terms
-        self.rep = None  # Sales rep identifier
-        self.labor_cost = 0.0  # Total cost of labor
-        self.material_cost = 0.0  # Total cost of material
-        self.shipping_cost = 0.0  # Total cost of shipping
-        self.subtotal = 0.0  # subtotal, from summing all costs
-        self.sales_tax = 0.0  # Additional sales tax
-        self.total = 0.0  # Calculated as subtotal plus sales_tax
-        self.listed_total = 0.0  # Total as listed on the invoice
+        self.customer_name   = None  # Name of customer on invoice
+        self.date            = None  # Date of invoice
+        self.order_number    = None  # Order Number, e.g. S12345
+        self.po_number       = None  # PO Number
+        self.payment_terms   = None  # Listed payment terms
+        self.sales_rep       = None  # Sales rep identifier
+        self.labor_cost      = 0.0   # Total cost of labor
+        self.material_cost   = 0.0   # Total cost of material
+        self.shipping_cost   = 0.0   # Total cost of shipping
+        self.subtotal        = 0.0   # subtotal, from summing all costs
+        self.sales_tax       = 0.0   # Additional sales tax
+        self.total           = 0.0   # Calculated as subtotal plus sales_tax
+        self.listed_total    = 0.0   # Total as listed
 
     # populate_invoice initializes the appropriate fields of a given Invoice object
     # params: text: str taken from the first page of the invoice
@@ -26,14 +25,14 @@ class Invoice:
     # params: payment_terms: list, all possible payment terms
     # returns: N/A
     def populate_invoice(self, text, sales_reps, payment_terms):
-        self.invoice_num = search_invoice(text, "S(\d{5})")
+        self.order_number = search_invoice(text, "S(\d{5})")
         self.date = search_invoice(text, "\d{2}/\d{2}/\d{4}")
-        self.customer = search_invoice(text, "Customer: .+").replace("Customer: ", "")
-        self.po_num = (search_invoice(text, "PO Number: .+S")[:-1]).replace(
+        self.customer_name = search_invoice(text, "Customer: .+").replace("Customer: ", "")
+        self.po_number = (search_invoice(text, "PO Number: .+S")[:-1]).replace(
             "PO Number: ", ""
         )
         self.payment_terms = find_payment_terms(text, payment_terms)
-        self.rep = find_sales_rep(text, sales_reps)
+        self.sales_rep = find_sales_rep(text, sales_reps)
 
     # dumpInvoice dumps all fields of a given invoice to the terminal for debugging
     # params: N/A
@@ -42,12 +41,12 @@ class Invoice:
         logging.debug(
             "\n***********************************\nDumping Invoice Contents!"
         )
-        logging.debug(f"Customer: {self.customer}")
+        logging.debug(f"Customer: {self.customer_name}")
         logging.debug(f"Date: {self.date}")
-        logging.debug(f"Invoice Number: {self.invoice_num}")
-        logging.debug(f"PO Number: {self.po_num}")
+        logging.debug(f"Order Number: {self.order_number}")
+        logging.debug(f"PO Number: {self.po_number}")
         logging.debug(f"Payment Terms: {self.payment_terms}")
-        logging.debug(f"Rep: {self.rep}")
+        logging.debug(f"Rep: {self.sales_rep}")
         logging.debug(f"Labor Costs: ${round(self.labor_cost, 2)}")
         logging.debug(f"Material Costs: ${round(self.material_cost, 2)}")
         logging.debug(f"Shipping Costs: ${round(self.shipping_cost, 2)}")
