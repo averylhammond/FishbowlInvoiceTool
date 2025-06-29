@@ -1,6 +1,6 @@
-******************************************
-* INSTRUCTIONS TO SET UP FOR DEVELOPMENT *
-******************************************
+**************************************
+INSTRUCTIONS TO SET UP FOR DEVELOPMENT
+**************************************
 1) Clone repo
 
 2) Open a Python virtual environment
@@ -19,9 +19,9 @@
     - python main.py
 
 
-**************************************
-* INSTRUCTIONS TO SET UP FOR RELEASE *
-**************************************
+**********************************
+INSTRUCTIONS TO SET UP FOR RELEASE
+**********************************
 
 1) Follow above instructions for development to set the repo
 
