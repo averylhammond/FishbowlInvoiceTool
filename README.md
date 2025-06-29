@@ -39,10 +39,17 @@
     - git reset --hard
     - git clean -fdxf
 
-6) Create a folder called Invoices
-    - The app expects this folder to be empty, but present.
+6) Paste the previously copied AutoInvoiceProc.exe into the clean repo and set up the 
+   following folder structure for release-
+   - FishbowlInvoiceTool
+        - Configs
+            - paymentTerms.txt
+            - salesReps.txt
+        - Invoices
+        - AutoInvoiceProc.exe
+        - README.txt
+    
 
-6) Now paste the previously copied AutoInvoiceProc.exe into the clean repo. The
-   folder can now be zipped up and packaged as a release on GitHub.
+6) The parent folder can now be zipped up and packaged as a release on GitHub.
 
    https://github.com/averylhammond/FishbowlInvoiceTool#

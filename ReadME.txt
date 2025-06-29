@@ -1,6 +1,6 @@
-TODO: Move this to part of the release
+Welcome to the the Automated Invoice Processing Tool
 
-Welcome to the Automated Invoice Processing Tool version 1.0!
+Version 2.1.0
 
 To use the tool:
 
