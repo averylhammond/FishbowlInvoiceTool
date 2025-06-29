@@ -14,4 +14,4 @@ results.txt
 dist/
 
 # Ignore invoices moved into this folder for testing
-Invoices/*/
+Invoices/*
