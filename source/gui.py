@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
 
 
@@ -14,9 +14,9 @@ class InvoiceAppGUI(tk.Tk):
         super().__init__()
 
         self.title("Invoice Processor")
-        self.geometry("750x300")
+        self.geometry("750x750")
         self.resizable(False, False)
-
+        self.output_box = None
         self.selected_file = tk.StringVar()
         self.process_callback = process_callback
 
@@ -61,6 +61,13 @@ class InvoiceAppGUI(tk.Tk):
         exit_button = tk.Button(button_frame, text="Exit", command=self.quit)
         exit_button.grid(row=0, column=1, padx=10)
 
+        # Output box to display results
+        output_label = tk.Label(self, text="Output:", font=("Segoe UI", 12))
+        self.output_box = scrolledtext.ScrolledText(
+            self, height=8, wrap="word", font=("Courier New", 10)
+        )
+        self.output_box.pack(padx=20, pady=(0, 10), fill="both", expand=True)
+
     # browse_file: On "Browse" button press, opens a file dialog to select a PDF invoice file. Once selected, the file is set
     # to the selected_file member variable
     # params: N/A
@@ -77,7 +84,7 @@ class InvoiceAppGUI(tk.Tk):
 
     # process_file: On "Process This Invoice" button press, processes the selected PDF invoice file by forwarding
     # the call to the provided process_callback function specified during construction
-    # params: N/A
+    # params: filepath: str, the path to the PDF file to be processed (optional, defaults to the selected_file member variable
     # returns: N/A
     # note: If no file is selected, a warning message is shown
     def process_file(self):
