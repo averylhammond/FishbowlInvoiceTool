@@ -1,7 +1,4 @@
---extra-index-url https://PySimpleGUI.net/install
-
 logging==0.4.9.6
 pyasn1==0.6.1
 PyPDF2==3.0.1
-PySimpleGUI==5.0.10
 rsa==4.9.1
