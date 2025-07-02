@@ -1,5 +1,4 @@
 import PyPDF2, logging, os, tkinter
-import PySimpleGUI as sg
 from source.search import *
 from source.invoice import *
 from source.fio import *
@@ -63,9 +62,9 @@ def process_invoice(filename):
                 invoice = process_payment_line(text, line, invoice, next_line_num)
                 next_line_num += 1  # Update nextLineNum
 
-            # "Total:subtotal" is the beginning of the end of the invoice
-            if "Total:subtotal" in line:
-                invoice = process_end_of_invoice(text, line, invoice)
+            # "Total:Subtotal" is the beginning of the end of the invoice
+            if "Total:Subtotal" in line:
+                invoice, diff = process_end_of_invoice(text, line, invoice)
 
     if __debug__:
         print_to_debug_file("Finished processing sales on current invoice!")
@@ -76,7 +75,7 @@ def process_invoice(filename):
     # Print output to results.txt
     print_to_output_file(invoice)
 
-    return invoice
+    return invoice, diff
 
 
 # Entry Point

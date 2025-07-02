@@ -142,6 +142,7 @@ def find_hr_cost(payment_lines):
 # params: startingLine: str, the line at which the end of the invoice starts
 # parms: invoice: Invoice, the invoice object to be modified
 # returns: Invoice, the invoice that was modified
+# returns: diff, the difference between the subtotal and the listed total
 def process_end_of_invoice(text, startingLine, invoice):
 
     # Only need to process from the start of the subtotal to the end
@@ -151,7 +152,10 @@ def process_end_of_invoice(text, startingLine, invoice):
     invoice.sales_tax = float(text.splitlines()[2].replace("$", "").replace(",", ""))
     invoice.listed_total = float(text.splitlines()[3].replace("$", "").replace(",", ""))
 
-    return invoice
+    # Calculate the difference between the subtotal and the listed total
+    diff = invoice.listed_total - invoice.subtotal
+
+    return invoice, diff
 
 
 # search_for_labor takes a given payment line and searches it for markers

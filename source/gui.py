@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
 from source.fio import *
+from source.invoice import *
 
 
 # Invoice App GUI class to hold the GUI for selecting and processing invoices
@@ -173,7 +174,7 @@ class InvoiceAppGUI(tk.Tk):
 
         try:
             reset_output_file()
-            self.process_callback(file_path)
+            invoice, diff = self.process_callback(file_path)
 
             with open("results.txt", "r") as f:
                 results = f.read()
@@ -182,23 +183,35 @@ class InvoiceAppGUI(tk.Tk):
 
                 # TODO: Still need to either figure out the diff issue or add the popup in here
 
-            messagebox.showinfo("Success", "Invoice processed successfully.")
+            if diff != 0:
+                messagebox.showwarning(
+                    "Warning",
+                    f"Invoice total does not match listed total by ${diff:.2f}. Please manually confirm the validity of the results.",
+                )
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
 
     def process_all_invoices(self):
         file_paths = Path("./Invoices").resolve().iterdir()
+        diff_flag = False
 
         try:
             reset_output_file()
             for file_path in file_paths:
-                self.process_callback(file_path)
+                invoice, diff = self.process_callback(file_path)
+
+                if diff != 0:
+                    diff_flag = True
 
             with open("results.txt", "r") as f:
                 results = f.read()
                 self.output_box.delete(1.0, tk.END)
                 self.output_box.insert(tk.END, results)
 
-            messagebox.showinfo("Success", "All invoices processed successfully.")
+            if diff_flag:
+                messagebox.showwarning(
+                    "Warning",
+                    "At least one invoice had a discrepancy between the calculated total and the listed total. Please manually confirm the validity of the results.",
+                )
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
