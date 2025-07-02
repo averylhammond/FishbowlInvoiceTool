@@ -28,50 +28,119 @@ class InvoiceAppGUI(tk.Tk):
     # params: N/A
     # returns: N/A
     def build_widgets(self):
+        # Define color scheme
+        bg_main = "#2c2f33"  # dark grey
+        bg_frame = "#23272a"  # slightly darker grey
+        bg_entry = "#36393f"  # medium grey
+        fg_text = "#f6f6f6"  # near white
+        accent_blue = "#3498db"  # blue accent
+        button_bg = accent_blue
+        button_fg = "#ffffff"
+        label_fg = accent_blue
+
+        self.configure(bg=bg_main)
 
         # Title Label
         title_label = tk.Label(
-            self, text="Choose a Fishbowl Invoice PDF to Process", font=("Segoe UI", 14)
+            self,
+            text="Choose a Fishbowl Invoice PDF to Process",
+            font=("Segoe UI", 16, "bold"),
+            bg=bg_main,
+            fg=label_fg,
         )
         title_label.pack(pady=(20, 10))
 
         # File selection frame
-        file_frame = tk.Frame(self)
+        file_frame = tk.Frame(self, bg=bg_frame)
         file_frame.pack(padx=20, fill="x")
 
         file_entry = tk.Entry(
-            file_frame, textvariable=self.selected_file, state="readonly", width=50
+            file_frame,
+            textvariable=self.selected_file,
+            state="readonly",
+            width=50,
+            bg=bg_entry,
+            fg=bg_main,
+            insertbackground=fg_text,
+            relief="flat",
         )
-        file_entry.pack(side="left", fill="x", expand=True)
+        file_entry.pack(side="left", fill="x", expand=True, padx=(0, 5), pady=8)
 
         # Browse button to open file dialog
-        browse_button = tk.Button(file_frame, text="Browse", command=self.browse_file)
-        browse_button.pack(side="left", padx=(10, 0))
+        browse_button = tk.Button(
+            file_frame,
+            text="Browse",
+            command=self.browse_file,
+            bg=button_bg,
+            fg=button_fg,
+            activebackground=accent_blue,
+            activeforeground=fg_text,
+            relief="flat",
+            font=("Segoe UI", 10, "bold"),
+        )
+        browse_button.pack(side="left", padx=(10, 0), pady=8)
 
         # Action buttons frame
-        button_frame = tk.Frame(self)
+        button_frame = tk.Frame(self, bg=bg_main)
         button_frame.pack(pady=20)
 
         # Create button for processing a single invoice
         process_button = tk.Button(
-            button_frame, text="Process This Invoice", command=self.process_file
+            button_frame,
+            text="Process This Invoice",
+            command=self.process_file,
+            bg=button_bg,
+            fg=button_fg,
+            activebackground=accent_blue,
+            activeforeground=fg_text,
+            relief="flat",
+            font=("Segoe UI", 10, "bold"),
         )
         process_button.grid(row=0, column=0, padx=10)
 
         # Create button for exiting the application
-        exit_button = tk.Button(button_frame, text="Exit", command=self.quit)
+        exit_button = tk.Button(
+            button_frame,
+            text="Exit",
+            command=self.quit,
+            bg=bg_entry,
+            fg=fg_text,
+            activebackground="#e74c3c",
+            activeforeground=fg_text,
+            relief="flat",
+            font=("Segoe UI", 10, "bold"),
+        )
         exit_button.grid(row=0, column=1, padx=10)
 
         # Create button for processing all invoices in the Invoices folder
         all_invoices_button = tk.Button(
-            button_frame, text="Process All Invoices", command=self.process_all_invoices
+            button_frame,
+            text="Process All Invoices",
+            command=self.process_all_invoices,
+            bg=button_bg,
+            fg=button_fg,
+            activebackground=accent_blue,
+            activeforeground=fg_text,
+            relief="flat",
+            font=("Segoe UI", 10, "bold"),
         )
         all_invoices_button.grid(row=0, column=2, padx=10)
 
         # Output box to display results
-        output_label = tk.Label(self, text="Output:", font=("Segoe UI", 12))
+        output_label = tk.Label(
+            self, text="Output:", font=("Segoe UI", 12, "bold"), bg=bg_main, fg=label_fg
+        )
+        output_label.pack(anchor="w", padx=22, pady=(0, 2))
+
         self.output_box = scrolledtext.ScrolledText(
-            self, height=8, wrap="word", font=("Courier New", 10)
+            self,
+            height=8,
+            wrap="word",
+            font=("Segoe UI", 15, "bold"),
+            bg=bg_entry,
+            fg=fg_text,
+            insertbackground=fg_text,
+            relief="flat",
         )
         self.output_box.pack(padx=20, pady=(0, 10), fill="both", expand=True)
 
