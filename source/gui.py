@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
+from source.fio import *
 
 
 # Invoice App GUI class to hold the GUI for selecting and processing invoices
@@ -61,6 +62,12 @@ class InvoiceAppGUI(tk.Tk):
         exit_button = tk.Button(button_frame, text="Exit", command=self.quit)
         exit_button.grid(row=0, column=1, padx=10)
 
+        # Create button for processing all invoices in the Invoices folder
+        all_invoices_button = tk.Button(
+            button_frame, text="Process All Invoices", command=self.process_all_invoices
+        )
+        all_invoices_button.grid(row=0, column=2, padx=10)
+
         # Output box to display results
         output_label = tk.Label(self, text="Output:", font=("Segoe UI", 12))
         self.output_box = scrolledtext.ScrolledText(
@@ -96,7 +103,33 @@ class InvoiceAppGUI(tk.Tk):
             return
 
         try:
+            reset_output_file()
             self.process_callback(file_path)
+
+            with open("results.txt", "r") as f:
+                results = f.read()
+                self.output_box.delete(1.0, tk.END)
+                self.output_box.insert(tk.END, results)
+
+                # TODO: Still need to either figure out the diff issue or add the popup in here
+
             messagebox.showinfo("Success", "Invoice processed successfully.")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+
+    def process_all_invoices(self):
+        file_paths = Path("./Invoices").resolve().iterdir()
+
+        try:
+            reset_output_file()
+            for file_path in file_paths:
+                self.process_callback(file_path)
+
+            with open("results.txt", "r") as f:
+                results = f.read()
+                self.output_box.delete(1.0, tk.END)
+                self.output_box.insert(tk.END, results)
+
+            messagebox.showinfo("Success", "All invoices processed successfully.")
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")

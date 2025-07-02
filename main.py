@@ -79,30 +79,6 @@ def process_invoice(filename):
     return invoice
 
 
-# update_invoice_gui is the handler for the process button being pressed from the GUI. It
-# takes thefilepath that was input and runs the process_invoice function and returns the output
-# params: invoice_path, str, the full file path the invoice to be processed
-# returns: str, output of results.txt to be displayed on the "output" GUI element
-def update_invoice_gui(invoice_path):
-
-    # If an empty path was given, ask for valid input
-    if invoice_path == "":
-        return ("Please Select a valid Invoice to Process...", 0.0)
-
-    # Clear output file incase previous invoice was listed
-    reset_output_file()
-    invoice = process_invoice(invoice_path, get_filename_from_filepath(invoice_path))
-
-    # Reset diff on each update, then calculate the new diff
-    diff = 0.0
-    diff = invoice.listed_total - invoice.total
-
-    # Open output file and read the calculated results to send to the GUI
-    with open("results.txt", "r") as f:
-        results = f.read()
-        return results, diff
-
-
 # Entry Point
 if __name__ == "__main__":
 
