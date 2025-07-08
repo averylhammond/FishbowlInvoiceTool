@@ -1,9 +1,5 @@
 import re
 
-from .InvoiceAppFileIO import *  # TODO: Remove this, the processor shouldn't need to know about the file IO, let the controller handle it
-
-from .Invoice import Invoice
-
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
 class InvoiceProcessor:
@@ -39,20 +35,24 @@ class InvoiceProcessor:
             return -1
 
     # populate_invoice initializes the appropriate fields of a given Invoice object
-    # param: text: str taken from the first page of the invoice
+    # param: invoice: Invoice, the invoice object to be populated
     # param: sales_reps: dict, all possible sales rep codes and names
     # param: payment_terms: list, all possible payment terms
-    def populate_invoice(self, text, sales_reps, payment_terms):
-        self.order_number = self.search_invoice(text, "S(\d{5})")
-        self.date = self.search_invoice(text, "\d{2}/\d{2}/\d{4}")
-        self.customer_name = self.search_invoice(text, "Customer: .+").replace(
+    def populate_invoice(self, invoice, sales_reps, payment_terms):
+
+        # Get the first page of the invoice
+        first_page = invoice.page_contents[0]
+
+        invoice.order_number = self.search_invoice(first_page, "S(\d{5})")
+        invoice.date = self.search_invoice(first_page, "\d{2}/\d{2}/\d{4}")
+        invoice.customer_name = self.search_invoice(first_page, "Customer: .+").replace(
             "Customer: ", ""
         )
-        self.po_number = (self.search_invoice(text, "PO Number: .+S")[:-1]).replace(
-            "PO Number: ", ""
-        )
-        self.payment_terms = self.find_payment_terms(text, payment_terms)
-        self.sales_rep = self.find_sales_rep(text, sales_reps)
+        invoice.po_number = (
+            self.search_invoice(first_page, "PO Number: .+S")[:-1]
+        ).replace("PO Number: ", "")
+        invoice.payment_terms = self.find_payment_terms(first_page, payment_terms)
+        invoice.sales_rep = self.find_sales_rep(first_page, sales_reps)
 
     # process_payment_line takes a given line from the payment table and processes it. This includes
     # reading the entire row, determining if the payment line refers to a labor, shipping, or

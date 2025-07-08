@@ -68,7 +68,7 @@ class InvoiceAppController:
 
         self.display.mainloop()  # Start the GUI application
 
-    # handle_process_invoice hanles the controller side of the invoice processing
+    # handle_process_invoice handles the controller side of the invoice processing
     # param: invoice_filepath: str, the filepath of the invoice PDF to be processed
     def handle_process_invoice(self, invoice_filepath):
 
@@ -93,7 +93,7 @@ class InvoiceAppController:
 
         # Populate other initial fields of the invoice from the first page of the PDF
         self.invoice_processor.populate_invoice(
-            invoice.page_contents[0], self.sales_reps, self.payment_terms
+            invoice, self.sales_reps, self.payment_terms
         )
 
         # Forward call to the Invoice Processor
