@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
-from source.fio import *
+from source.InvoiceAppFileIO import *
 from source.Invoice import *
 
 
@@ -10,8 +10,8 @@ from source.Invoice import *
 class InvoiceAppDisplay(tk.Tk):
 
     # __init__ Constructor, takes in a callback function as input
-    # params: process_callback: function, a callback function to process the selected invoice file
-    # returns: N/A
+    # param: process_callback: function, a callback function to process the selected invoice file
+    # returns: Created InvoiceAppDisplay object
     def __init__(self, process_callback):
         super().__init__()
 
@@ -26,7 +26,7 @@ class InvoiceAppDisplay(tk.Tk):
 
     # build_widgets: Creates the GUI widgets for the application
     # This includes a title label, file selection entry, browse button, and action buttons
-    # params: N/A
+    # param: N/A
     # returns: N/A
     def build_widgets(self):
         # Define color scheme
@@ -147,7 +147,7 @@ class InvoiceAppDisplay(tk.Tk):
 
     # browse_file: On "Browse" button press, opens a file dialog to select a PDF invoice file. Once selected, the file is set
     # to the selected_file member variable
-    # params: N/A
+    # param: N/A
     # returns: N/A
     def browse_file(self):
         initial_dir = Path("./Invoices").resolve()
@@ -161,7 +161,7 @@ class InvoiceAppDisplay(tk.Tk):
 
     # process_file: On "Process This Invoice" button press, processes the selected PDF invoice file by forwarding
     # the call to the provided process_callback function specified during construction
-    # params: filepath: str, the path to the PDF file to be processed (optional, defaults to the selected_file member variable
+    # param: filepath: str, the path to the PDF file to be processed (optional, defaults to the selected_file member variable
     # returns: N/A
     # note: If no file is selected, a warning message is shown
     def process_file(self):

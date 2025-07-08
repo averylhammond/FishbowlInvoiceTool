@@ -1,4 +1,4 @@
-from source.search import *
+from source.InvoiceProcessor import *
 import logging
 
 
@@ -22,9 +22,9 @@ class Invoice:
         # fmt:on
 
     # populate_invoice initializes the appropriate fields of a given Invoice object
-    # params: text: str taken from the first page of the invoice
-    # params: sales_reps: dict, all possible sales rep codes and names
-    # params: payment_terms: list, all possible payment terms
+    # param: text: str taken from the first page of the invoice
+    # param: sales_reps: dict, all possible sales rep codes and names
+    # param: payment_terms: list, all possible payment terms
     # returns: N/A
     def populate_invoice(self, text, sales_reps, payment_terms):
         self.order_number = search_invoice(text, "S(\d{5})")
@@ -39,7 +39,7 @@ class Invoice:
         self.sales_rep = find_sales_rep(text, sales_reps)
 
     # dumpInvoice dumps all fields of a given invoice to the terminal for debugging
-    # params: N/A
+    # param: N/A
     # returns: N/A
     def dumpInvoice(self):
         logging.debug(
@@ -61,7 +61,7 @@ class Invoice:
         logging.debug("***********************************")
 
     # calculate_total calculates the total for a fully processed invoice
-    # params: N/A
+    # param: N/A
     # returns: N/A
     def calculate_total(self):
         self.total = self.subtotal + self.sales_tax
