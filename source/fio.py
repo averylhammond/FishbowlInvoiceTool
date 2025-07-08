@@ -66,11 +66,11 @@ def print_to_output_file(invoice):
 
 # build_dict_sales_reps builds the salesReps dictionary that contains the
 # invoice code and matching name for each sales rep as defined in Configs/salesReps.txt
-# params: N/A
+# params: sales_reps_filepath: str, the path to the sales reps config file
 # returns: dict, the populated dictionary with all codes as keys and names as values
-def build_dict_sales_reps():
+def build_dict_sales_reps(sales_reps_filepath):
 
-    with open("Configs/salesReps.txt", "r") as f:
+    with open(sales_reps_filepath, "r") as f:
         dict = {}
 
         # Search through text file, only take non-comment entries
@@ -84,11 +84,11 @@ def build_dict_sales_reps():
 
 # build_list_payment_terms builds the payment_terms list that contains each possible
 # payment term as defined in Configs/payment_terms.txt
-# params: N/A
+# params: payment_terms_filepath: str, the path to the payment terms config file
 # returns: list, contains each possible payment term that could be found in the invoice
-def build_list_payment_terms():
+def build_list_payment_terms(payment_terms_filepath):
 
-    with open("Configs/paymentTerms.txt", "r") as f:
+    with open(payment_terms_filepath, "r") as f:
         list = []
 
         # Search through text file, only take non-comment entries

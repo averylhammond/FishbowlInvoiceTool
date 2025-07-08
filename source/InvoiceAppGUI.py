@@ -2,12 +2,12 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
 from source.fio import *
-from source.invoice import *
+from source.Invoice import *
 
 
-# Invoice App GUI class to hold the GUI for selecting and processing invoices
+# Invoice App Display class to hold the GUI for selecting and processing invoices
 # This implementation uses tkinter for the GUI
-class InvoiceAppGUI(tk.Tk):
+class InvoiceAppDisplay(tk.Tk):
 
     # __init__ Constructor, takes in a callback function as input
     # params: process_callback: function, a callback function to process the selected invoice file
