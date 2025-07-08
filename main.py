@@ -5,7 +5,7 @@ from source.InvoiceAppController import InvoiceAppController
 # Entry Point
 if __name__ == "__main__":
 
-    # TODO: Only do this in debug configuration?
+    # TODO: Only do this in debug configuration? Or just move this to the file IO controller?
     # # Setup logging
     logging.basicConfig(
         level=logging.DEBUG, format="[%(levelname)s] %(asctime)s - %(message)s"

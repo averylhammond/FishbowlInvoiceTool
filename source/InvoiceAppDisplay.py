@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
-from source.InvoiceAppFileIO import *
-from source.Invoice import *
+from .InvoiceAppFileIO import *
+from .Invoice import *
 
 
 # Invoice App Display class to hold the GUI for selecting and processing invoices
@@ -173,7 +173,7 @@ class InvoiceAppDisplay(tk.Tk):
             return
 
         try:
-            reset_output_file()
+            # reset_output_file()
             invoice, diff = self.process_callback(file_path)
 
             with open("results.txt", "r") as f:
@@ -196,7 +196,7 @@ class InvoiceAppDisplay(tk.Tk):
         diff_flag = False
 
         try:
-            reset_output_file()
+            # reset_output_file()
             for file_path in file_paths:
                 invoice, diff = self.process_callback(file_path)
 

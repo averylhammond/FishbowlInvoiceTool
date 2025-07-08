@@ -1,5 +1,6 @@
-import re, PyPDF2
-from source.InvoiceAppFileIO import *  # TODO: Remove this, the processor shouldn't need to know about the file IO, let the controller handle it
+import re
+
+from .InvoiceAppFileIO import *  # TODO: Remove this, the processor shouldn't need to know about the file IO, let the controller handle it
 
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
@@ -14,7 +15,7 @@ class InvoiceProcessor:
     # param: text: str, first page of the invoice
     # param: regex: str, regex to be matched
     # returns: Either returns the str match of the regex if successful, or None
-    def search_invoice(text, regex):
+    def search_invoice(self, text, regex):
         res = re.search(regex, text)
 
         if res:
@@ -27,7 +28,7 @@ class InvoiceProcessor:
     # param: line: str, one line of text from the purchase table
     # param: regex: str, regex to be matched
     # returns: N/A
-    def search_payment_line(line, regex):
+    def search_payment_line(self, line, regex):
         res = re.search(regex, line)
 
         if res:
@@ -43,7 +44,7 @@ class InvoiceProcessor:
     # param: invoice: Invoice, the invoice struct to be modified
     # param: curr_line_num: int, the current payment line number being processed
     # returns: Invoice, the invoice that was modified
-    def process_payment_line(text, line, invoice, curr_line_num):
+    def process_payment_line(self, text, line, invoice, curr_line_num):
 
         # If this line contains a subtotal, do nothing
         if "subtotal" in line:
@@ -55,73 +56,73 @@ class InvoiceProcessor:
         text = text[: text.find(f"\n{curr_line_num+1} ")]
 
         # Determine if the payment line is a labor, shipping, or material cost
-        is_labor_cost = search_for_labor(line)
-        is_shipping_cost = search_for_shipping(line)
+        is_labor_cost = self.search_for_labor(line)
+        is_shipping_cost = self.search_for_shipping(line)
 
         # If the cost is listed as a quantity or hourly rate, find the cost
-        ea_cost = find_ea_cost(text)
-        hr_cost = find_hr_cost(text)
+        ea_cost = self.find_ea_cost(text)
+        hr_cost = self.find_hr_cost(text)
 
         # Case: Payment line is a labor cost
         if is_labor_cost:
             if ea_cost > -1:
                 invoice.labor_cost += ea_cost
                 invoice.subtotal += ea_cost
-                if __debug__:
-                    print_to_debug_file(
-                        f"Line {curr_line_num}: Adding LABOR COST of:    ${ea_cost}"
-                    )
+                # if __debug__:
+                #     print_to_debug_file(
+                #         f"Line {curr_line_num}: Adding LABOR COST of:    ${ea_cost}"
+                #     )
             elif hr_cost > -1:
                 invoice.labor_cost += hr_cost
                 invoice.subtotal += hr_cost
-                if __debug__:
-                    print_to_debug_file(
-                        f"Line {curr_line_num}: Adding LABOR COST of:    ${hr_cost}"
-                    )
+                # if __debug__:
+                #     print_to_debug_file(
+                #         f"Line {curr_line_num}: Adding LABOR COST of:    ${hr_cost}"
+                #     )
 
         # Case: Payment line is a shipping cost
         elif is_shipping_cost:
             if ea_cost > -1:
                 invoice.shipping_cost += ea_cost
                 invoice.subtotal += ea_cost
-                if __debug__:
-                    print_to_debug_file(
-                        f"Line {curr_line_num}: Adding SHIPPING COST of:    ${ea_cost}"
-                    )
+                # if __debug__:
+                #     print_to_debug_file(
+                #         f"Line {curr_line_num}: Adding SHIPPING COST of:    ${ea_cost}"
+                #     )
             elif hr_cost > -1:
                 invoice.shipping_cost += hr_cost
                 invoice.subtotal += hr_cost
-                if __debug__:
-                    print_to_debug_file(
-                        f"Line {curr_line_num}: Adding SHIPPING COST of:    ${hr_cost}"
-                    )
+                # if __debug__:
+                #     print_to_debug_file(
+                #         f"Line {curr_line_num}: Adding SHIPPING COST of:    ${hr_cost}"
+                #     )
 
         # Case: Payment line is a material cost
         else:
             if ea_cost > -1:
                 invoice.material_cost += ea_cost
                 invoice.subtotal += ea_cost
-                if __debug__:
-                    print_to_debug_file(
-                        f"Line {curr_line_num}: Adding MATERIAL COST of:    ${ea_cost}"
-                    )
+                # if __debug__:
+                #     print_to_debug_file(
+                #         f"Line {curr_line_num}: Adding MATERIAL COST of:    ${ea_cost}"
+                #     )
             elif hr_cost > -1:
                 invoice.material_cost += hr_cost
                 invoice.subtotal += hr_cost
-                if __debug__:
-                    print_to_debug_file(
-                        f"Line {curr_line_num}: Adding MATERIAL COST of:    ${hr_cost}"
-                    )
+                # if __debug__:
+                #     print_to_debug_file(
+                #         f"Line {curr_line_num}: Adding MATERIAL COST of:    ${hr_cost}"
+                #     )
 
         return invoice
 
     # find_ea_cost searches the payment_lines for any listing of cost listed in quantity
     # param: payment_lines: str, the lines of text that make up the payment line
     # returns: double, the cost if found, -1 if otherwise
-    def find_ea_cost(payment_lines):
+    def find_ea_cost(self, payment_lines):
 
         for line in payment_lines.splitlines():
-            cost = search_payment_line(line, "[0-9]+ea(.*)")
+            cost = self.search_payment_line(line, "[0-9]+ea(.*)")
             if cost > -1:
                 return cost
 
@@ -130,10 +131,10 @@ class InvoiceProcessor:
     # find_ea_cost searches the payment_lines for any listing of cost listed in quantity
     # param: payment_lines: str, the lines of text that make up the payment line
     # returns: double, the cost if found, -1 if otherwise
-    def find_hr_cost(payment_lines):
+    def find_hr_cost(self, payment_lines):
 
         for line in payment_lines.splitlines():
-            cost = search_payment_line(line, "[0-9]+hr(.*)")
+            cost = self.search_payment_line(line, "[0-9]+hr(.*)")
             if cost > -1:
                 return cost
 
@@ -146,7 +147,7 @@ class InvoiceProcessor:
     # parms: invoice: Invoice, the invoice object to be modified
     # returns: Invoice, the invoice that was modified
     # returns: diff, the difference between the subtotal and the listed total
-    def process_end_of_invoice(text, startingLine, invoice):
+    def process_end_of_invoice(self, text, startingLine, invoice):
 
         # Only need to process from the start of the subtotal to the end
         text = text[(text.find(startingLine)) :]
@@ -168,7 +169,7 @@ class InvoiceProcessor:
     # that would indicate that this line contains a labor cost
     # param: line, str, one line of text from the purchase table
     # returns: True if a labor cost, False otherwise
-    def search_for_labor(line):
+    def search_for_labor(self, line):
 
         # Only return true is MF/ or MD/ was found in the line. Does not include
         # MF/RHR or MF/LHR or MD/RHR or MD/LHR
@@ -182,7 +183,7 @@ class InvoiceProcessor:
         else:
             return False
 
-    def search_for_shipping(line):
+    def search_for_shipping(self, line):
 
         if ("DELIVERY" in line) or ("UPS GROUND" in line) or ("FREIGHT OUT" in line):
             return True
@@ -207,7 +208,7 @@ class InvoiceProcessor:
         return "Could Not Find"
 
     # find_sales_rep takes the invoice and searched for the sales rep listed
-    # param: text: str, the invoice to be saerched
+    # param: text: str, the invoice to be searched
     # param: sales_reps: dict, contains all possible sales rep codes and names
     # returns: str, the name of the sales rep if found, "Could Not Find" otherwise
     def find_sales_rep(text, sales_reps):
@@ -226,7 +227,7 @@ class InvoiceProcessor:
     # isolates the name of the file
     # param: str: filepath, the full path to the invoice pdf
     # returns: the filename "xxxx.pdf" if found, -1 if not found
-    def get_filename_from_filepath(filepath):
+    def get_filename_from_filepath(self, filepath):
         res = re.search("SO-(.+).pdf", filepath)
 
         if res:
@@ -235,29 +236,15 @@ class InvoiceProcessor:
             return -1
 
     # process_invoice is the main function that processes the invoice pdf
-    # param: filename: str, the name of the file to be processed
-    # returns: N/A
+    # param: invoice: Invoice, the empty invoice object to be populated
+    # param: invoice_filepath: str, the file path to the Invoice PDF file to be processed
+    # returns: a constructed Invoice object with all fields populated, and the difference
+    # between the calculated total and the listed total, to show any discrepancies
     # NOTE: Right now filename is actually the full file path to the invoice. This should either
     # be changed or the variable should be renamed to filepath
-    # TODO: Move this into InvoiceProcessor.py
-    def process_invoice(self, filename):
+    def process_invoice(self, invoice, invoice_filepath):
 
-        # Read text from input PDF
-        pdf = PyPDF2.PdfReader(filename)
-
-        # Get Number of Pages
-        num_pages = len(pdf.pages)
-
-        if __debug__:
-            print_to_debug_file(f"\nProcessing file: {filename}")
-            print_to_debug_file(f"Number of Pages in invoice: {num_pages}")
-
-        # Process First Page
-        curr_page = pdf.pages[0]
-        text = curr_page.extract_text()
-
-        # Create Invoice object and populate initial fields
-        invoice = Invoice()
+        # Populate initial fields of the invoice
         invoice.populate_invoice(text, self.sales_reps, self.payment_terms)
 
         # Keep track of next expected payment line number
@@ -265,9 +252,6 @@ class InvoiceProcessor:
 
         # Loop through each page to read purchase table
         for i in range(1, num_pages + 1):
-
-            if __debug__:
-                print_to_debug_file(f"Processing sales on page {i}")
 
             # If not on first page, extract text from new page
             if i > 1:
@@ -285,20 +269,16 @@ class InvoiceProcessor:
 
                 # Check if at beginning of the line in the table. If so, process this payment item
                 if line.startswith(f"{next_line_num} "):
-                    invoice = process_payment_line(text, line, invoice, next_line_num)
+                    invoice = self.process_payment_line(
+                        text, line, invoice, next_line_num
+                    )
                     next_line_num += 1  # Update nextLineNum
 
                 # "Total:Subtotal" is the beginning of the end of the invoice
                 if "Total:Subtotal" in line:
-                    invoice, diff = process_end_of_invoice(text, line, invoice)
-
-        if __debug__:
-            print_to_debug_file("Finished processing sales on current invoice!")
+                    invoice, diff = self.process_end_of_invoice(text, line, invoice)
 
         # Calculate total from subtotal and sales tax
         invoice.calculate_total()
-
-        # Print output to results.txt
-        print_to_output_file(invoice)
 
         return invoice, diff

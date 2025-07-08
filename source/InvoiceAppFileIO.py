@@ -1,4 +1,5 @@
-import os
+import os, PyPDF2
+from .Invoice import Invoice
 
 
 # InvoiceAppFileIO class to handle all file input/output operations
@@ -31,9 +32,9 @@ class InvoiceAppFileIO:
     def reset_debug_file(self):
 
         # Check to make sure the filepath exists
-        if not os.path.exists(self.debug_filepath - "/debug.txt"):
+        if not os.path.exists(os.path.dirname(self.debug_filepath)):
             raise FileNotFoundError(
-                f"Debug file path {(self.debug_filepath - "/debug.txt")} does not exist."
+                f"Debug file directory {os.path.dirname(self.debug_filepath)} does not exist."
             )
 
         # If the file already exists, delete it
@@ -44,9 +45,9 @@ class InvoiceAppFileIO:
     def reset_results_file(self):
 
         # Check to make sure the filepath exists
-        if not os.path.exists(self.results_filepath - "/results.txt"):
+        if not os.path.exists(os.path.dirname(self.debug_filepath)):
             raise FileNotFoundError(
-                f"Results file path {(self.results_filepath - "/results.txt")} does not exist."
+                f"Results file path {os.path.dirname(self.results_filepath)} does not exist."
             )
 
         # If the file already exists, delete it
@@ -97,6 +98,26 @@ class InvoiceAppFileIO:
             f.write(f"Calculated Total: ${round(invoice.total, 2)}\n")
             f.write(f"Listed Total:     ${round(invoice.listed_total, 2)}\n")
             f.write("***********************************\n")
+
+    # read_invoice_file is responsible for converting the given invoice PDF into a list of strings
+    # Each string in the list represents a page of the invoice PDF
+    # param: invoice_filepath, str: the file path of the invoice to read in
+    # returns: list, a list of strings where each string is the text from a page of the invoice PDF
+    def read_invoice_file(self, invoice_filepath):
+
+        # Read text from input PDF
+        pdf = PyPDF2.PdfReader(invoice_filepath)
+
+        # Create empty list
+        pages_contents = []
+
+        # Extract text from each page and append to list
+        for page in pdf.pages:
+            text = page.extract_text()
+            pages_contents.append(text)
+
+        # Get Number of Pages
+        return pages_contents
 
     # build_sales_reps_dict builds the salesReps dictionary that contains the invoice
     # code and matching name for each sales rep as defined in the sales reps config file

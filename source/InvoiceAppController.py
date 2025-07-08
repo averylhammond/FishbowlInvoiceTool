@@ -1,13 +1,14 @@
 # Import necessary classes from modules
-from Invoice import Invoice
-from InvoiceAppDisplay import InvoiceAppDisplay
-from InvoiceAppFileIO import InvoiceAppFileIO
-from InvoiceProcessor import InvoiceProcessor
+from .InvoiceAppDisplay import InvoiceAppDisplay
+from .InvoiceAppFileIO import InvoiceAppFileIO
+from .InvoiceProcessor import InvoiceProcessor
+from .Invoice import Invoice
 
 # General TODO: Remove params or returns from function header comments if there are none
 # General TODO: Check all functions in classes and make sure they have self if needed
 #               Some functions may not need self if they are just used internally
 #               If they are used externally, they should have self
+# General TODO: Add lots of ##### above and below function headers? Or block comments?
 
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
@@ -44,17 +45,17 @@ class InvoiceAppController:
         # Create InvoiceProcessor
         self.invoice_processor = InvoiceProcessor()
 
+        # TODO: Since this is the Invoice App "Controller" it should tell the display how to create itself. Move default values out of the
+        # InvoiceAppDisplay constructor and move them into here
+        self.display = InvoiceAppDisplay(
+            process_callback=self.handle_process_invoice
+        )  # GUI display to drive selecting and processing invoices
+
         # Build payment terms dictionary containing sales rep name codes that could appear on an invoice
         self.payment_terms = self.file_io_controller.build_payment_terms_list()
 
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
         self.sales_reps = self.file_io_controller.build_sales_reps_dict()
-
-        # TODO: Since this is the Invoice App "Controller" it should tell the display how to create itself. Move default values out of the
-        # InvoiceAppDisplay constructor and move them into here
-        self.display = InvoiceAppDisplay(
-            process_callback=self.process_invoice
-        )  # GUI display to drive selecting and processing invoices
 
     # Start the application by entering the tkinter main GUI loop
     def start_application(self):
@@ -66,3 +67,22 @@ class InvoiceAppController:
         self.file_io_controller.reset_results_file()
 
         self.display.mainloop()  # Start the GUI application
+
+    # handle_process_invoice hanles the controller side of the invoice processing
+    # param: invoice_filepath: str, the filepath of the invoice PDF to be processed
+    def handle_process_invoice(self, invoice_filepath):
+
+        invoice = Invoice()
+
+        # Command the File IO Controller to read in the invoice
+        invoice.page_contents = self.file_io_controller.read_invoice_file(
+            invoice_filepath=invoice_filepath
+        )
+
+        # Forward call to the Invoice Processor
+        self.invoice_processor.process_invoice(
+            invoice=invoice, invoice_filepath=invoice_filepath
+        )
+
+        # Print calculated invoice output to results.txt
+        self.file_io_controller.print_to_output_file(invoice)
