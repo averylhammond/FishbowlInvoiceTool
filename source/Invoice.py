@@ -23,22 +23,6 @@ class Invoice:
         self.page_contents   = []    # List of strings, each string is the text from a page of the invoice PDF
         # fmt:on
 
-    # populate_invoice initializes the appropriate fields of a given Invoice object
-    # param: text: str taken from the first page of the invoice
-    # param: sales_reps: dict, all possible sales rep codes and names
-    # param: payment_terms: list, all possible payment terms
-    def populate_invoice(self, text, sales_reps, payment_terms):
-        self.order_number = search_invoice(text, "S(\d{5})")
-        self.date = search_invoice(text, "\d{2}/\d{2}/\d{4}")
-        self.customer_name = search_invoice(text, "Customer: .+").replace(
-            "Customer: ", ""
-        )
-        self.po_number = (search_invoice(text, "PO Number: .+S")[:-1]).replace(
-            "PO Number: ", ""
-        )
-        self.payment_terms = find_payment_terms(text, payment_terms)
-        self.sales_rep = find_sales_rep(text, sales_reps)
-
     # dumpInvoice dumps all fields of a given invoice to the terminal for debugging
     def dumpInvoice(self):
         logging.debug(

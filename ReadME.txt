@@ -1,6 +1,4 @@
-Welcome to the the Automated Invoice Processing Tool
-
-Version 2.1.0
+Welcome to the the Automated Invoice Processing Tool Version 3.1.0
 
 To use the tool:
 
@@ -26,6 +24,3 @@ out where it went wrong.
 
 results.txt contains all processed data on each invoice listed in the same order as the
 invoice pdf files are listed in the 'Invoices' folder.
-
-
-For help or support, please contact yours truly.

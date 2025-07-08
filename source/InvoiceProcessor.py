@@ -2,6 +2,8 @@ import re
 
 from .InvoiceAppFileIO import *  # TODO: Remove this, the processor shouldn't need to know about the file IO, let the controller handle it
 
+from .Invoice import Invoice
+
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
 class InvoiceProcessor:
@@ -35,6 +37,22 @@ class InvoiceProcessor:
             return float((res.group().split()[2]).replace(",", ""))
         else:
             return -1
+
+    # populate_invoice initializes the appropriate fields of a given Invoice object
+    # param: text: str taken from the first page of the invoice
+    # param: sales_reps: dict, all possible sales rep codes and names
+    # param: payment_terms: list, all possible payment terms
+    def populate_invoice(self, text, sales_reps, payment_terms):
+        self.order_number = self.search_invoice(text, "S(\d{5})")
+        self.date = self.search_invoice(text, "\d{2}/\d{2}/\d{4}")
+        self.customer_name = self.search_invoice(text, "Customer: .+").replace(
+            "Customer: ", ""
+        )
+        self.po_number = (self.search_invoice(text, "PO Number: .+S")[:-1]).replace(
+            "PO Number: ", ""
+        )
+        self.payment_terms = self.find_payment_terms(text, payment_terms)
+        self.sales_rep = self.find_sales_rep(text, sales_reps)
 
     # process_payment_line takes a given line from the payment table and processes it. This includes
     # reading the entire row, determining if the payment line refers to a labor, shipping, or
@@ -193,9 +211,9 @@ class InvoiceProcessor:
     # find_payment_terms takes the invoice and searches for an occurance of any
     # of the possible payment terms
     # param: text: str, the invoice to be searched
-    # param: payment_terms: list, contains all possible payment terms
+    # param: payment_terms: dict, contains all possible payment terms
     # returns: str, payment term if match found, "Could Not Find" otherwise
-    def find_payment_terms(text, payment_terms):
+    def find_payment_terms(self, text, payment_terms):
 
         # Search for each possible payment term
         for term in payment_terms:
@@ -211,7 +229,7 @@ class InvoiceProcessor:
     # param: text: str, the invoice to be searched
     # param: sales_reps: dict, contains all possible sales rep codes and names
     # returns: str, the name of the sales rep if found, "Could Not Find" otherwise
-    def find_sales_rep(text, sales_reps):
+    def find_sales_rep(self, text, sales_reps):
 
         # Search for each possible sales rep
         for key, val in sales_reps.items():
@@ -237,46 +255,35 @@ class InvoiceProcessor:
 
     # process_invoice is the main function that processes the invoice pdf
     # param: invoice: Invoice, the empty invoice object to be populated
-    # param: invoice_filepath: str, the file path to the Invoice PDF file to be processed
     # returns: a constructed Invoice object with all fields populated, and the difference
     # between the calculated total and the listed total, to show any discrepancies
-    # NOTE: Right now filename is actually the full file path to the invoice. This should either
-    # be changed or the variable should be renamed to filepath
-    def process_invoice(self, invoice, invoice_filepath):
-
-        # Populate initial fields of the invoice
-        invoice.populate_invoice(text, self.sales_reps, self.payment_terms)
+    def process_invoice(self, invoice):
 
         # Keep track of next expected payment line number
         next_line_num = 1
 
         # Loop through each page to read purchase table
-        for i in range(1, num_pages + 1):
-
-            # If not on first page, extract text from new page
-            if i > 1:
-                curr_page = pdf.pages[i - 1]
-                text = curr_page.extract_text()
+        for page in invoice.page_contents:
 
             # At this point, can disregard everything before the purchase table
             # Trim off everything before purchase table (before the line Ordered Total Price)
-            if len(text[(text.find("Ordered Total Price")) :]) > 1:
-                text = text[(text.find("Ordered Total Price")) :]
+            if len(page[(page.find("Ordered Total Price")) :]) > 1:
+                page = page[(page.find("Ordered Total Price")) :]
 
             # Loop through each line in the table. Some table entries may have multiple lines that need
             # to be processed
-            for line in text.splitlines():
+            for line in page.splitlines():
 
                 # Check if at beginning of the line in the table. If so, process this payment item
                 if line.startswith(f"{next_line_num} "):
                     invoice = self.process_payment_line(
-                        text, line, invoice, next_line_num
+                        page, line, invoice, next_line_num
                     )
                     next_line_num += 1  # Update nextLineNum
 
                 # "Total:Subtotal" is the beginning of the end of the invoice
                 if "Total:Subtotal" in line:
-                    invoice, diff = self.process_end_of_invoice(text, line, invoice)
+                    invoice, diff = self.process_end_of_invoice(page, line, invoice)
 
         # Calculate total from subtotal and sales tax
         invoice.calculate_total()

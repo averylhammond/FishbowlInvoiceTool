@@ -79,10 +79,25 @@ class InvoiceAppController:
             invoice_filepath=invoice_filepath
         )
 
-        # Forward call to the Invoice Processor
-        self.invoice_processor.process_invoice(
-            invoice=invoice, invoice_filepath=invoice_filepath
+        # If there are no pages in the invoice, return early
+        if not invoice.page_contents or invoice.page_contents[0] is None:
+            # TODO: Tell the GUI to display a popup error message.
+            # Maybe popping up the error message should be a generic thing, that can
+            # be called from anywhere
+            return
+
+        # Print results of reading invoice to debug.txt if in debug mode
+        self.file_io_controller.print_to_debug_file(
+            f"Processing invoice: {invoice_filepath} with {len(invoice.page_contents)} pages."
         )
 
+        # Populate other initial fields of the invoice from the first page of the PDF
+        self.invoice_processor.populate_invoice(
+            invoice.page_contents[0], self.sales_reps, self.payment_terms
+        )
+
+        # Forward call to the Invoice Processor
+        self.invoice_processor.process_invoice(invoice=invoice)
+
         # Print calculated invoice output to results.txt
-        self.file_io_controller.print_to_output_file(invoice)
+        self.file_io_controller.print_invoice_to_output_file(invoice)

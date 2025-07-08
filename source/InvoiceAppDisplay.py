@@ -172,24 +172,21 @@ class InvoiceAppDisplay(tk.Tk):
             )
             return
 
-        try:
-            # reset_output_file()
-            invoice, diff = self.process_callback(file_path)
+        self.process_callback(file_path)
 
-            with open("results.txt", "r") as f:
-                results = f.read()
-                self.output_box.delete(1.0, tk.END)
-                self.output_box.insert(tk.END, results)
+        # with open("results.txt", "r") as f:
+        #     results = f.read()
+        #     self.output_box.delete(1.0, tk.END)
+        #     self.output_box.insert(tk.END, results)
 
-                # TODO: Still need to either figure out the diff issue or add the popup in here
+        # TODO: Still need to either figure out the diff issue or add the popup in here
 
-            if diff != 0:
-                messagebox.showwarning(
-                    "Warning",
-                    f"Invoice total does not match listed total by ${diff:.2f}. Please manually confirm the validity of the results.",
-                )
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
+        # TODO: Implement the diff somewhere
+        # if diff != 0:
+        #     messagebox.showwarning(
+        #         "Warning",
+        #         f"Invoice total does not match listed total by ${diff:.2f}. Please manually confirm the validity of the results.",
+        #     )
 
     def process_all_invoices(self):
         file_paths = Path("./Invoices").resolve().iterdir()

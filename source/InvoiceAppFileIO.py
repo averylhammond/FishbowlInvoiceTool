@@ -29,7 +29,12 @@ class InvoiceAppFileIO:
         self.sales_reps_filepath = sales_reps_filepath
 
     # reset_debug_file deletes the debug.txt that was created from the previous program execution
+    # note: This function does nothing in the release configuration
     def reset_debug_file(self):
+
+        # If in release configuration, do nothing
+        if not __debug__:
+            return
 
         # Check to make sure the filepath exists
         if not os.path.exists(os.path.dirname(self.debug_filepath)):
@@ -42,6 +47,7 @@ class InvoiceAppFileIO:
             os.remove(self.debug_filepath)
 
     # reset_results_file deletes results.txt that was created from the previous program execution
+    # note: This function does nothing in the release configuration
     def reset_results_file(self):
 
         # Check to make sure the filepath exists
@@ -56,32 +62,42 @@ class InvoiceAppFileIO:
 
     # print_to_debug_file writes the str contents to debug.txt
     # param: contents: str, the contents to be written to file
-    # returns: N/A
+    # note: This function does nothing in the release configuration
     def print_to_debug_file(self, contents):
 
+        # If in release configuration, do nothing
+        if not __debug__:
+            return
+
         # If debug.txt already exists, append to it, otherwise write from beginning
-        if os.path.isfile("./debug.txt"):
+        if os.path.exists(os.path.dirname(self.debug_filepath)):
             write_or_append = "a"
         else:
             write_or_append = "w"
 
         # Write contents to file
-        with open("debug.txt", write_or_append) as f:
+        with open(self.debug_filepath, write_or_append) as f:
             f.write(contents + "\n")
 
-    # print_to_output_file writes each field of the invoice object to results.txt
+    # print_invoice_to_output_file writes each field of the invoice object to results.txt
     # param: invoice: Invoice object, the invoice whose fields are to be output
     # returns: N/A
-    def print_to_output_file(self, invoice):
+    def print_invoice_to_output_file(self, invoice):
+
+        # Check to make sure the filepath exists
+        if not os.path.exists(os.path.dirname(self.results_filepath)):
+            raise FileNotFoundError(
+                f"Debug file directory {os.path.dirname(self.results_filepath)} does not exist."
+            )
 
         # If results.txt already exists, append to it, otherwise write from beginning
-        if os.path.isfile("./results.txt"):
+        if os.path.isfile(os.path.dirname(self.results_filepath)):
             write_or_append = "a"
         else:
             write_or_append = "w"
 
         # Write invoice contents to file
-        with open("results.txt", write_or_append) as f:
+        with open(self.results_filepath, write_or_append) as f:
             f.write("***********************************\n")
             f.write(f"Processed Invoice Results:\n")
             f.write(f"Customer Name:    {invoice.customer_name}\n")
