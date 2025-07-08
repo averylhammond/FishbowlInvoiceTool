@@ -2,11 +2,14 @@
 from source.Invoice import Invoice
 from source.InvoiceAppGUI import InvoiceAppDisplay
 
-# Eventually want to move this to a separate module to do PDF processing
+# TODO: Eventually want to move this to a separate module to do PDF processing
 import PyPDF2
 
-# Need to figureout what to do with these, should they be integrated into the InvoiceProcessor class?
+# TODO: Need to figure out what to do with these, should they be integrated into the InvoiceProcessor class?
 from source.fio import *
+
+# TODO: What to do with this? Could be in this file but would be best to separate it out
+from source.search import *
 
 
 # InvoiceProcessor class to drive logic for processing invoice PDFs.
@@ -41,7 +44,7 @@ class InvoiceProcessor:
     # returns: N/A
     # NOTE: Right now filename is actually the full file path to the invoice. This should either
     # be changed or the variable should be renamed to filepath
-    def process_invoice(filename):
+    def process_invoice(self, filename):
 
         # Read text from input PDF
         pdf = PyPDF2.PdfReader(filename)
@@ -59,7 +62,7 @@ class InvoiceProcessor:
 
         # Create Invoice object and populate initial fields
         invoice = Invoice()
-        invoice.populate_invoice(text, sales_reps, payment_terms)
+        invoice.populate_invoice(text, self.sales_reps, self.payment_terms)
 
         # Keep track of next expected payment line number
         next_line_num = 1
