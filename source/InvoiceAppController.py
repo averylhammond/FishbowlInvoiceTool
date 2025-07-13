@@ -83,7 +83,7 @@ class InvoiceAppController:
         if not invoice.page_contents or invoice.page_contents[0] is None:
             # TODO: Tell the GUI to display a popup error message.
             # Maybe popping up the error message should be a generic thing, that can
-            # be called from anywhere
+            # be called from anywhere, so can do self.display.show_error_popup(message)
             return
 
         # Print results of reading invoice to debug.txt if in debug mode
@@ -99,5 +99,8 @@ class InvoiceAppController:
         # Forward call to the Invoice Processor
         self.invoice_processor.process_invoice(invoice=invoice)
 
+        # Display the calculated totals in the GUI
+        self.display.display_invoice_output(invoice=invoice)
+        
         # Print calculated invoice output to results.txt
         self.file_io_controller.print_invoice_to_output_file(invoice)

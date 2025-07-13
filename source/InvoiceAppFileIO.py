@@ -100,22 +100,25 @@ class InvoiceAppFileIO:
         # TODO: Should the FileIO class be responsible for paring this all out? Or the Invoice class provides
         # a to_string function or something that returns this formatting string
         with open(self.results_filepath, write_or_append) as f:
-            f.write("***********************************\n")
-            f.write(f"Processed Invoice Results:\n")
-            f.write(f"Customer Name:    {invoice.customer_name}\n")
-            f.write(f"Invoice Date:     {invoice.date}\n")
-            f.write(f"Order Number:     {invoice.order_number}\n")
-            f.write(f"PO Number:        {invoice.po_number}\n")
-            f.write(f"Payment Terms:    {invoice.payment_terms}\n")
-            f.write(f"Sales Rep:        {invoice.sales_rep}\n")
-            f.write(f"Labor Cost:       ${round(invoice.labor_cost, 2)}\n")
-            f.write(f"Material Cost:    ${round(invoice.material_cost, 2)}\n")
-            f.write(f"Shipping Cost:    ${round(invoice.shipping_cost, 2)}\n")
-            f.write(f"subtotal:         ${round(invoice.subtotal, 2)}\n")
-            f.write(f"Sales Tax:        ${round(invoice.sales_tax, 2)}\n")
-            f.write(f"Calculated Total: ${round(invoice.total, 2)}\n")
-            f.write(f"Listed Total:     ${round(invoice.listed_total, 2)}\n")
-            f.write("***********************************\n")
+            output = (
+                "***********************************\n"
+                "Processed Invoice Results:\n"
+                f"Customer Name:    {invoice.customer_name}\n"
+                f"Invoice Date:     {invoice.date}\n"
+                f"Order Number:     {invoice.order_number}\n"
+                f"PO Number:        {invoice.po_number}\n"
+                f"Payment Terms:    {invoice.payment_terms}\n"
+                f"Sales Rep:        {invoice.sales_rep}\n"
+                f"Labor Cost:       ${round(invoice.labor_cost, 2)}\n"
+                f"Material Cost:    ${round(invoice.material_cost, 2)}\n"
+                f"Shipping Cost:    ${round(invoice.shipping_cost, 2)}\n"
+                f"subtotal:         ${round(invoice.subtotal, 2)}\n"
+                f"Sales Tax:        ${round(invoice.sales_tax, 2)}\n"
+                f"Calculated Total: ${round(invoice.total, 2)}\n"
+                f"Listed Total:     ${round(invoice.listed_total, 2)}\n"
+                "***********************************\n"
+            )
+            f.write(output)
 
     # read_invoice_file is responsible for converting the given invoice PDF into a list of strings
     # Each string in the list represents a page of the invoice PDF

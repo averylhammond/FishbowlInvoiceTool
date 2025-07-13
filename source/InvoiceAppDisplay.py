@@ -159,6 +159,13 @@ class InvoiceAppDisplay(tk.Tk):
         if file_path:
             self.selected_file.set(file_path)
 
+    # display_invoice_output: Displays the calculated totals of the invoice in the output box
+    # param: invoice: Invoice object, the processed invoice containing calculated totals
+    def display_invoice_output(self, invoice):
+        self.output_box.delete(1.0, tk.END)
+        self.output_box.insert(tk.END, invoice.to_formatted_string())
+        return
+
     # process_file: On "Process This Invoice" button press, processes the selected PDF invoice file by forwarding
     # the call to the provided process_callback function specified during construction
     # param: filepath: str, the path to the PDF file to be processed (optional, defaults to the selected_file member variable
@@ -174,19 +181,8 @@ class InvoiceAppDisplay(tk.Tk):
 
         self.process_callback(file_path)
 
-        # with open("results.txt", "r") as f:
-        #     results = f.read()
-        #     self.output_box.delete(1.0, tk.END)
-        #     self.output_box.insert(tk.END, results)
-
         # TODO: Still need to either figure out the diff issue or add the popup in here
-
         # TODO: Implement the diff somewhere
-        # if diff != 0:
-        #     messagebox.showwarning(
-        #         "Warning",
-        #         f"Invoice total does not match listed total by ${diff:.2f}. Please manually confirm the validity of the results.",
-        #     )
 
     def process_all_invoices(self):
         file_paths = Path("./Invoices").resolve().iterdir()
