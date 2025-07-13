@@ -9,6 +9,9 @@ from .Invoice import Invoice
 #               Some functions may not need self if they are just used internally
 #               If they are used externally, they should have self
 # General TODO: Add lots of ##### above and below function headers? Or block comments?
+# General TODO: Find a style guide for python arguments? I like calling functions with invoice=invoice
+#               but that will add a lot of bloat, even though it is more readable. Look into it, and
+#               if I want to do it then do it to all functions
 
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
@@ -70,7 +73,10 @@ class InvoiceAppController:
 
     # handle_process_invoice handles the controller side of the invoice processing
     # param: invoice_filepath: str, the filepath of the invoice PDF to be processed
-    def handle_process_invoice(self, invoice_filepath):
+    # append_output: bool, whether to append the Invoice outputs to any existing outputs.
+    # True: append to existing results.txt and output box
+    # False: overwrite existing results.txt and output box
+    def handle_process_invoice(self, invoice_filepath, append_output):
 
         invoice = Invoice()
 
@@ -100,7 +106,11 @@ class InvoiceAppController:
         self.invoice_processor.process_invoice(invoice=invoice)
 
         # Display the calculated totals in the GUI
-        self.display.display_invoice_output(invoice=invoice)
-        
+        self.display.display_invoice_output(
+            invoice=invoice, append_output=append_output
+        )
+
         # Print calculated invoice output to results.txt
-        self.file_io_controller.print_invoice_to_output_file(invoice)
+        self.file_io_controller.print_invoice_to_output_file(
+            invoice, append_output=append_output
+        )

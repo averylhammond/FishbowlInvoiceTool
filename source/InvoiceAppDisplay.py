@@ -161,8 +161,17 @@ class InvoiceAppDisplay(tk.Tk):
 
     # display_invoice_output: Displays the calculated totals of the invoice in the output box
     # param: invoice: Invoice object, the processed invoice containing calculated totals
-    def display_invoice_output(self, invoice):
-        self.output_box.delete(1.0, tk.END)
+    # param: append, bool: whether to append to the output box or clear it first before writing
+    def display_invoice_output(self, invoice, append_output=False):
+
+        # Clear the output box if not appending
+        if not append_output:
+            self.output_box.delete(1.0, tk.END)
+
+        # If appending, insert a newline before adding the new output
+        else:
+            self.output_box.insert(tk.END, "\n")
+
         self.output_box.insert(tk.END, invoice.to_formatted_string())
         return
 
@@ -179,32 +188,19 @@ class InvoiceAppDisplay(tk.Tk):
             )
             return
 
-        self.process_callback(file_path)
+        self.process_callback(file_path, append_output=False)
 
         # TODO: Still need to either figure out the diff issue or add the popup in here
         # TODO: Implement the diff somewhere
 
     def process_all_invoices(self):
         file_paths = Path("./Invoices").resolve().iterdir()
-        diff_flag = False
+
+        # TODO: Does there need to be a try catch here? And also add error handling like above
 
         try:
-            # reset_output_file()
             for file_path in file_paths:
-                invoice, diff = self.process_callback(file_path)
+                self.process_callback(file_path, append_output=True)
 
-                if diff != 0:
-                    diff_flag = True
-
-            with open("results.txt", "r") as f:
-                results = f.read()
-                self.output_box.delete(1.0, tk.END)
-                self.output_box.insert(tk.END, results)
-
-            if diff_flag:
-                messagebox.showwarning(
-                    "Warning",
-                    "At least one invoice had a discrepancy between the calculated total and the listed total. Please manually confirm the validity of the results.",
-                )
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")

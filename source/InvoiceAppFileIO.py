@@ -82,7 +82,7 @@ class InvoiceAppFileIO:
     # print_invoice_to_output_file writes each field of the invoice object to results.txt
     # param: invoice: Invoice object, the invoice whose fields are to be output
     # returns: N/A
-    def print_invoice_to_output_file(self, invoice):
+    def print_invoice_to_output_file(self, invoice, append_output=False):
 
         # Check to make sure the filepath exists
         if not os.path.exists(os.path.dirname(self.results_filepath)):
@@ -90,8 +90,8 @@ class InvoiceAppFileIO:
                 f"Debug file directory {os.path.dirname(self.results_filepath)} does not exist."
             )
 
-        # If results.txt already exists, append to it, otherwise write from beginning
-        if os.path.isfile(os.path.dirname(self.results_filepath)):
+        # If appending output, use "a" for the file open call, otherwise use "w"
+        if append_output:
             write_or_append = "a"
         else:
             write_or_append = "w"
@@ -100,25 +100,7 @@ class InvoiceAppFileIO:
         # TODO: Should the FileIO class be responsible for paring this all out? Or the Invoice class provides
         # a to_string function or something that returns this formatting string
         with open(self.results_filepath, write_or_append) as f:
-            output = (
-                "***********************************\n"
-                "Processed Invoice Results:\n"
-                f"Customer Name:    {invoice.customer_name}\n"
-                f"Invoice Date:     {invoice.date}\n"
-                f"Order Number:     {invoice.order_number}\n"
-                f"PO Number:        {invoice.po_number}\n"
-                f"Payment Terms:    {invoice.payment_terms}\n"
-                f"Sales Rep:        {invoice.sales_rep}\n"
-                f"Labor Cost:       ${round(invoice.labor_cost, 2)}\n"
-                f"Material Cost:    ${round(invoice.material_cost, 2)}\n"
-                f"Shipping Cost:    ${round(invoice.shipping_cost, 2)}\n"
-                f"subtotal:         ${round(invoice.subtotal, 2)}\n"
-                f"Sales Tax:        ${round(invoice.sales_tax, 2)}\n"
-                f"Calculated Total: ${round(invoice.total, 2)}\n"
-                f"Listed Total:     ${round(invoice.listed_total, 2)}\n"
-                "***********************************\n"
-            )
-            f.write(output)
+            f.write(invoice.to_formatted_string())
 
     # read_invoice_file is responsible for converting the given invoice PDF into a list of strings
     # Each string in the list represents a page of the invoice PDF
