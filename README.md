@@ -56,6 +56,7 @@ INSTRUCTIONS TO SET UP FOR RELEASE
             - paymentTerms.txt
             - salesReps.txt
         - Invoices
+        - logs
         - AutoInvoiceProc.exe
         - README.txt
     
