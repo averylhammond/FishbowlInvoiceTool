@@ -5,8 +5,18 @@ from .search_utilities import *
 class InvoiceProcessor:
 
     # __init__ Constructor
+    # param: file_io_controller: InvoiceAppFileIO, the file IO controller to be used
+    # param: labor_criteria: str list, criteria to determine if a payment line is a labor cost
+    # param: labor_exclusions: str list, criteria to exclude a payment line from being a labor cost
+    # param: shipping_criteria: str list, criteria to determine if a payment line is a shipping cost
     # returns: Created InvoiceProcessor object
-    def __init__(self):
+    def __init__(
+        self, file_io_controller, labor_criteria, labor_exclusions, shipping_criteria
+    ):
+        self.file_io_controller = file_io_controller
+        self.labor_criteria = labor_criteria
+        self.labor_exclusions = labor_exclusions
+        self.shipping_criteria = shipping_criteria
         return
 
     # populate_invoice initializes the appropriate fields of a given Invoice object
@@ -66,16 +76,25 @@ class InvoiceProcessor:
 
         # Case: Payment line contains a labor cost
         if is_labor_cost:
+            self.file_io_controller.print_to_debug_file(
+                f"Adding LABOR COST of {line_cost} from line {curr_line_num}"
+            )
             invoice.labor_cost += line_cost
             invoice.subtotal += line_cost
 
         # Case: Payment line contains a shipping cost
         elif is_shipping_cost:
+            self.file_io_controller.print_to_debug_file(
+                f"Adding SHIPPING COST of {line_cost} from line {curr_line_num}"
+            )
             invoice.shipping_cost += line_cost
             invoice.subtotal += line_cost
 
         # Case: Payment line contains a material cost
         else:
+            self.file_io_controller.print_to_debug_file(
+                f"Adding MATERIAL COST of {line_cost} from line {curr_line_num}"
+            )
             invoice.material_cost += line_cost
             invoice.subtotal += line_cost
 
@@ -136,28 +155,34 @@ class InvoiceProcessor:
 
         return invoice, diff
 
-    # search_for_labor takes a given payment line and searches it for markers
-    # that would indicate that this line contains a labor cost
+    # search_for_labor takes a given payment line and searches it for the criteria
+    # and exclusions that were defined during construction
     # param: line, str, one line of text from the purchase table
     # returns: True if a labor cost, False otherwise
     def search_for_labor(self, line):
 
-        # Only return true is MF/ or MD/ was found in the line. Does not include
-        # MF/RHR or MF/LHR or MD/RHR or MD/LHR
-        if (("MF/" in line) or ("MD/" in line)) and (
-            ("MF/RHR" not in line)
-            and ("MF/LHR" not in line)
-            and ("MD/RHR" not in line)
-            and ("MD/LHR" not in line)
-        ):
-            return True
-        else:
-            return False
+        # Check if the line contains any of the labor criteria
+        for criteria in self.labor_criteria:
+            if criteria in line:
 
+                # If the line contains any of the labor exclusions, return False
+                for exclusion in self.labor_exclusions:
+                    if exclusion in line:
+                        return False
+
+                # If the line does not contain any of the exclusions, return True
+                return True
+
+    # search_for_shipping takes a given payment line and searches it for the critieria
+    # defined during construction
+    # param: line, str, one line of text from the purchase table
+    # returns: True if a shipping cost, False otherwise
     def search_for_shipping(self, line):
 
-        if ("DELIVERY" in line) or ("UPS GROUND" in line) or ("FREIGHT OUT" in line):
-            return True
+        # Check if the line contains any of the shipping criteria
+        for criteria in self.shipping_criteria:
+            if criteria in line:
+                return True
 
         return False
 

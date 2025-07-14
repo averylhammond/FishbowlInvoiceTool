@@ -43,8 +43,9 @@ def find_payment_terms(text, payment_terms):
         # If found, return the term
         if res:
             return term
-        else:
-            return None
+
+    # If no payment term was found, return None
+    return None
 
 
 # find_sales_rep searches text for the any of the possible sales reps

@@ -46,7 +46,12 @@ class InvoiceAppController:
         )
 
         # Create InvoiceProcessor
-        self.invoice_processor = InvoiceProcessor()
+        self.invoice_processor = InvoiceProcessor(
+            file_io_controller=self.file_io_controller,
+            labor_criteria=["MF/", "MD/"],
+            labor_exclusions=["MF/RHR", "MF/LHR", "MD/RHR", "MD/LHR"],
+            shipping_criteria=["DELIVERY", "UPS GROUND", "FREIGHT OUT"],
+        )
 
         # TODO: Since this is the Invoice App "Controller" it should tell the display how to create itself. Move default values out of the
         # InvoiceAppDisplay constructor and move them into here
@@ -113,4 +118,9 @@ class InvoiceAppController:
         # Print calculated invoice output to results.txt
         self.file_io_controller.print_invoice_to_output_file(
             invoice, append_output=append_output
+        )
+
+        # Print completion notice to debug.txt if in debug mode
+        self.file_io_controller.print_to_debug_file(
+            f"Processed all sales for invoice: {invoice_filepath}\n"
         )
