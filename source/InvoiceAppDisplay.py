@@ -1,17 +1,17 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
-from source.fio import *
-from source.invoice import *
+from .InvoiceAppFileIO import *
+from .Invoice import *
 
 
-# Invoice App GUI class to hold the GUI for selecting and processing invoices
+# Invoice App Display class to hold the GUI for selecting and processing invoices
 # This implementation uses tkinter for the GUI
-class InvoiceAppGUI(tk.Tk):
+class InvoiceAppDisplay(tk.Tk):
 
     # __init__ Constructor, takes in a callback function as input
-    # params: process_callback: function, a callback function to process the selected invoice file
-    # returns: N/A
+    # param: process_callback: function, a callback function to process the selected invoice file
+    # returns: Created InvoiceAppDisplay object
     def __init__(self, process_callback):
         super().__init__()
 
@@ -26,7 +26,7 @@ class InvoiceAppGUI(tk.Tk):
 
     # build_widgets: Creates the GUI widgets for the application
     # This includes a title label, file selection entry, browse button, and action buttons
-    # params: N/A
+    # param: N/A
     # returns: N/A
     def build_widgets(self):
         # Define color scheme
@@ -147,7 +147,7 @@ class InvoiceAppGUI(tk.Tk):
 
     # browse_file: On "Browse" button press, opens a file dialog to select a PDF invoice file. Once selected, the file is set
     # to the selected_file member variable
-    # params: N/A
+    # param: N/A
     # returns: N/A
     def browse_file(self):
         initial_dir = Path("./Invoices").resolve()
@@ -159,9 +159,25 @@ class InvoiceAppGUI(tk.Tk):
         if file_path:
             self.selected_file.set(file_path)
 
+    # display_invoice_output: Displays the calculated totals of the invoice in the output box
+    # param: invoice: Invoice object, the processed invoice containing calculated totals
+    # param: append, bool: whether to append to the output box or clear it first before writing
+    def display_invoice_output(self, invoice, append_output=False):
+
+        # Clear the output box if not appending
+        if not append_output:
+            self.output_box.delete(1.0, tk.END)
+
+        # If appending, insert a newline before adding the new output
+        else:
+            self.output_box.insert(tk.END, "\n")
+
+        self.output_box.insert(tk.END, invoice.to_formatted_string())
+        return
+
     # process_file: On "Process This Invoice" button press, processes the selected PDF invoice file by forwarding
     # the call to the provided process_callback function specified during construction
-    # params: filepath: str, the path to the PDF file to be processed (optional, defaults to the selected_file member variable
+    # param: filepath: str, the path to the PDF file to be processed (optional, defaults to the selected_file member variable
     # returns: N/A
     # note: If no file is selected, a warning message is shown
     def process_file(self):
@@ -172,46 +188,19 @@ class InvoiceAppGUI(tk.Tk):
             )
             return
 
-        try:
-            reset_output_file()
-            invoice, diff = self.process_callback(file_path)
+        self.process_callback(file_path, append_output=False)
 
-            with open("results.txt", "r") as f:
-                results = f.read()
-                self.output_box.delete(1.0, tk.END)
-                self.output_box.insert(tk.END, results)
-
-                # TODO: Still need to either figure out the diff issue or add the popup in here
-
-            if diff != 0:
-                messagebox.showwarning(
-                    "Warning",
-                    f"Invoice total does not match listed total by ${diff:.2f}. Please manually confirm the validity of the results.",
-                )
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
+        # TODO: Still need to either figure out the diff issue or add the popup in here
+        # TODO: Implement the diff somewhere
 
     def process_all_invoices(self):
         file_paths = Path("./Invoices").resolve().iterdir()
-        diff_flag = False
+
+        # TODO: Does there need to be a try catch here? And also add error handling like above
 
         try:
-            reset_output_file()
             for file_path in file_paths:
-                invoice, diff = self.process_callback(file_path)
+                self.process_callback(file_path, append_output=True)
 
-                if diff != 0:
-                    diff_flag = True
-
-            with open("results.txt", "r") as f:
-                results = f.read()
-                self.output_box.delete(1.0, tk.END)
-                self.output_box.insert(tk.END, results)
-
-            if diff_flag:
-                messagebox.showwarning(
-                    "Warning",
-                    "At least one invoice had a discrepancy between the calculated total and the listed total. Please manually confirm the validity of the results.",
-                )
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
