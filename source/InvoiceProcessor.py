@@ -1,4 +1,4 @@
-import re
+from .search_utilities import *
 
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
@@ -9,31 +9,6 @@ class InvoiceProcessor:
     def __init__(self):
         return
 
-    # search_invoice takes a given regex and searches the invoice for a match
-    # param: text: str, first page of the invoice
-    # param: regex: str, regex to be matched
-    # returns: Either returns the str match of the regex if successful, or None
-    def search_invoice(self, text, regex):
-        res = re.search(regex, text)
-
-        if res:
-            return res.group()
-        else:
-            return None
-
-    # search_payment_line takes a given regex and searches one line of payment text
-    # from the purchase table of the invoice
-    # param: line: str, one line of text from the purchase table
-    # param: regex: str, regex to be matched
-    # returns: N/A
-    def search_payment_line(self, line, regex):
-        res = re.search(regex, line)
-
-        if res:
-            return float((res.group().split()[2]).replace(",", ""))
-        else:
-            return -1
-
     # populate_invoice initializes the appropriate fields of a given Invoice object
     # param: invoice: Invoice, the invoice object to be populated
     # param: sales_reps: dict, all possible sales rep codes and names
@@ -43,16 +18,16 @@ class InvoiceProcessor:
         # Get the first page of the invoice
         first_page = invoice.page_contents[0]
 
-        invoice.order_number = self.search_invoice(first_page, "S(\d{5})")
-        invoice.date = self.search_invoice(first_page, "\d{2}/\d{2}/\d{4}")
-        invoice.customer_name = self.search_invoice(first_page, "Customer: .+").replace(
+        invoice.order_number = search_text_by_re(first_page, "S(\d{5})")
+        invoice.date = search_text_by_re(first_page, "\d{2}/\d{2}/\d{4}")
+        invoice.customer_name = search_text_by_re(first_page, "Customer: .+").replace(
             "Customer: ", ""
         )
         invoice.po_number = (
-            self.search_invoice(first_page, "PO Number: .+S")[:-1]
+            search_text_by_re(first_page, "PO Number: .+S")[:-1]
         ).replace("PO Number: ", "")
-        invoice.payment_terms = self.find_payment_terms(first_page, payment_terms)
-        invoice.sales_rep = self.find_sales_rep(first_page, sales_reps)
+        invoice.payment_terms = find_payment_terms(first_page, payment_terms)
+        invoice.sales_rep = find_sales_rep(first_page, sales_reps)
 
     # process_payment_line takes a given line from the payment table and processes it. This includes
     # reading the entire row, determining if the payment line refers to a labor, shipping, or
@@ -66,97 +41,75 @@ class InvoiceProcessor:
 
         # If this line contains a subtotal, do nothing
         if "subtotal" in line:
-            return invoice
+            return
 
         # Only take the current payment line, remove everything before line,
         # and everything right after the next payment line
         text = text[(text.find(line)) :]
         text = text[: text.find(f"\n{curr_line_num+1} ")]
 
-        # Determine if the payment line is a labor, shipping, or material cost
-        is_labor_cost = self.search_for_labor(line)
-        is_shipping_cost = self.search_for_shipping(line)
-
         # If the cost is listed as a quantity or hourly rate, find the cost
         ea_cost = self.find_ea_cost(text)
         hr_cost = self.find_hr_cost(text)
 
-        # Case: Payment line is a labor cost
-        if is_labor_cost:
-            if ea_cost > -1:
-                invoice.labor_cost += ea_cost
-                invoice.subtotal += ea_cost
-                # if __debug__:
-                #     print_to_debug_file(
-                #         f"Line {curr_line_num}: Adding LABOR COST of:    ${ea_cost}"
-                #     )
-            elif hr_cost > -1:
-                invoice.labor_cost += hr_cost
-                invoice.subtotal += hr_cost
-                # if __debug__:
-                #     print_to_debug_file(
-                #         f"Line {curr_line_num}: Adding LABOR COST of:    ${hr_cost}"
-                #     )
-
-        # Case: Payment line is a shipping cost
-        elif is_shipping_cost:
-            if ea_cost > -1:
-                invoice.shipping_cost += ea_cost
-                invoice.subtotal += ea_cost
-                # if __debug__:
-                #     print_to_debug_file(
-                #         f"Line {curr_line_num}: Adding SHIPPING COST of:    ${ea_cost}"
-                #     )
-            elif hr_cost > -1:
-                invoice.shipping_cost += hr_cost
-                invoice.subtotal += hr_cost
-                # if __debug__:
-                #     print_to_debug_file(
-                #         f"Line {curr_line_num}: Adding SHIPPING COST of:    ${hr_cost}"
-                #     )
-
-        # Case: Payment line is a material cost
+        # Figure out which cost to use, if neither was found, return
+        if ea_cost is not None:
+            line_cost = ea_cost
+        elif hr_cost is not None:
+            line_cost = hr_cost
         else:
-            if ea_cost > -1:
-                invoice.material_cost += ea_cost
-                invoice.subtotal += ea_cost
-                # if __debug__:
-                #     print_to_debug_file(
-                #         f"Line {curr_line_num}: Adding MATERIAL COST of:    ${ea_cost}"
-                #     )
-            elif hr_cost > -1:
-                invoice.material_cost += hr_cost
-                invoice.subtotal += hr_cost
-                # if __debug__:
-                #     print_to_debug_file(
-                #         f"Line {curr_line_num}: Adding MATERIAL COST of:    ${hr_cost}"
-                #     )
+            return
 
-        return invoice
+        # Determine if the payment line is a labor, shipping, or material cost
+        is_labor_cost = self.search_for_labor(line)
+        is_shipping_cost = self.search_for_shipping(line)
+
+        # Case: Payment line contains a labor cost
+        if is_labor_cost:
+            invoice.labor_cost += line_cost
+            invoice.subtotal += line_cost
+
+        # Case: Payment line contains a shipping cost
+        elif is_shipping_cost:
+            invoice.shipping_cost += line_cost
+            invoice.subtotal += line_cost
+
+        # Case: Payment line contains a material cost
+        else:
+            invoice.material_cost += line_cost
+            invoice.subtotal += line_cost
 
     # find_ea_cost searches the payment_lines for any listing of cost listed in quantity
     # param: payment_lines: str, the lines of text that make up the payment line
-    # returns: double, the cost if found, -1 if otherwise
+    # returns: double, the cost if found, None otherwise
     def find_ea_cost(self, payment_lines):
 
+        # Search the payment lines for any line that contains a cost listed in quantity
         for line in payment_lines.splitlines():
-            cost = self.search_payment_line(line, "[0-9]+ea(.*)")
-            if cost > -1:
+            cost = search_payment_line(line, "[0-9]+ea(.*)")
+
+            # If a valid cost is found, return it, no reason to continue searching
+            if cost is not None:
                 return cost
 
-        return -1
+        # If no cost was found, return None
+        return None
 
     # find_ea_cost searches the payment_lines for any listing of cost listed in quantity
     # param: payment_lines: str, the lines of text that make up the payment line
-    # returns: double, the cost if found, -1 if otherwise
+    # returns: double, the cost if found, None otherwise
     def find_hr_cost(self, payment_lines):
 
+        # Search the payment lines for any line that contains a cost listed in hourly rate
         for line in payment_lines.splitlines():
-            cost = self.search_payment_line(line, "[0-9]+hr(.*)")
-            if cost > -1:
+            cost = search_payment_line(line, "[0-9]+hr(.*)")
+
+            # If a valid cost is found, return it, no reason to continue searching
+            if cost is not None:
                 return cost
 
-        return -1
+        # If no cost was found, return None
+        return None
 
     # process_end_of_invoice takes the ending of the invoice starting at "Total:subtotal" and searches for
     # the sales tax and the listed total on the invoice
@@ -208,51 +161,6 @@ class InvoiceProcessor:
 
         return False
 
-    # find_payment_terms takes the invoice and searches for an occurance of any
-    # of the possible payment terms
-    # param: text: str, the invoice to be searched
-    # param: payment_terms: dict, contains all possible payment terms
-    # returns: str, payment term if match found, "Could Not Find" otherwise
-    def find_payment_terms(self, text, payment_terms):
-
-        # Search for each possible payment term
-        for term in payment_terms:
-            res = re.search(term, text)
-
-            # If found, return the term
-            if res:
-                return term
-
-        return "Could Not Find"
-
-    # find_sales_rep takes the invoice and searched for the sales rep listed
-    # param: text: str, the invoice to be searched
-    # param: sales_reps: dict, contains all possible sales rep codes and names
-    # returns: str, the name of the sales rep if found, "Could Not Find" otherwise
-    def find_sales_rep(self, text, sales_reps):
-
-        # Search for each possible sales rep
-        for key, val in sales_reps.items():
-            res = re.search(key, text)
-
-            # If found, return sales rep name
-            if res:
-                return val
-
-        return "Could Not Find"
-
-    # get_filename_from_filepath takes a full filepath to an invoice PDF file and
-    # isolates the name of the file
-    # param: str: filepath, the full path to the invoice pdf
-    # returns: the filename "xxxx.pdf" if found, -1 if not found
-    def get_filename_from_filepath(self, filepath):
-        res = re.search("SO-(.+).pdf", filepath)
-
-        if res:
-            return res.group()
-        else:
-            return -1
-
     # process_invoice is the main function that processes the invoice pdf
     # param: invoice: Invoice, the empty invoice object to be populated
     # returns: a constructed Invoice object with all fields populated, and the difference
@@ -276,10 +184,8 @@ class InvoiceProcessor:
 
                 # Check if at beginning of the line in the table. If so, process this payment item
                 if line.startswith(f"{next_line_num} "):
-                    invoice = self.process_payment_line(
-                        page, line, invoice, next_line_num
-                    )
-                    next_line_num += 1  # Update nextLineNum
+                    self.process_payment_line(page, line, invoice, next_line_num)
+                    next_line_num += 1  # Update next_line_num
 
                 # "Total:Subtotal" is the beginning of the end of the invoice
                 if "Total:Subtotal" in line:
