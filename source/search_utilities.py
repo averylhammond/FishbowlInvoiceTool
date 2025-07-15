@@ -1,8 +1,5 @@
 from re import search
 
-# General TODO: Look at what the re.search() returns, may not need to check and return None
-# if it already returns None
-
 
 # search_text_by_re takes a given regex and searches the text for a match
 # param: text: str, text to be searched

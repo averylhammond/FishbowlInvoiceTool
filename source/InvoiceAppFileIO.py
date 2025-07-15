@@ -97,8 +97,6 @@ class InvoiceAppFileIO:
             write_or_append = "w"
 
         # Write invoice contents to file
-        # TODO: Should the FileIO class be responsible for paring this all out? Or the Invoice class provides
-        # a to_string function or something that returns this formatting string
         with open(self.results_filepath, write_or_append) as f:
             f.write(invoice.to_formatted_string())
 

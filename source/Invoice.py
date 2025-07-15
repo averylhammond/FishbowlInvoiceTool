@@ -27,25 +27,20 @@ class Invoice:
     # returns: str, a formatted string containing all of the invoice's fields on separate lines
     def to_formatted_string(self):
         return (
-                "***********************************\n"
-                "Processed Invoice Results:\n"
-                f"Customer Name:    {self.customer_name}\n"
-                f"Invoice Date:     {self.date}\n"
-                f"Order Number:     {self.order_number}\n"
-                f"PO Number:        {self.po_number}\n"
-                f"Payment Terms:    {self.payment_terms}\n"
-                f"Sales Rep:        {self.sales_rep}\n"
-                f"Labor Cost:       ${round(self.labor_cost, 2)}\n"
-                f"Material Cost:    ${round(self.material_cost, 2)}\n"
-                f"Shipping Cost:    ${round(self.shipping_cost, 2)}\n"
-                f"subtotal:         ${round(self.subtotal, 2)}\n"
-                f"Sales Tax:        ${round(self.sales_tax, 2)}\n"
-                f"Calculated Total: ${round(self.total, 2)}\n"
-                f"Listed Total:     ${round(self.listed_total, 2)}\n"
-                "***********************************\n"
-            )
-
-    # TODO: This seems unncessary, since the Processor should be doing this. Move this
-    # calculate_total calculates the total for a fully processed invoice
-    def calculate_total(self):
-        self.total = self.subtotal + self.sales_tax
+            "***********************************\n"
+            "Processed Invoice Results:\n"
+            f"Customer Name:    {self.customer_name}\n"
+            f"Invoice Date:     {self.date}\n"
+            f"Order Number:     {self.order_number}\n"
+            f"PO Number:        {self.po_number}\n"
+            f"Payment Terms:    {self.payment_terms}\n"
+            f"Sales Rep:        {self.sales_rep}\n"
+            f"Labor Cost:       ${round(self.labor_cost, 2)}\n"
+            f"Material Cost:    ${round(self.material_cost, 2)}\n"
+            f"Shipping Cost:    ${round(self.shipping_cost, 2)}\n"
+            f"subtotal:         ${round(self.subtotal, 2)}\n"
+            f"Sales Tax:        ${round(self.sales_tax, 2)}\n"
+            f"Calculated Total: ${round(self.total, 2)}\n"
+            f"Listed Total:     ${round(self.listed_total, 2)}\n"
+            "***********************************\n"
+        )

@@ -150,6 +150,9 @@ class InvoiceProcessor:
             text.splitlines()[3].replace("$", "").replace(",", "")
         )
 
+        # Calculate the total of all processed listed costs
+        invoice.total = invoice.subtotal + invoice.sales_tax
+
         # Calculate the difference between the subtotal and the listed total
         diff = invoice.listed_total - invoice.subtotal
 
@@ -215,8 +218,5 @@ class InvoiceProcessor:
                 # "Total:Subtotal" is the beginning of the end of the invoice
                 if "Total:Subtotal" in line:
                     invoice, diff = self.process_end_of_invoice(page, line, invoice)
-
-        # Calculate total from subtotal and sales tax
-        invoice.calculate_total()
 
         return invoice, diff

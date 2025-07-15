@@ -54,14 +54,13 @@ class InvoiceAppController:
             shipping_criteria=["DELIVERY", "UPS GROUND", "FREIGHT OUT"],
         )
 
-        # TODO: Since this is the Invoice App "Controller" it should tell the display how to create itself. Move default values out of the
-        # InvoiceAppDisplay constructor and move them into here
+        # Create the InvoiceAppDisplay GUI, provide it with callback functions to proces invoices
         self.display = InvoiceAppDisplay(
             title="Invoice Processor",
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
             invoices_dir=self.invoices_path,
-        )  # GUI display to drive selecting and processing invoices
+        )
 
         # Build payment terms dictionary containing sales rep name codes that could appear on an invoice
         self.payment_terms = self.file_io_controller.build_payment_terms_list()
@@ -94,11 +93,11 @@ class InvoiceAppController:
             invoice_filepath=invoice_filepath
         )
 
-        # If there are no pages in the invoice, return early
+        # If there are no pages in the invoice, show an error and return early
         if not invoice.page_contents or invoice.page_contents[0] is None:
-            # TODO: Tell the GUI to display a popup error message.
-            # Maybe popping up the error message should be a generic thing, that can
-            # be called from anywhere, so can do self.display.show_error_popup(message)
+            self.display.show_error_popup(
+                "Error", "No pages were found in the invoice PDF."
+            )
             return
 
         # Print results of reading invoice to debug.txt if in debug mode
