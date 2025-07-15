@@ -33,10 +33,10 @@ class InvoiceAppController:
         self.invoices_path = "Invoices"
 
         # Define the filepath for the payment terms config file
-        self.payment_terms_path = "Configs/paymentTerms.txt"
+        self.payment_terms_path = "Configs/Payment_Terms.txt"
 
         # Define the filepath for the sales reps config file
-        self.sales_reps_path = "Configs/salesReps.txt"
+        self.sales_reps_path = "Configs/Sales_Reps.txt"
 
         # Create File IO Controller, provide it with all necessary file paths
         self.file_io_controller = InvoiceAppFileIO(

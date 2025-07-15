@@ -3,6 +3,6 @@
 * with all sales reps that can appear on
 * an invoice. Make sure that each line has
 * at most one sales rep.
+* One example is listed below
 ****************************************
-jaccoo=Jackie
-jonwil=John
+jdoe=JohnDoe
