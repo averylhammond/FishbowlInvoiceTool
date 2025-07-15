@@ -1,25 +1,30 @@
-import os, PyPDF2
-from .Invoice import Invoice
+import os
+import PyPDF2
+
+from source.Invoice import Invoice
 
 
 # InvoiceAppFileIO class to handle all file input/output operations
 class InvoiceAppFileIO:
 
-    # __init__ Constructor
-    # param: results_filepath: str, the desired filepath to maintain the results.txt file
-    # param: debug_filepath: str, the desired filepath to maintain the debug.txt file
-    # param: invoices_filepath: str, the desired filepath to expect invoice PDFs to be located
-    # param: payment_terms_filepath: str, the desired filepath to expect the payment terms config file
-    # param: sales_reps_filepath: str, the desired filepath to expect the sales reps config file
-    # returns: Created InvoiceAppFileIO object
     def __init__(
         self,
-        debug_filepath,
-        results_filepath,
-        invoices_filepath,
-        payment_terms_filepath,
-        sales_reps_filepath,
+        debug_filepath: str,
+        results_filepath: str,
+        invoices_filepath: str,
+        payment_terms_filepath: str,
+        sales_reps_filepath: str,
     ):
+        """
+        Initializes the InvoiceAppFileIO object
+
+        Args:
+            debug_filepath (str): The filepath for the debug log file
+            results_filepath (str): The filepath for the results log file
+            invoices_filepath (str): The filepath where invoice PDFs are located
+            payment_terms_filepath (str): The filepath for the payment terms config file
+            sales_reps_filepath (str): The filepath for the sales reps config file
+        """
 
         # Initialize file paths
         self.debug_filepath = debug_filepath
@@ -28,9 +33,11 @@ class InvoiceAppFileIO:
         self.payment_terms_filepath = payment_terms_filepath
         self.sales_reps_filepath = sales_reps_filepath
 
-    # reset_debug_file deletes the debug.txt that was created from the previous program execution
-    # note: This function does nothing in the release configuration
     def reset_debug_file(self):
+        """
+        Deletes the debug.txt file if it exists, to reset the debug log for the next execution
+        Note: This function does nothing in the release configuration
+        """
 
         # If in release configuration, do nothing
         if not __debug__:
@@ -46,9 +53,10 @@ class InvoiceAppFileIO:
         if os.path.isfile(self.debug_filepath):
             os.remove(self.debug_filepath)
 
-    # reset_results_file deletes results.txt that was created from the previous program execution
-    # note: This function does nothing in the release configuration
     def reset_results_file(self):
+        """
+        Deletes the results.txt file if it exists, to reset the results log for the next execution
+        """
 
         # Check to make sure the filepath exists
         if not os.path.exists(os.path.dirname(self.debug_filepath)):
@@ -60,10 +68,14 @@ class InvoiceAppFileIO:
         if os.path.isfile(self.results_filepath):
             os.remove(self.results_filepath)
 
-    # print_to_debug_file writes the str contents to debug.txt
-    # param: contents: str, the contents to be written to file
-    # note: This function does nothing in the release configuration
-    def print_to_debug_file(self, contents):
+    def print_to_debug_file(self, contents: str):
+        """
+        Writes the string contents to the debug.txt file
+        Note: This function does nothing in the release configuration
+
+        Args:
+            contents (str): The contents to be written to the debug file
+        """
 
         # If in release configuration, do nothing
         if not __debug__:
@@ -79,10 +91,17 @@ class InvoiceAppFileIO:
         with open(self.debug_filepath, write_or_append) as f:
             f.write(contents + "\n")
 
-    # print_invoice_to_output_file writes each field of the invoice object to results.txt
-    # param: invoice: Invoice object, the invoice whose fields are to be output
-    # returns: N/A
-    def print_invoice_to_output_file(self, invoice, append_output=False):
+    def print_invoice_to_output_file(
+        self, invoice: Invoice, append_output: bool = False
+    ):
+        """
+        Writes each field of the invoice object to results.txt
+
+        Args:
+            invoice (Invoice): The invoice whose fields are to be output
+            append_output (bool): Whether to append the output to the results file or overwrite it
+                                    Defaults to False, meaning the results file will be overwritten
+        """
 
         # Check to make sure the filepath exists
         if not os.path.exists(os.path.dirname(self.results_filepath)):
@@ -100,11 +119,17 @@ class InvoiceAppFileIO:
         with open(self.results_filepath, write_or_append) as f:
             f.write(invoice.to_formatted_string())
 
-    # read_invoice_file is responsible for converting the given invoice PDF into a list of strings
-    # Each string in the list represents a page of the invoice PDF
-    # param: invoice_filepath, str: the file path of the invoice to read in
-    # returns: list, a list of strings where each string is the text from a page of the invoice PDF
-    def read_invoice_file(self, invoice_filepath):
+    def read_invoice_file(self, invoice_filepath: str) -> list:
+        """
+        Converts the given invoice PDF into a list of strings
+        Each string in the list represents a page of the invoice PDF
+
+        Args:
+            invoice_filepath (str): The file path of the invoice to read in
+
+        Returns:
+            list: A list of strings where each string is the text from a page of the invoice
+        """
 
         # Read text from input PDF
         pdf = PyPDF2.PdfReader(invoice_filepath)
@@ -120,11 +145,16 @@ class InvoiceAppFileIO:
         # Get Number of Pages
         return pages_contents
 
-    # build_sales_reps_dict builds the salesReps dictionary that contains the invoice
-    # code and matching name for each sales rep as defined in the sales reps config file
-    # returns: dict, the populated dictionary with all codes as keys and names as values
-    def build_sales_reps_dict(self):
+    def build_sales_reps_dict(self) -> dict:
+        """
+        Builds the salesReps dictionary that contains the invoice
+        code and matching name for each sales rep as defined in the sales reps config file
 
+        Returns:
+            dict: The populated dictionary with all codes as keys and names as values
+        """
+
+        # Open sales rep config file for reading
         with open(self.sales_reps_filepath, "r") as f:
             dict = {}
 
@@ -138,17 +168,24 @@ class InvoiceAppFileIO:
 
         return dict
 
-    # build_payment_terms_list builds the payment_terms list that contains each possible
-    # payment term as defined in the payment terms config file
-    # returns: list, contains each possible payment term that could be found in the invoice
-    def build_payment_terms_list(self):
+    def build_payment_terms_list(self) -> list:
+        """
+        Builds the payment_terms list that contains each possible
+        payment term as defined in the payment terms config file
 
+        Returns:
+            list: A list of strings, each string is a payment term that could be found in
+        """
+
+        # Open payment terms config file for reading
         with open(self.payment_terms_filepath, "r") as f:
             list = []
 
             # Search through text file, only take non-comment entries
             for line in f:
                 if line[0] != "*":
-                    list.append(line.replace("\n", ""))  # Strip '\n' from all entries
+                    list.append(
+                        line.replace("\n", "")
+                    )  # Strip '\n' from all entries
 
         return list

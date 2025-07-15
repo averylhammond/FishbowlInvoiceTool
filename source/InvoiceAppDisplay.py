@@ -11,13 +11,23 @@ from .color_theme import *
 # This implementation uses tkinter for the GUI
 class InvoiceAppDisplay(tk.Tk):
 
-    # __init__ Constructor, takes in a callback function as input
-    # param: process_callback: function, a callback function to process the selected invoice file
-    # param: title: str, the title of the application window
-    # param: window_resolution: str, the resolution of the application window (e.g., "750x750")
-    # param: invoices_dir: str, the directory where invoice PDFs are located
-    # returns: Created InvoiceAppDisplay object
-    def __init__(self, process_callback, title, window_resolution, invoices_dir):
+    def __init__(
+        self,
+        process_callback: callable,
+        title: str,
+        window_resolution: str,
+        invoices_dir: str,
+    ):
+        """
+        Initializes the InvoiceAppDisplay object
+
+        Args:
+            process_callback (callable): Callback function to process the selected invoice file
+            title (str): Title of the application window
+            window_resolution (str): Resolution of the application window (e.g., "750x750
+            invoices_dir (str): Directory where invoice PDFs are located
+        """
+
         super().__init__()
 
         # Title applied to the application window
@@ -54,11 +64,11 @@ class InvoiceAppDisplay(tk.Tk):
 
         self.build_widgets()
 
-    # build_widgets: Creates the GUI widgets for the application
-    # This includes a title label, file selection entry, browse button, and action buttons
-    # param: N/A
-    # returns: N/A
     def build_widgets(self):
+        """
+        Creates the GUI widgets for the application
+        This includes a title label, file selection entry, browse button, and action buttons
+        """
 
         # Define color scheme
         bg_main = DARK_GRAY
@@ -96,7 +106,9 @@ class InvoiceAppDisplay(tk.Tk):
             insertbackground=fg_text,
             relief="flat",
         )
-        self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 5), pady=8)
+        self.file_entry.pack(
+            side="left", fill="x", expand=True, padx=(0, 5), pady=8
+        )
 
         # Browse button to open file dialog
         self.browse_button = tk.Button(
@@ -160,7 +172,11 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Output box to display results
         self.output_label = tk.Label(
-            self, text="Output:", font=("Segoe UI", 12, "bold"), bg=bg_main, fg=label_fg
+            self,
+            text="Output:",
+            font=("Segoe UI", 12, "bold"),
+            bg=bg_main,
+            fg=label_fg,
         )
         self.output_label.pack(anchor="w", padx=22, pady=(0, 2))
 
@@ -176,11 +192,12 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.output_box.pack(padx=20, pady=(0, 10), fill="both", expand=True)
 
-    # handle_browse_button: On "Browse" button press, opens a file dialog to select a PDF invoice file. Once selected, the file is set
-    # to the selected_file member variable
-    # param: N/A
-    # returns: N/A
     def handle_browse_button(self):
+        """
+        On "Browse" button press, opens a file dialog to select a PDF invoice file.
+        Once selected, the file is set to the selected_file member variable
+
+        """
 
         # Open a file dialog to select a PDF invoice file
         file_path = filedialog.askopenfilename(
@@ -193,10 +210,17 @@ class InvoiceAppDisplay(tk.Tk):
         if file_path:
             self.selected_file.set(file_path)
 
-    # display_invoice_output: Displays the calculated totals of the invoice in the output box
-    # param: invoice: Invoice object, the processed invoice containing calculated totals
-    # param: append, bool: whether to append to the output box or clear it first before writing
-    def display_invoice_output(self, invoice, append_output=False):
+    def display_invoice_output(
+        self, invoice: Invoice, append_output: bool = False
+    ):
+        """
+        Displays the calculated totals of the invoice in the output box
+
+        Args:
+            invoice (Invoice): The processed invoice containing calculated totals
+            append_output (bool): Whether to append to the output box or clear it first before writing
+                                    Defaults to False, meaning the output box will be cleared before writing
+        """
 
         # Clear the output box if not appending
         if not append_output:
@@ -209,28 +233,32 @@ class InvoiceAppDisplay(tk.Tk):
         self.output_box.insert(tk.END, invoice.to_formatted_string())
         return
 
-    # handle_process_invoice: On "Process This Invoice" button press, processes the selected PDF invoice file by forwarding
-    # the call to the provided process_callback function specified during construction
     def handle_process_invoice(self):
+        """
+        On "Process This Invoice" button press, processes the selected PDF invoice file
+        by forwarding the call to the provided process_callback function specified during construction
+        """
 
         # Try to use the last selected file from the file dialogue widget
         file_path = self.selected_file.get()
 
         # If no file is selected, show an error popup and do nothing
         if not file_path:
-            self.show_error_popup("No file selected", "Please select a PDF file first.")
+            self.show_error_popup(
+                "No file selected", "Please select a PDF file first."
+            )
             return
 
         # Forward the call to the process_callback function with the selected file path. Append output is false to reset the
         # output windows and results.txt file since this is the only invoice being processed
         self.process_callback(file_path, append_output=False)
 
-        # TODO: Still need to either figure out the diff issue or add the popup in here
-        # Diff should probably be handled in the controller
-
-    # handle_process_all_invoices: On "Process This Invoice" button press, processes the selected PDF invoice file by forwarding
-    # the call to the provided process_callback function specified during construction
     def handle_process_all_invoices(self):
+        """
+        On "Process All Invoices" button press, processes all invoice PDF files in the specified invoices directory
+        by iterating through each file and calling the process_callback function for each one.
+        This will append the output to the results.txt file and output widget.
+        """
 
         try:
 
@@ -242,11 +270,17 @@ class InvoiceAppDisplay(tk.Tk):
 
         except Exception as e:
             self.show_error_popup(
-                "Processing Error", f"An error occurred while processing invoices: {e}"
+                "Processing Error",
+                f"An error occurred while processing invoices: {e}",
             )
 
-    # show_error_popup: Displays an error message in a popup window
-    # param: error_title: str, the title of the error popup
-    # param: error_message: str, the error message to display
-    def show_error_popup(self, error_title, error_message):
+    def show_error_popup(self, error_title: str, error_message: str):
+        """
+        Displays an error message in a popup window
+
+        Args:
+            error_title (str): The title of the error popup
+            error_message (str): The error message to display
+        """
+
         messagebox.showerror(error_title, error_message)
