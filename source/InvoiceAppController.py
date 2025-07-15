@@ -12,6 +12,7 @@ from .Invoice import Invoice
 # General TODO: Find a style guide for python arguments? I like calling functions with invoice=invoice
 #               but that will add a lot of bloat, even though it is more readable. Look into it, and
 #               if I want to do it then do it to all functions
+# General TODO: Add comments to each part of constructors explaining what each attribute is for
 
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
@@ -56,7 +57,10 @@ class InvoiceAppController:
         # TODO: Since this is the Invoice App "Controller" it should tell the display how to create itself. Move default values out of the
         # InvoiceAppDisplay constructor and move them into here
         self.display = InvoiceAppDisplay(
-            process_callback=self.handle_process_invoice
+            title="Invoice Processor",
+            window_resolution="750x750",
+            process_callback=self.handle_process_invoice,
+            invoices_dir=self.invoices_path,
         )  # GUI display to drive selecting and processing invoices
 
         # Build payment terms dictionary containing sales rep name codes that could appear on an invoice
