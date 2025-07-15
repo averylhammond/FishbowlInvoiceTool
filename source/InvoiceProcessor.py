@@ -1,6 +1,6 @@
-from .processor_utilities import *
-from .InvoiceAppFileIO import InvoiceAppFileIO
-from .Invoice import Invoice
+from source.processor_utilities import *
+from source.InvoiceAppFileIO import InvoiceAppFileIO
+from source.Invoice import Invoice
 
 
 # InvoiceProcessor class to handle all logic for text processing on invoices

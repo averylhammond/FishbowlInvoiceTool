@@ -2,9 +2,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
 
-from .InvoiceAppFileIO import *
-from .Invoice import *
-from .color_theme import *
+from source.InvoiceAppFileIO import *
+from source.Invoice import *
+from source.color_theme import *
 
 
 # Invoice App Display class to hold the GUI for selecting and processing invoices

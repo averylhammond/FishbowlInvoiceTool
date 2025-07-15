@@ -1,18 +1,12 @@
 # Import necessary classes from modules
-from .InvoiceAppDisplay import InvoiceAppDisplay
-from .InvoiceAppFileIO import InvoiceAppFileIO
-from .InvoiceProcessor import InvoiceProcessor
-from .Invoice import Invoice
+from source.InvoiceAppDisplay import InvoiceAppDisplay
+from source.InvoiceAppFileIO import InvoiceAppFileIO
+from source.InvoiceProcessor import InvoiceProcessor
+from source.Invoice import Invoice
 
-# General TODO: Remove params or returns from function header comments if there are none
-# General TODO: Add lots of ##### above and below function headers? Or block comments?
-# General TODO: Find a style guide for python arguments? I like calling functions with invoice=invoice
-#               but that will add a lot of bloat, even though it is more readable. Look into it, and
-#               if I want to do it then do it to all functions
-# General TODO: Add comments to each part of constructors explaining what each attribute is for
+
 # General TODO: Work on python formatting and best practices
 # General TODO: All function arguments should be specified when called
-# General TODO: Use full namespace resolution for includes
 
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
