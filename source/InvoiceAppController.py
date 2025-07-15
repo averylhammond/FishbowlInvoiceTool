@@ -5,9 +5,6 @@ from .InvoiceProcessor import InvoiceProcessor
 from .Invoice import Invoice
 
 # General TODO: Remove params or returns from function header comments if there are none
-# General TODO: Check all functions in classes and make sure they have self if needed
-#               Some functions may not need self if they are just used internally
-#               If they are used externally, they should have self
 # General TODO: Add lots of ##### above and below function headers? Or block comments?
 # General TODO: Find a style guide for python arguments? I like calling functions with invoice=invoice
 #               but that will add a lot of bloat, even though it is more readable. Look into it, and
@@ -96,7 +93,8 @@ class InvoiceAppController:
         # If there are no pages in the invoice, show an error and return early
         if not invoice.page_contents or invoice.page_contents[0] is None:
             self.display.show_error_popup(
-                "Error", "No pages were found in the invoice PDF."
+                "Error",
+                "No pages were found in the invoice PDF located at {invoice_filepath}.",
             )
             return
 
@@ -117,6 +115,15 @@ class InvoiceAppController:
         self.display.display_invoice_output(
             invoice=invoice, append_output=append_output
         )
+
+        # If the calculated invoice total does not match the listed total (likely due to rounding errors),
+        # display a popup widnow warning which invoices have a mismastch total
+        # TODO: Figure out rounding issue with this, probably OBE once the diff issue is resolved
+        if invoice.total != invoice.listed_total:
+            self.display.show_error_popup(
+                "Calculated Total Mismatch",
+                f"The calculated total of ${invoice.total} does not match the listed total of ${invoice.listed_total} for invoice {invoice.order_number}.",
+            )
 
         # Print calculated invoice output to results.txt
         self.file_io_controller.print_invoice_to_output_file(

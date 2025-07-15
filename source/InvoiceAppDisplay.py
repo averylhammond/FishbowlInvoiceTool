@@ -235,7 +235,7 @@ class InvoiceAppDisplay(tk.Tk):
         try:
 
             # Loop through all invoice files in the invoices directory and process each one
-            for file_path in self.invoices_dir:
+            for file_path in Path(self.invoices_dir).resolve().iterdir():
 
                 # Process each invoice, appending output to the results.txt file and output widget
                 self.process_callback(file_path, append_output=True)

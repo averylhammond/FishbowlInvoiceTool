@@ -1,5 +1,7 @@
 from .search_utilities import *
 
+# TODO: Figure out what rounding issues are causing the total to not match the listed total
+
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
 class InvoiceProcessor:
