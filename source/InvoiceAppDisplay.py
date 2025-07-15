@@ -6,6 +6,8 @@ from source.InvoiceAppFileIO import *
 from source.Invoice import *
 from source.color_theme import *
 
+# FUTURE TODO: Implement a dynamic theme that can be changed at runtime through user input
+
 
 # Invoice App Display class to hold the GUI for selecting and processing invoices
 # This implementation uses tkinter for the GUI
@@ -13,7 +15,7 @@ class InvoiceAppDisplay(tk.Tk):
 
     def __init__(
         self,
-        process_callback: callable,
+        process_callback,
         title: str,
         window_resolution: str,
         invoices_dir: str,
@@ -24,7 +26,7 @@ class InvoiceAppDisplay(tk.Tk):
         Args:
             process_callback (callable): Callback function to process the selected invoice file
             title (str): Title of the application window
-            window_resolution (str): Resolution of the application window (e.g., "750x750
+            window_resolution (str): Resolution of the application window (e.g., "750x750")
             invoices_dir (str): Directory where invoice PDFs are located
         """
 
@@ -72,7 +74,6 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Define color scheme
         bg_main = DARK_GRAY
-        bg_frame = DARKER_GRAY
         bg_entry = MEDIUM_GRAY
         fg_text = IVORY
         accent_blue = LIGHT_BLUE
@@ -93,7 +94,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.title_label.pack(pady=(20, 10))
 
         # File selection frame
-        self.file_frame = tk.Frame(self, bg=bg_frame)
+        self.file_frame = tk.Frame(self, bg=bg_main)
         self.file_frame.pack(padx=20, fill="x")
 
         self.file_entry = tk.Entry(
@@ -156,7 +157,7 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.exit_button.grid(row=0, column=1, padx=10)
 
-        # Create button for processing all invoices in the Invoices folder
+        # Create button for processing all invoices in the Invoices folder at once
         self.process_all_invoices_button = tk.Button(
             self.button_frame,
             text="Process All Invoices",
@@ -170,7 +171,7 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.process_all_invoices_button.grid(row=0, column=2, padx=10)
 
-        # Output box to display results
+        # Output Label before text results
         self.output_label = tk.Label(
             self,
             text="Output:",
@@ -180,6 +181,7 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.output_label.pack(anchor="w", padx=22, pady=(0, 2))
 
+        # Output box to display invoice results
         self.output_box = scrolledtext.ScrolledText(
             self,
             height=8,
@@ -224,13 +226,19 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Clear the output box if not appending
         if not append_output:
-            self.output_box.delete(1.0, tk.END)
+
+            # Make sure output box was initialized before trying to clear it
+            if self.output_box:
+                self.output_box.delete(1.0, tk.END)
 
         # If appending, insert a newline before adding the new output
         else:
-            self.output_box.insert(tk.END, "\n")
 
-        self.output_box.insert(tk.END, invoice.to_formatted_string())
+            # Make sure output_box was initialized before trying to insert
+            if self.output_box:
+                self.output_box.insert(tk.END, "\n")
+                self.output_box.insert(tk.END, invoice.to_formatted_string())
+
         return
 
     def handle_process_invoice(self):
@@ -245,7 +253,8 @@ class InvoiceAppDisplay(tk.Tk):
         # If no file is selected, show an error popup and do nothing
         if not file_path:
             self.show_error_popup(
-                "No file selected", "Please select a PDF file first."
+                error_title="No file selected",
+                error_message="Please select a PDF file first.",
             )
             return
 
@@ -261,7 +270,6 @@ class InvoiceAppDisplay(tk.Tk):
         """
 
         try:
-
             # Loop through all invoice files in the invoices directory and process each one
             for file_path in Path(self.invoices_dir).resolve().iterdir():
 
@@ -270,8 +278,8 @@ class InvoiceAppDisplay(tk.Tk):
 
         except Exception as e:
             self.show_error_popup(
-                "Processing Error",
-                f"An error occurred while processing invoices: {e}",
+                error_title="Processing Error",
+                error_message=f"An error occurred while processing invoices: {e}",
             )
 
     def show_error_popup(self, error_title: str, error_message: str):

@@ -1,6 +1,8 @@
 from re import search
 from decimal import Decimal, ROUND_HALF_UP
 
+# TODO: Define global for Decimal("0.0") somewhere
+
 
 def search_text_by_re(text: str, regex: str) -> str:
     """
@@ -11,13 +13,13 @@ def search_text_by_re(text: str, regex: str) -> str:
         regex (str): The regex to be matched
 
     Returns:
-        str: The matched string if found, None otherwise
+        str: The matched string if found, empty string otherwise
     """
-    res = search(regex, text)
+    res = search(pattern=regex, string=text)
     if res:
         return res.group()
     else:
-        return None
+        return str()
 
 
 def search_payment_line(line: str, regex: str) -> Decimal:
@@ -30,15 +32,15 @@ def search_payment_line(line: str, regex: str) -> Decimal:
         regex (str): Regex to be matched
 
     Returns:
-        Decimal: The payment amount as a Decimal if match found, None otherwise
+        Decimal: The payment amount as a Decimal if match found, 0.0 otherwise
     """
 
-    res = search(regex, line)
+    res = search(pattern=regex, string=line)
 
     if res:
         return format_currency((res.group().split()[2]).replace(",", ""))
     else:
-        return None
+        return Decimal("0.0")
 
 
 def find_payment_terms(text: str, payment_terms: list) -> str:
@@ -50,19 +52,19 @@ def find_payment_terms(text: str, payment_terms: list) -> str:
         payment_terms (list): Contains all possible payment terms
 
     Returns:
-        str: The payment term if found, None otherwise
+        str: The payment term if found, empty string otherwise
     """
 
     # Search for each possible payment term
     for term in payment_terms:
-        res = search(term, text)
+        res = search(pattern=term, string=text)
 
         # If found, return the term
         if res:
             return term
 
-    # If no payment term was found, return None
-    return None
+    # If no payment term was found, return empty string
+    return str()
 
 
 def find_sales_rep(text: str, sales_reps: dict) -> str:
@@ -74,18 +76,18 @@ def find_sales_rep(text: str, sales_reps: dict) -> str:
         sales_reps (dict): Contains all possible sales rep codes and names
 
     Returns:
-        str: The name of the sales rep if found, None otherwise
+        str: The name of the sales rep if found, empty string otherwise
     """
 
     # Search for each possible sales rep
     for key, val in sales_reps.items():
-        res = search(key, text)
+        res = search(pattern=key, string=text)
 
         # If found, return sales rep name
         if res:
             return val
 
-    return None
+    return str()
 
 
 def format_currency(value) -> Decimal:
@@ -100,5 +102,5 @@ def format_currency(value) -> Decimal:
         Decimal: The formatted currency value
     """
     return Decimal(str(value)).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
+        exp=Decimal("0.01"), rounding=ROUND_HALF_UP
     )

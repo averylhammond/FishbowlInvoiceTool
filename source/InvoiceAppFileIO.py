@@ -1,5 +1,6 @@
 import os
 import PyPDF2
+from typing import List
 
 from source.Invoice import Invoice
 
@@ -19,8 +20,8 @@ class InvoiceAppFileIO:
         Initializes the InvoiceAppFileIO object
 
         Args:
-            debug_filepath (str): The filepath for the debug log file
-            results_filepath (str): The filepath for the results log file
+            debug_filepath (str): The filepath for the debug log
+            results_filepath (str): The filepath for the results log
             invoices_filepath (str): The filepath where invoice PDFs are located
             payment_terms_filepath (str): The filepath for the payment terms config file
             sales_reps_filepath (str): The filepath for the sales reps config file
@@ -88,7 +89,7 @@ class InvoiceAppFileIO:
             write_or_append = "w"
 
         # Write contents to file
-        with open(self.debug_filepath, write_or_append) as f:
+        with open(file=self.debug_filepath, mode=write_or_append) as f:
             f.write(contents + "\n")
 
     def print_invoice_to_output_file(
@@ -116,7 +117,7 @@ class InvoiceAppFileIO:
             write_or_append = "w"
 
         # Write invoice contents to file
-        with open(self.results_filepath, write_or_append) as f:
+        with open(file=self.results_filepath, mode=write_or_append) as f:
             f.write(invoice.to_formatted_string())
 
     def read_invoice_file(self, invoice_filepath: str) -> list:
@@ -132,30 +133,30 @@ class InvoiceAppFileIO:
         """
 
         # Read text from input PDF
-        pdf = PyPDF2.PdfReader(invoice_filepath)
+        pdf = PyPDF2.PdfReader(stream=invoice_filepath)
 
         # Create empty list
-        pages_contents = []
+        pages = []
 
         # Extract text from each page and append to list
         for page in pdf.pages:
             text = page.extract_text()
-            pages_contents.append(text)
+            pages.append(text)
 
         # Get Number of Pages
-        return pages_contents
+        return pages
 
     def build_sales_reps_dict(self) -> dict:
         """
-        Builds the salesReps dictionary that contains the invoice
-        code and matching name for each sales rep as defined in the sales reps config file
+        Builds the Sales Reps dictionary that contains the invoice code and
+        matching name for each sales rep as defined in the sales reps config file
 
         Returns:
             dict: The populated dictionary with all codes as keys and names as values
         """
 
         # Open sales rep config file for reading
-        with open(self.sales_reps_filepath, "r") as f:
+        with open(file=self.sales_reps_filepath, mode="r") as f:
             dict = {}
 
             # Search through text file, only take non-comment entries
@@ -174,11 +175,11 @@ class InvoiceAppFileIO:
         payment term as defined in the payment terms config file
 
         Returns:
-            list: A list of strings, each string is a payment term that could be found in
+            list: A list of strings, each string is a payment term that could be found in an invoice
         """
 
         # Open payment terms config file for reading
-        with open(self.payment_terms_filepath, "r") as f:
+        with open(file=self.payment_terms_filepath, mode="r") as f:
             list = []
 
             # Search through text file, only take non-comment entries
