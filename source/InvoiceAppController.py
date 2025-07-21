@@ -5,8 +5,6 @@ from source.InvoiceProcessor import InvoiceProcessor
 from source.Invoice import Invoice
 
 
-# TODO: Rename payment terms and sales reps config files
-# TODO: Move the config files to a private repo? Should that information be public?
 # TODO: Move the criteria for different costs to the config files? Private?
 
 
@@ -38,6 +36,9 @@ class InvoiceAppController:
         # Define the filepath for the sales reps config file
         self.sales_reps_path = "Configs/Sales_Reps.txt"
 
+        # Define the filepath for the cost criteria config file
+        self.cost_criteria_path = "Configs/Cost_Criteria.txt"
+
         # Create File IO Controller, provide it with all necessary file paths
         self.file_io_controller = InvoiceAppFileIO(
             debug_filepath=self.debug_log_path,
@@ -45,14 +46,18 @@ class InvoiceAppController:
             invoices_filepath=self.invoices_path,
             payment_terms_filepath=self.payment_terms_path,
             sales_reps_filepath=self.sales_reps_path,
+            cost_criteria_filepath=self.cost_criteria_path,
         )
+
+        # Use the File IO Controller to read in the criteria/exclusions for each cost section
+        self.file_io_controller.parse_cost_criteria_file()
 
         # Create InvoiceProcessor, provide it with the File IO Controller and criteria for processing invoices
         self.invoice_processor = InvoiceProcessor(
             file_io_controller=self.file_io_controller,
-            labor_criteria=["MF/", "MD/"],
-            labor_exclusions=["MF/RHR", "MF/LHR", "MD/RHR", "MD/LHR"],
-            shipping_criteria=["DELIVERY", "UPS GROUND", "FREIGHT OUT"],
+            labor_criteria=self.file_io_controller.labor_criteria,
+            labor_exclusions=self.file_io_controller.labor_exclusions,
+            shipping_criteria=self.file_io_controller.shipping_criteria,
         )
 
         # Create the InvoiceAppDisplay GUI, provide it with callback function to process invoices
@@ -64,10 +69,12 @@ class InvoiceAppController:
         )
 
         # Build payment terms dictionary containing all possible sales rep name codes that could appear on an invoice
-        self.payment_terms = self.file_io_controller.build_payment_terms_list()
+        self.payment_terms = (
+            self.file_io_controller.parse_payment_terms_config()
+        )
 
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
-        self.sales_reps = self.file_io_controller.build_sales_reps_dict()
+        self.sales_reps = self.file_io_controller.parse_sales_reps_config()
 
     def start_application(self):
         """

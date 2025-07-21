@@ -15,6 +15,7 @@ class InvoiceAppFileIO:
         invoices_filepath: str,
         payment_terms_filepath: str,
         sales_reps_filepath: str,
+        cost_criteria_filepath: str,
     ):
         """
         Initializes the InvoiceAppFileIO object
@@ -25,6 +26,7 @@ class InvoiceAppFileIO:
             invoices_filepath (str): The filepath where invoice PDFs are located
             payment_terms_filepath (str): The filepath for the payment terms config file
             sales_reps_filepath (str): The filepath for the sales reps config file
+            cost_criteria_filepath (str): The filepath for the cost criteria config file
         """
 
         # Initialize file paths
@@ -33,6 +35,12 @@ class InvoiceAppFileIO:
         self.invoices_filepath = invoices_filepath
         self.payment_terms_filepath = payment_terms_filepath
         self.sales_reps_filepath = sales_reps_filepath
+        self.cost_criteria_filepath = cost_criteria_filepath
+
+        # Initialize cost criteria/exclusion lists
+        self.labor_criteria = []
+        self.labor_exclusions = []
+        self.shipping_criteria = []
 
     def reset_debug_file(self):
         """
@@ -146,7 +154,7 @@ class InvoiceAppFileIO:
         # Get Number of Pages
         return pages
 
-    def build_sales_reps_dict(self) -> dict:
+    def parse_sales_reps_config(self) -> dict:
         """
         Builds the Sales Reps dictionary that contains the invoice code and
         matching name for each sales rep as defined in the sales reps config file
@@ -169,7 +177,7 @@ class InvoiceAppFileIO:
 
         return dict
 
-    def build_payment_terms_list(self) -> list:
+    def parse_payment_terms_config(self) -> list:
         """
         Builds the payment_terms list that contains each possible
         payment term as defined in the payment terms config file
@@ -190,3 +198,62 @@ class InvoiceAppFileIO:
                     )  # Strip '\n' from all entries
 
         return list
+
+    def add_cost_criteria_field(self, category: str, line: str):
+        """
+        Given the current category being read in the cost criteria config file, add the entry
+        to the list of criteria/exclusions
+
+        Args:
+            category (str): The category of criteria being parsed
+            line (str): The current line containing the criteria/exclusion
+        """
+
+        # If this is a Labor Criteria, add it to the appropriate list
+        if category == "LABOR CRITERIA":
+            self.labor_criteria.append(line)
+
+        # If this is a Labor Exclusion, add it to the appropriate list
+        elif category == "LABOR EXCLUSIONS":
+            self.labor_exclusions.append(line)
+
+        # If this is a Labor Exclusion, add it to the appropriate list
+        elif category == "SHIPPING CRITERIA":
+            self.labor_exclusions.append(line)
+
+        # If the category cannot be read, print it to the debug file
+        else:
+            self.print_to_debug_file(
+                f"Unknown category read out of Cost Criteria configuration file: {category}"
+            )
+
+    def parse_cost_criteria_file(self):
+        """
+        Reads all cost criteria/exclusions from the provided config file and stores them
+        in member variables
+
+        Args:
+            category (str): The category of criteria being parsed
+            line (str): The current line containing the criteria/exclusion
+        """
+
+        # Open payment terms config file for reading
+        with open(file=self.cost_criteria_filepath, mode="r") as f:
+
+            # Default to empty strings
+            line = ""
+            category = ""
+
+            # Search through text file, only take non-comment entries
+            for line in f:
+
+                # Strip trailing whitespace from line, and skip comment lines
+                line = line.strip()
+                if not line or line[0] == "*":
+                    continue
+
+                if line.endswith(":"):
+                    category = line.rstrip(":").upper()
+
+                else:
+                    self.add_cost_criteria_field(category=category, line=line)
