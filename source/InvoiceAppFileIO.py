@@ -219,7 +219,7 @@ class InvoiceAppFileIO:
 
         # If this is a Labor Exclusion, add it to the appropriate list
         elif category == "SHIPPING CRITERIA":
-            self.labor_exclusions.append(line)
+            self.shipping_criteria.append(line)
 
         # If the category cannot be read, print it to the debug file
         else:

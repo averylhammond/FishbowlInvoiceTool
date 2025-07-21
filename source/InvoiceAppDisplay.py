@@ -226,20 +226,17 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Clear the output box if not appending
         if not append_output:
-
             # Make sure output box was initialized before trying to clear it
             if self.output_box:
                 self.output_box.delete(1.0, tk.END)
+                self.output_box.insert(tk.END, invoice.to_formatted_string())
 
         # If appending, insert a newline before adding the new output
         else:
-
             # Make sure output_box was initialized before trying to insert
             if self.output_box:
                 self.output_box.insert(tk.END, "\n")
                 self.output_box.insert(tk.END, invoice.to_formatted_string())
-
-        return
 
     def handle_process_invoice(self):
         """
