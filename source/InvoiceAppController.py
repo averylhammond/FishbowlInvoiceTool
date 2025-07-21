@@ -5,9 +5,6 @@ from source.InvoiceProcessor import InvoiceProcessor
 from source.Invoice import Invoice
 
 
-# TODO: Figure out how to build for release configuration so debug.txt is not written in the release load
-
-
 # InvoiceAppController class to drive logic for processing invoice PDFs.
 class InvoiceAppController:
 
