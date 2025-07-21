@@ -1,5 +1,0 @@
-****************************************************************************************
-* Make sure to keep this text file updated with all payment terms that can appear on a *
-* Fishwbowl generated invoice. Make sure each line has at most one option.             *
-****************************************************************************************
-Due on receipt
