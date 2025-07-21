@@ -2,6 +2,7 @@
 * Make sure to keep this text file updated with all criteria to identify the   *
 * kinds of costs that can appear on an invoice. Enter one criteria or          *
 * exclusion per line, under each header. Examples are given for each section.  *
+* Do not change the headers for each section, they must remain as is.          *
 ********************************************************************************
 LABOR CRITERIA:
 CRITERIA/A
