@@ -1,7 +1,7 @@
 from re import search
 from decimal import Decimal, ROUND_HALF_UP
 
-# TODO: Define global for Decimal("0.0") somewhere
+from source.globals import *
 
 
 def search_text_by_re(text: str, regex: str) -> str:
@@ -40,7 +40,7 @@ def search_payment_line(line: str, regex: str) -> Decimal:
     if res:
         return format_currency((res.group().split()[2]).replace(",", ""))
     else:
-        return Decimal("0.0")
+        return DECIMAL_ZERO
 
 
 def find_payment_terms(text: str, payment_terms: list) -> str:

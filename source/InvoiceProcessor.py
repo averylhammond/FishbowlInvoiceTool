@@ -1,6 +1,7 @@
 from source.processor_utilities import *
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.Invoice import Invoice
+from source.globals import *
 
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
@@ -96,9 +97,9 @@ class InvoiceProcessor:
         hr_cost = self.find_hr_cost(payment_lines=text)
 
         # Figure out which cost to use, if neither was found, return
-        if ea_cost > Decimal("0.0"):
+        if ea_cost > DECIMAL_ZERO:
             line_cost = ea_cost
-        elif hr_cost > Decimal("0.0"):
+        elif hr_cost > DECIMAL_ZERO:
             line_cost = hr_cost
         else:
             return
@@ -147,11 +148,11 @@ class InvoiceProcessor:
             cost = search_payment_line(line=line, regex="[0-9]+ea(.*)")
 
             # If a valid cost is found, return it, no reason to continue searching
-            if cost > Decimal("0.0"):
+            if cost > DECIMAL_ZERO:
                 return format_currency(value=cost)
 
         # If no cost was found, return 0.0
-        return Decimal("0.0")
+        return DECIMAL_ZERO
 
     def find_hr_cost(self, payment_lines: str) -> Decimal:
         """
@@ -169,11 +170,11 @@ class InvoiceProcessor:
             cost = search_payment_line(line=line, regex="[0-9]+hr(.*)")
 
             # If a valid cost is found, return it, no reason to continue searching
-            if cost > Decimal("0.0"):
+            if cost > DECIMAL_ZERO:
                 return format_currency(value=cost)
 
         # If no cost was found, return None
-        return Decimal("0.0")
+        return DECIMAL_ZERO
 
     def process_end_of_invoice(
         self, text: str, starting_line: str, invoice: Invoice

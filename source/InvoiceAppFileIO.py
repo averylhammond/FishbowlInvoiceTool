@@ -169,11 +169,16 @@ class InvoiceAppFileIO:
 
             # Search through text file, only take non-comment entries
             for line in f:
-                if line[0] != "*":
-                    res = line.partition("=")
-                    dict[res[0]] = res[2].replace(
-                        "\n", ""
-                    )  # Strip '\n' from all entries
+
+                # Strip whitespace from the line
+                line = line.strip()
+
+                # Skip empty lines or comment lines
+                if not line or line[0] == "*":
+                    continue
+
+                res = line.partition("=")
+                dict[res[0]] = res[2]
 
         return dict
 
@@ -192,10 +197,16 @@ class InvoiceAppFileIO:
 
             # Search through text file, only take non-comment entries
             for line in f:
-                if line[0] != "*":
-                    list.append(
-                        line.replace("\n", "")
-                    )  # Strip '\n' from all entries
+
+                # Strip whitespace from the line
+                line = line.strip()
+
+                # Ignore line if empty or comment line
+                if not line or line[0] == "*":
+                    continue
+
+                # Append the payment term to the list
+                list.append(line)
 
         return list
 

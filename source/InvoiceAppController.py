@@ -5,9 +5,7 @@ from source.InvoiceProcessor import InvoiceProcessor
 from source.Invoice import Invoice
 
 
-# TODO: Move the criteria for different costs to the config files? Private?
 # TODO: Figure out how to build for release configuration so debug.txt is not written in the release load
-# TODO: Strip trailing whitespace when matching for things?
 
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
