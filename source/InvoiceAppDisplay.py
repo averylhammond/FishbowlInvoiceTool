@@ -7,6 +7,10 @@ from source.Invoice import *
 from source.color_theme import *
 
 # FUTURE TODO: Implement a dynamic theme that can be changed at runtime through user input
+# Future TODO: Let the config text files be controlled through tabs on the GUI, store results
+#              in database somewhere so the txt files don't need to be retained
+# Future TODO: Add second output window for errors, instead of cluttering the screen with
+#              pop up windows when Fishbowl invoices present rounding errors
 
 
 # Invoice App Display class to hold the GUI for selecting and processing invoices
@@ -107,9 +111,7 @@ class InvoiceAppDisplay(tk.Tk):
             insertbackground=fg_text,
             relief="flat",
         )
-        self.file_entry.pack(
-            side="left", fill="x", expand=True, padx=(0, 5), pady=8
-        )
+        self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 5), pady=8)
 
         # Browse button to open file dialog
         self.browse_button = tk.Button(
@@ -212,9 +214,7 @@ class InvoiceAppDisplay(tk.Tk):
         if file_path:
             self.selected_file.set(file_path)
 
-    def display_invoice_output(
-        self, invoice: Invoice, append_output: bool = False
-    ):
+    def display_invoice_output(self, invoice: Invoice, append_output: bool = False):
         """
         Displays the calculated totals of the invoice in the output box
 
