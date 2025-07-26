@@ -67,7 +67,7 @@ INSTRUCTIONS TO SET UP FOR RELEASE
         - Invoices
         - logs
         - AutoInvoiceProc.exe
-        - README.txt
+        - ReadMe.txt
     
 
 6) The parent folder can now be zipped up and packaged as a release on GitHub.
