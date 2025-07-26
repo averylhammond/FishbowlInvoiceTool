@@ -46,7 +46,8 @@ INSTRUCTIONS TO SET UP FOR RELEASE
     - pip install PyInstaller
 
 3) Convert main.py into an exe
-    - pyinstaller --onefile --noconsole --name AutoInvoiceProc main.py
+    - pyinstaller -O --onefile --noconsole --name AutoInvoiceProc main.py
+    - Note: Remove the -O when building for the release configuration
 
 4) This will generate several files, including dist/AutoInvoiceProc.exe. Save this file
    in another location to move later.
