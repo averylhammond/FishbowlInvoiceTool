@@ -30,9 +30,7 @@ class InvoiceProcessor:
         self.shipping_criteria = shipping_criteria
         return
 
-    def populate_invoice(
-        self, invoice: Invoice, sales_reps: dict, payment_terms: list
-    ):
+    def populate_invoice(self, invoice: Invoice, sales_reps: dict, payment_terms: list):
         """
         Initializes all fields of an invoice object that appear on the first page of the invoice PDF
 
@@ -49,24 +47,18 @@ class InvoiceProcessor:
         first_page = invoice.page_contents[0]
 
         # Parse the first page to get the invoice attributes
-        invoice.order_number = search_text_by_re(
-            text=first_page, regex="S(\d{5})"
-        )
-        invoice.date = search_text_by_re(
-            text=first_page, regex="\d{2}/\d{2}/\d{4}"
-        )
+        invoice.order_number = search_text_by_re(text=first_page, regex=r"S(\d{5})")
+        invoice.date = search_text_by_re(text=first_page, regex=r"\d{2}/\d{2}/\d{4}")
         invoice.customer_name = search_text_by_re(
-            text=first_page, regex="Customer: .+"
+            text=first_page, regex=r"Customer: .+"
         ).replace("Customer: ", "")
         invoice.po_number = (
-            search_text_by_re(text=first_page, regex="PO Number: .+S")[:-1]
+            search_text_by_re(text=first_page, regex=r"PO Number: .+S")[:-1]
         ).replace("PO Number: ", "")
         invoice.payment_terms = find_payment_terms(
             text=first_page, payment_terms=payment_terms
         )
-        invoice.sales_rep = find_sales_rep(
-            text=first_page, sales_reps=sales_reps
-        )
+        invoice.sales_rep = find_sales_rep(text=first_page, sales_reps=sales_reps)
 
     def process_payment_line(
         self, text: str, line: str, invoice: Invoice, curr_line_num: int
@@ -145,7 +137,7 @@ class InvoiceProcessor:
 
         # Search the payment lines for any line that contains a cost listed in quantity
         for line in payment_lines.splitlines():
-            cost = search_payment_line(line=line, regex="[0-9]+ea(.*)")
+            cost = search_payment_line(line=line, regex=r"[0-9]+\s*ea(.*)")
 
             # If a valid cost is found, return it, no reason to continue searching
             if cost > DECIMAL_ZERO:
@@ -167,7 +159,7 @@ class InvoiceProcessor:
 
         # Search the payment lines for any line that contains a cost listed in hourly rate
         for line in payment_lines.splitlines():
-            cost = search_payment_line(line=line, regex="[0-9]+hr(.*)")
+            cost = search_payment_line(line=line, regex=r"[0-9]+\s*hr(.*)")
 
             # If a valid cost is found, return it, no reason to continue searching
             if cost > DECIMAL_ZERO:
@@ -176,9 +168,7 @@ class InvoiceProcessor:
         # If no cost was found, return None
         return DECIMAL_ZERO
 
-    def process_end_of_invoice(
-        self, text: str, starting_line: str, invoice: Invoice
-    ):
+    def process_end_of_invoice(self, text: str, starting_line: str, invoice: Invoice):
         """
         Takes the ending of the invoice starting at "Total:subtotal" and searches for
         the sales tax and the listed total on the invoice
@@ -201,9 +191,9 @@ class InvoiceProcessor:
         )
 
         # Calculate the total of all processed listed costs
-        invoice.total = format_currency(
-            value=invoice.subtotal
-        ) + format_currency(value=invoice.sales_tax)
+        invoice.total = format_currency(value=invoice.subtotal) + format_currency(
+            value=invoice.sales_tax
+        )
 
     def search_for_labor_criteria(self, line: str) -> bool:
         """

@@ -38,7 +38,12 @@ def search_payment_line(line: str, regex: str) -> Decimal:
     res = search(pattern=regex, string=line)
 
     if res:
-        return format_currency((res.group().split()[2]).replace(",", ""))
+
+        # Get the matched regex string, match is a list of words from the match
+        match = res.group().split()
+
+        # Take the last word in the match (total payment amount for this item) and format it to Decimal type
+        return format_currency(match[-1].replace(",", ""))
     else:
         return DECIMAL_ZERO
 
@@ -99,8 +104,19 @@ def format_currency(value) -> Decimal:
         value (any): The string representation of the currency value
 
     Returns:
-        Decimal: The formatted currency value
+        Decimal: The formatted currency value if conversion is successful,
+        DECIMAL_ZERO otherwise
     """
-    return Decimal(str(value)).quantize(
-        exp=Decimal("0.01"), rounding=ROUND_HALF_UP
-    )
+
+    # Try/catch: Calling Decimal() constructor with invalid string will raise an exception
+    try:
+        # Convert value param to Decimal type
+        decimal = Decimal(str(value))
+
+        # Format the decimal value for US currency, round to the nearest cent and round up
+        res = decimal.quantize(exp=Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    except (ValueError, ArithmeticError, TypeError):
+        res = DECIMAL_ZERO
+
+    return res
