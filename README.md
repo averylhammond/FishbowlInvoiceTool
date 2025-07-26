@@ -25,7 +25,14 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
         - For Arch based distros:
             - sudo pacman -S python3-tk
 
-5) Run script
+5) Create the following folders inside of the project directory
+    - ./Configs: Place your up to date private config files here
+
+    - ./logs: This needs to be created and left empty for the text files
+
+    - ./Invoices: Place your Fishbowl invoice PDFs here to test them
+
+6) Run script
     - python main.py
 
 
@@ -53,8 +60,9 @@ INSTRUCTIONS TO SET UP FOR RELEASE
    following folder structure for release-
    - FishbowlInvoiceTool
         - Configs
-            - paymentTerms.txt
-            - salesReps.txt
+            - Payment_Terms.txt
+            - Sales_Reps.txt
+            - Cost_Criteria.txt
         - Invoices
         - logs
         - AutoInvoiceProc.exe

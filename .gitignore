@@ -17,3 +17,6 @@ build/
 
 # Ignore invoices moved into this folder for testing
 Invoices/*
+
+# Ignore config files
+Configs/*

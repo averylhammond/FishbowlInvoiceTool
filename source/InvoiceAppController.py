@@ -1,41 +1,40 @@
 # Import necessary classes from modules
-from .InvoiceAppDisplay import InvoiceAppDisplay
-from .InvoiceAppFileIO import InvoiceAppFileIO
-from .InvoiceProcessor import InvoiceProcessor
-from .Invoice import Invoice
-
-# General TODO: Remove params or returns from function header comments if there are none
-# General TODO: Check all functions in classes and make sure they have self if needed
-#               Some functions may not need self if they are just used internally
-#               If they are used externally, they should have self
-# General TODO: Add lots of ##### above and below function headers? Or block comments?
-# General TODO: Find a style guide for python arguments? I like calling functions with invoice=invoice
-#               but that will add a lot of bloat, even though it is more readable. Look into it, and
-#               if I want to do it then do it to all functions
-# General TODO: Add comments to each part of constructors explaining what each attribute is for
+from source.InvoiceAppDisplay import InvoiceAppDisplay
+from source.InvoiceAppFileIO import InvoiceAppFileIO
+from source.InvoiceProcessor import InvoiceProcessor
+from source.Invoice import Invoice
 
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
 class InvoiceAppController:
 
-    # __init__ Constructor
-    # returns: Created InvoiceAppController object
     def __init__(self):
+        """
+        Initializes the InvoiceAppController object
 
-        # Define the filepath for debug log files
+        This includes specifying the file paths for logs, invoices, config files, and initializing
+        the File IO Controller, Invoice Processor, and GUI Display.
+
+        Note that all defined filepaths are relative to the executable's current working directory.
+        """
+
+        # Define the filepath for the debug log
         self.debug_log_path = "logs/debug.txt"
 
-        # Define the filepath for saved results log files
+        # Define the filepath for the saved results log
         self.results_log_path = "logs/results.txt"
 
         # Define the filepath for Invoices to be processed
         self.invoices_path = "Invoices"
 
         # Define the filepath for the payment terms config file
-        self.payment_terms_path = "Configs/paymentTerms.txt"
+        self.payment_terms_path = "Configs/Payment_Terms.txt"
 
         # Define the filepath for the sales reps config file
-        self.sales_reps_path = "Configs/salesReps.txt"
+        self.sales_reps_path = "Configs/Sales_Reps.txt"
+
+        # Define the filepath for the cost criteria config file
+        self.cost_criteria_path = "Configs/Cost_Criteria.txt"
 
         # Create File IO Controller, provide it with all necessary file paths
         self.file_io_controller = InvoiceAppFileIO(
@@ -44,33 +43,40 @@ class InvoiceAppController:
             invoices_filepath=self.invoices_path,
             payment_terms_filepath=self.payment_terms_path,
             sales_reps_filepath=self.sales_reps_path,
+            cost_criteria_filepath=self.cost_criteria_path,
         )
 
-        # Create InvoiceProcessor
+        # Use the File IO Controller to read in the criteria/exclusions for each cost section
+        self.file_io_controller.parse_cost_criteria_file()
+
+        # Create InvoiceProcessor, provide it with the File IO Controller and criteria for processing invoices
         self.invoice_processor = InvoiceProcessor(
             file_io_controller=self.file_io_controller,
-            labor_criteria=["MF/", "MD/"],
-            labor_exclusions=["MF/RHR", "MF/LHR", "MD/RHR", "MD/LHR"],
-            shipping_criteria=["DELIVERY", "UPS GROUND", "FREIGHT OUT"],
+            labor_criteria=self.file_io_controller.labor_criteria,
+            labor_exclusions=self.file_io_controller.labor_exclusions,
+            shipping_criteria=self.file_io_controller.shipping_criteria,
         )
 
-        # TODO: Since this is the Invoice App "Controller" it should tell the display how to create itself. Move default values out of the
-        # InvoiceAppDisplay constructor and move them into here
+        # Create the InvoiceAppDisplay GUI, provide it with callback function to process invoices
         self.display = InvoiceAppDisplay(
             title="Invoice Processor",
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
             invoices_dir=self.invoices_path,
-        )  # GUI display to drive selecting and processing invoices
+        )
 
-        # Build payment terms dictionary containing sales rep name codes that could appear on an invoice
-        self.payment_terms = self.file_io_controller.build_payment_terms_list()
+        # Build payment terms dictionary containing all possible sales rep name codes that could appear on an invoice
+        self.payment_terms = (
+            self.file_io_controller.parse_payment_terms_config()
+        )
 
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
-        self.sales_reps = self.file_io_controller.build_sales_reps_dict()
+        self.sales_reps = self.file_io_controller.parse_sales_reps_config()
 
-    # Start the application by entering the tkinter main GUI loop
     def start_application(self):
+        """
+        Starts the application by entering the tkinter main GUI loop
+        """
 
         # Reset text files before starting the application
         if __debug__:
@@ -78,27 +84,35 @@ class InvoiceAppController:
 
         self.file_io_controller.reset_results_file()
 
-        self.display.mainloop()  # Start the GUI application
+        # Start the GUI application
+        self.display.mainloop()
 
-    # handle_process_invoice handles the controller side of the invoice processing
-    # param: invoice_filepath: str, the filepath of the invoice PDF to be processed
-    # append_output: bool, whether to append the Invoice outputs to any existing outputs.
-    # True: append to existing results.txt and output box
-    # False: overwrite existing results.txt and output box
-    def handle_process_invoice(self, invoice_filepath, append_output):
+    def handle_process_invoice(
+        self, invoice_filepath: str, append_output: bool
+    ):
+        """
+        Directs components to process the invoice located at invoice_filepath
+
+        Args:
+            invoice_filepath (str): The filepath of the invoice PDF to be processed.
+            append_output (bool): Whether to append the Invoice outputs to any existing outputs.
+                                    True: append to existing results.txt and output box
+                                    False: overwrite existing results.txt and output box
+        """
 
         invoice = Invoice()
 
-        # Command the File IO Controller to read in the invoice
+        # Command the File IO Controller to read in the invoice located at invoice_filepath
         invoice.page_contents = self.file_io_controller.read_invoice_file(
             invoice_filepath=invoice_filepath
         )
 
-        # If there are no pages in the invoice, return early
+        # If there are no pages in the invoice, show an error and return early
         if not invoice.page_contents or invoice.page_contents[0] is None:
-            # TODO: Tell the GUI to display a popup error message.
-            # Maybe popping up the error message should be a generic thing, that can
-            # be called from anywhere, so can do self.display.show_error_popup(message)
+            self.display.show_error_popup(
+                error_title="Error",
+                error_message="No pages were found in the invoice PDF located at {invoice_filepath}.",
+            )
             return
 
         # Print results of reading invoice to debug.txt if in debug mode
@@ -108,7 +122,9 @@ class InvoiceAppController:
 
         # Populate other initial fields of the invoice from the first page of the PDF
         self.invoice_processor.populate_invoice(
-            invoice, self.sales_reps, self.payment_terms
+            invoice=invoice,
+            sales_reps=self.sales_reps,
+            payment_terms=self.payment_terms,
         )
 
         # Forward call to the Invoice Processor
@@ -119,12 +135,21 @@ class InvoiceAppController:
             invoice=invoice, append_output=append_output
         )
 
+        # Invoices generated by Fishbowl are known to have rounding errors, likely due to floating point precision issues, so
+        # we need to account for that and let the user know that the generated total may not match the listed total on the invoice.
+        # This is done by displaying an error popup window
+        if invoice.total != invoice.listed_total:
+            self.display.show_error_popup(
+                error_title="Calculated Total Mismatch",
+                error_message=f"The calculated total of ${invoice.total} does not match the listed total of ${invoice.listed_total} for invoice {invoice.order_number}.",
+            )
+
         # Print calculated invoice output to results.txt
         self.file_io_controller.print_invoice_to_output_file(
-            invoice, append_output=append_output
+            invoice=invoice, append_output=append_output
         )
 
         # Print completion notice to debug.txt if in debug mode
         self.file_io_controller.print_to_debug_file(
-            f"Processed all sales for invoice: {invoice_filepath}\n"
+            contents=f"Processed all sales for invoice: {invoice_filepath}\n"
         )
