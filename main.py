@@ -1,5 +1,6 @@
 from source.InvoiceAppController import InvoiceAppController
 
+# TODO: Add a /scripts folder to automate PyInstaller process for new release packages
 
 # Entry Point
 if __name__ == "__main__":
