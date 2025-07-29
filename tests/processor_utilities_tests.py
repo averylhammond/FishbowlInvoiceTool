@@ -10,7 +10,7 @@ from source.globals import DECIMAL_ZERO
 ###############################################################################
 def test_search_text_by_re_order_number_correct_format():
     """
-    Tests that the function search_text_by_re can successfully extract an order number
+    Tests that the function search_text_by_re() can successfully extract an order number
     where the string is formatted correctly
 
     The expected format is 'SXXXXX' where x is a non zero integer
@@ -26,7 +26,7 @@ def test_search_text_by_re_order_number_correct_format():
 
 def test_search_text_by_re_order_number_wrong_format():
     """
-    Tests that the function search_text_by_re will return an empty string (indicating
+    Tests that the function search_text_by_re() will return an empty string (indicating
     failure) if a regex match cannot be made when searching for an order number
 
     The expected format is 'SXXXXX' where x is a non zero integer
@@ -46,7 +46,7 @@ def test_search_text_by_re_order_number_wrong_format():
 
 def test_search_text_by_re_invoice_date_correct_format():
     """
-    Tests that the function search_text_by_re can successfully extract an invoice date
+    Tests that the function search_text_by_re() can successfully extract an invoice date
     where string is formatted correctly
 
     The expected format is 'mm/dd/yyyy' where mm is the month, dd is the day, and yyyy is the year
@@ -62,7 +62,7 @@ def test_search_text_by_re_invoice_date_correct_format():
 
 def test_search_text_by_re_invoice_date_wrong_format():
     """
-    Tests that the function search_text_by_re will return an empty string (indicating
+    Tests that the function search_text_by_re() will return an empty string (indicating
     failure) if a regex match cannot be made when searching for an invoice date
 
     The expected format is 'mm/dd/yyyy' where mm is the month, dd is the day, and yyyy is the year
@@ -90,7 +90,7 @@ def test_search_text_by_re_invoice_date_wrong_format():
 
 def test_search_text_by_re_customer_name_correct_format():
     """
-    Tests that the function search_text_by_re can successfully extract a customer
+    Tests that the function search_text_by_re() can successfully extract a customer
     name when the string is formatted correctly
 
     The expected format is 'Customer: x' where x is the customer name. Note that
@@ -111,7 +111,7 @@ def test_search_text_by_re_customer_name_correct_format():
 
 def test_search_text_by_re_customer_name_wrong_format():
     """
-    Tests that the function search_text_by_re will return an empty string (indicating
+    Tests that the function search_text_by_re() will return an empty string (indicating
     failure) if a regex match cannot be made when searching for the customer name
 
     The expected format is 'Customer: x' where x is the customer name. Note that
@@ -141,7 +141,7 @@ def test_search_text_by_re_customer_name_wrong_format():
 
 def test_search_text_by_re_po_number_correct_format():
     """
-    Tests that the function search_text_by_re can successfully extract a PO number
+    Tests that the function search_text_by_re() can successfully extract a PO number
     when the string is formatted correctly
 
     The expected format is 'PO Number: x' where x is the PO Number. Note that
@@ -168,7 +168,7 @@ def test_search_text_by_re_po_number_correct_format():
 
 def test_search_text_by_re_po_number_wrong_format():
     """
-    Tests that the function search_text_by_re will return an empty string (indicating
+    Tests that the function search_text_by_re() will return an empty string (indicating
     failure) if a regex match cannot be made when searching for the customer name
 
     The expected format is 'PO Number: x' where x is the PO Number. Note that
@@ -193,7 +193,7 @@ def test_search_text_by_re_po_number_wrong_format():
 ###############################################################################
 def test_search_payment_line_quantity_correct_format():
     """
-    Tests that the function search_payment_line can successfully extract an a quantity
+    Tests that the function search_payment_line() can successfully extract an a quantity
     order cost from an invoice payment line
 
     The expected format is '$x y ea $ z" where x is the unit cost, y is the quantity of
@@ -204,76 +204,107 @@ def test_search_payment_line_quantity_correct_format():
     regex = r"[0-9]+\s*ea(.*)"
 
     # Verify the quantity cost can be extracted
-    line = "$59.65 1ea $ 59.65"
+    line = "CORRECT QUANTITY COST FORMAT - $59.65 1ea $ 59.65"
     assert search_payment_line(line=line, regex=regex) == Decimal("59.65")
 
     # Verify the quantity cost can be extracted with extra spaces
-    line = "$ 59.65 1 ea $ 59.65"
+    line = "CORRECT QUANTITY COST FORMAT - $ 59.65 1 ea $ 59.65"
     assert search_payment_line(line=line, regex=regex) == Decimal("59.65")
 
     # Verify the quantity cost can be extracted with 2 digit quantities
-    line = "$ 59.65 10 ea $ 596.50"
+    line = "CORRECT QUANTITY COST FORMAT - $ 59.65 10 ea $ 596.50"
     assert search_payment_line(line=line, regex=regex) == Decimal("596.50")
 
     # Verify the quantity cost can be extracted with 3 digit quantities
-    line = "$ 59.65 100 ea $ 5965.00"
+    line = "CORRECT QUANTITY COST FORMAT - $ 59.65 100 ea $ 5965.00"
     assert search_payment_line(line=line, regex=regex) == Decimal("5965.00")
 
     # Verify the quantity cost can be extracted with 4 digit quantities
-    line = "$ 59.65 1000 ea $ 59650.00"
+    line = "CORRECT QUANTITY COST FORMAT - $ 59.65 1000 ea $ 59650.00"
     assert search_payment_line(line=line, regex=regex) == Decimal("59650.00")
 
 
-# def test_search_payment_line_valid():
-#     line = "Total payment: $1,234.56"
-#     regex = r"\$[\d,]+\.\d{2}"
-#     assert search_payment_line(line, regex) == Decimal("1234.56")
+def test_search_payment_line_quantity_wrong_format():
+    """
+    Tests that the function search_payment_line() will return Decimal 0.0 if a
+    regex match cannot be made when searching for the quantity cost
+
+    The expected format is '$x y ea $ z" where x is the unit cost, y is the quantity of
+    the item sold, and z is the total cost of the payment line ( x * y )
+    """
+
+    # Expected format
+    regex = r"[0-9]+\s*ea(.*)"
+
+    # Verify Decimal 0.0 is returned when there is no total listed
+    line = "WRONG QUANTITY COST FORMAT - $59.65 1 ea $"
+    assert search_payment_line(line=line, regex=regex) == DECIMAL_ZERO
 
 
-# def test_search_payment_line_invalid():
-#     line = "Total payment: N/A"
-#     regex = r"\$[\d,]+\.\d{2}"
-#     assert search_payment_line(line, regex) == DECIMAL_ZERO
+###############################################################################
+###         Tests for processor_utilities -> find_payment_terms()           ###
+###############################################################################
+def test_find_payment_terms_correct_format():
+    """
+    Tests that the function find_payment_terms() can successfully extract the
+    payment terms from an invoice
+    """
+
+    # Define payment terms list
+    payment_terms = ["payment_term_1", "payment_term_2"]
+
+    # Verify the correct payment term is found in the searched text
+    text = "Text containing payment_term_1 inside of it"
+    assert (
+        find_payment_terms(text=text, payment_terms=payment_terms)
+        == "payment_term_1"
+    )
 
 
-# def test_find_payment_terms_found():
-#     text = "Net 30 payment terms apply"
-#     payment_terms = ["Net 15", "Net 30", "Due on receipt"]
-#     assert find_payment_terms(text, payment_terms) == "Net 30"
+def test_find_payment_terms_wrong_format():
+    """
+    Tests that the function find_payment_terms() will return an empty string if a
+    regex match cannot be made when searching the invoice for a payment term
+    """
+
+    # Define payment terms list
+    payment_terms = ["payment_term_1", "payment_term_2"]
+
+    # Verify the correct dict value is returned when searching text for key1
+    text = "Text that does not contain any payment terms in it"
+    assert find_payment_terms(text=text, payment_terms=payment_terms) == ""
 
 
-# def test_find_payment_terms_not_found():
-#     text = "Payment due next week"
-#     payment_terms = ["Net 15", "Net 30", "Due on receipt"]
-#     assert find_payment_terms(text, payment_terms) == ""
+###############################################################################
+###           Tests for processor_utilities -> find_sales_rep()             ###
+###############################################################################
+def test_find_sales_rep_correct_format():
+    """
+    Tests that the function find_sales_rep() can successfully extract the sales
+    rep from the sales rep code in the invoice text
+    """
+
+    # Define sales rep dict
+    sales_reps = {"key1": "value1", "key2": "value2"}
+
+    # Verify the correct dict value is returned when searching text for key1
+    text = "Text containing key1 inside of it"
+    assert find_sales_rep(text=text, sales_reps=sales_reps) == "value1"
+
+    # Verify the correct dict value is returned when searching text for key2
+    text = "More text that has key2 inside of it"
+    assert find_sales_rep(text=text, sales_reps=sales_reps) == "value2"
 
 
-# def test_find_sales_rep_found():
-#     text = "Sold by rep123"
-#     sales_reps = {"rep123": "Alice Johnson", "rep456": "Bob Smith"}
-#     assert find_sales_rep(text, sales_reps) == "Alice Johnson"
+def test_find_sales_rep_wrong_format():
+    """
+    Tests that the function find_sales_rep() will return an empty string if a
+    regex match cannot be made when searching the invoice for a sales rep
+    """
 
+    # Define sales rep dict
+    sales_reps = {"key1": "value1", "key2": "value2"}
 
-# def test_find_sales_rep_not_found():
-#     text = "Sold by rep999"
-#     sales_reps = {"rep123": "Alice Johnson", "rep456": "Bob Smith"}
-#     assert find_sales_rep(text, sales_reps) == ""
-
-
-# @pytest.mark.parametrize(
-#     "input_val,expected",
-#     [
-#         ("123.45", Decimal("123.45")),
-#         ("123.456", Decimal("123.46")),
-#         ("123", Decimal("123.00")),
-#         (123.1, Decimal("123.10")),
-#         (Decimal("5.555"), Decimal("5.56")),
-#     ],
-# )
-# def test_format_currency_valid(input_val, expected):
-#     assert format_currency(input_val) == expected
-
-
-# @pytest.mark.parametrize("input_val", ["abc", None, object()])
-# def test_format_currency_invalid(input_val):
-#     assert format_currency(input_val) == DECIMAL_ZERO
+    # Verify the correct dict value is returned when searching text for key1
+    text = "Text that does not contain any keys in it"
+    assert find_sales_rep(text=text, sales_reps=sales_reps) == ""
