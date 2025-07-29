@@ -41,13 +41,14 @@ INSTRUCTIONS TO SET UP FOR RELEASE
 **********************************
 
 1) Follow above instructions for development to set the repo
+    - Additionally, make sure all unit tests pass by running pytest tests/*
 
 2) In virtual environment, install PyInstaller
     - pip install PyInstaller
 
 3) Convert main.py into an exe
     - python -OO -m PyInstaller --onefile --noconsole --name AutoInvoiceProc main.py
-    - Note: Remove the -OO when building for the debug configuration
+    - Note: Remove the -OO when building a debug release
 
 4) This will generate several files, including dist/AutoInvoiceProc.exe. Save this file
    in another location to move later.
