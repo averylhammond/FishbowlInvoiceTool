@@ -4,6 +4,8 @@ from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 from source.Invoice import Invoice
 
+# TODO: Add tests style function headers to each header to improve readability
+
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
 class InvoiceAppController:
