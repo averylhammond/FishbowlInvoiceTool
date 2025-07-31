@@ -137,7 +137,7 @@ def test_populate_invoice_populates_fields(
 
 
 ###############################################################################
-###                   Tests for process_payment_line()                      ###
+###           Tests InvoiceProcessor -> process_payment_line()              ###
 ###############################################################################
 def test_process_payment_line_skips_subtotal_line(invoice_processor, invoice):
     """
@@ -341,7 +341,135 @@ def test_process_payment_line_skips_if_no_cost_found(
     )
 
     # Verify that no values were added to invoice
-    assert invoice.subtotal == Decimal("0.00")
-    assert invoice.material_cost == Decimal("0.00")
-    assert invoice.labor_cost == Decimal("0.00")
-    assert invoice.shipping_cost == Decimal("0.00")
+    assert invoice.subtotal == DECIMAL_ZERO
+    assert invoice.material_cost == DECIMAL_ZERO
+    assert invoice.labor_cost == DECIMAL_ZERO
+    assert invoice.shipping_cost == DECIMAL_ZERO
+
+
+###############################################################################
+###               Tests InvoiceProcessor -> find_ea_cost()                  ###
+###############################################################################
+@patch("source.InvoiceProcessor.search_payment_line")
+@patch(
+    "source.InvoiceProcessor.format_currency",
+    side_effect=lambda value: Decimal(value),
+)
+def test_find_ea_cost_returns_first_valid_cost(
+    _mock_format_currency, mock_search_payment_line, invoice_processor
+):
+    """
+    Verifies that find_ea_cost() returns the first valid quantity cost found in the payment lines
+
+    Args:
+        _mock_format_currency (unittest.mock.MagicMock): Mocked format_currency function
+        mock_search_payment_line (unittest.mock.MagicMock): Mocked search_payment_line function
+        invoice_processor (pytest.fixture): The InvoiceProcessor instance under test
+    """
+
+    # Mock the first call to search_payment_line() to return 45.60
+    mock_search_payment_line.side_effect = [Decimal("45.60")]
+
+    # Create a payment line containing the string
+    payment_lines = "2 anchor bolt ea $45.60"
+
+    # Call find_ea_cost() with the payment line
+    cost = invoice_processor.find_ea_cost(payment_lines)
+
+    # Verify that the correct cost is found
+    assert cost == Decimal("45.60")
+
+
+@patch("source.InvoiceProcessor.search_payment_line")
+@patch(
+    "source.InvoiceProcessor.format_currency",
+    side_effect=lambda value: Decimal(value),
+)
+def test_find_ea_cost_returns_zero_when_no_match(
+    _mock_format_currency, mock_search_payment_line, invoice_processor
+):
+    """
+    Verifies that find_ea_cost() returns the first valid quantity cost found in the payment lines
+
+    Args:
+        _mock_format_currency (unittest.mock.MagicMock): Mocked format_currency function
+        mock_search_payment_line (unittest.mock.MagicMock): Mocked search_payment_line function
+        invoice_processor (pytest.fixture): The InvoiceProcessor instance under test
+    """
+
+    # Mock the first call to search_payment_line() to return DECIMAL_ZERO,
+    # indicating that there was no match for the given regex
+    mock_search_payment_line.side_effect = [DECIMAL_ZERO]
+
+    # Create a payment line containing no valid quantity cost
+    payment_lines = "2 anchor bolt no quantity cost"
+
+    # Call find_ea_cost() with the payment line
+    cost = invoice_processor.find_ea_cost(payment_lines)
+
+    # Verify that no cost was found
+    assert cost == DECIMAL_ZERO
+
+
+###############################################################################
+###               Tests InvoiceProcessor -> find_hr_cost()                  ###
+###############################################################################
+@patch("source.InvoiceProcessor.search_payment_line")
+@patch(
+    "source.InvoiceProcessor.format_currency",
+    side_effect=lambda value: Decimal(value),
+)
+def test_find_hr_cost_returns_first_valid_cost(
+    _mock_format_currency, mock_search_payment_line, invoice_processor
+):
+    """
+    Verifies that find_hr_cost() returns the first valid hourly cost found in the payment lines
+
+    Args:
+        _mock_format_currency (unittest.mock.MagicMock): Mocked format_currency function
+        mock_search_payment_line (unittest.mock.MagicMock): Mocked search_payment_line function
+        invoice_processor (pytest.fixture): The InvoiceProcessor instance under test
+    """
+
+    # Mock the first call to search_payment_line() to return 45.60
+    mock_search_payment_line.side_effect = [Decimal("45.60")]
+
+    # Create a payment line containing the string
+    payment_lines = "UPS shipping hr $45.60"
+
+    # Call find_hr_cost() with the payment line
+    cost = invoice_processor.find_hr_cost(payment_lines)
+
+    # Verify that the correct cost is found
+    assert cost == Decimal("45.60")
+
+
+@patch("source.InvoiceProcessor.search_payment_line")
+@patch(
+    "source.InvoiceProcessor.format_currency",
+    side_effect=lambda value: Decimal(value),
+)
+def test_find_hr_cost_returns_zero_when_no_match(
+    _mock_format_currency, mock_search_payment_line, invoice_processor
+):
+    """
+    Verifies that find_hr_cost() returns the first valid hourly cost found in the payment lines
+
+    Args:
+        _mock_format_currency (unittest.mock.MagicMock): Mocked format_currency function
+        mock_search_payment_line (unittest.mock.MagicMock): Mocked search_payment_line function
+        invoice_processor (pytest.fixture): The InvoiceProcessor instance under test
+    """
+
+    # Mock the first call to search_payment_line() to return DECIMAL_ZERO,
+    # indicating that there was no match for the given regex
+    mock_search_payment_line.side_effect = [DECIMAL_ZERO]
+
+    # Create a payment line containing no valid quantity cost
+    payment_lines = "UPS shipping no hourly cost"
+
+    # Call find_hr_cost() with the payment line
+    cost = invoice_processor.find_hr_cost(payment_lines)
+
+    # Verify that no cost was found
+    assert cost == DECIMAL_ZERO
