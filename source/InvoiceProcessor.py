@@ -111,7 +111,7 @@ class InvoiceProcessor:
 
         # Determine if the payment line is a labor, shipping, or material cost
         is_labor_cost = self.search_for_labor_criteria(line=line)
-        is_shipping_cost = self.search_for_shipping(line=line)
+        is_shipping_cost = self.search_for_shipping_criteria(line=line)
 
         # Case: Payment line contains a labor cost
         if is_labor_cost:
@@ -237,7 +237,7 @@ class InvoiceProcessor:
         # If no labor criteria was found, return False
         return False
 
-    def search_for_shipping(self, line: str) -> bool:
+    def search_for_shipping_criteria(self, line: str) -> bool:
         """
         Takes a given payment line and searches it for the criteria
         that was defined during construction

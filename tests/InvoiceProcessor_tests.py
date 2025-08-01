@@ -42,7 +42,16 @@ def invoice():
     """
     mock_invoice = Invoice()
     mock_invoice.page_contents = [
-        "Customer: Acme Corp\nPO Number: PO12345S\nS12345\n01/01/2025"
+        "Customer: Acme Corp\n"
+        "PO Number: PO12345S\n"
+        "S12345\n"
+        "01/01/2025\n"
+        "Ordered Total Price\n"
+        "1 LABOR install\n"
+        "2 SHIPPING charges\n"
+        "Total:Subtotal\n"
+        "$10.00\n"
+        "$12.00\n"
     ]
 
     return mock_invoice
@@ -193,7 +202,9 @@ def test_process_payment_line_labor_cost(
 
     # Mock functions to determine this is a labor cost
     invoice_processor.search_for_labor_criteria = MagicMock(return_value=True)
-    invoice_processor.search_for_shipping = MagicMock(return_value=False)
+    invoice_processor.search_for_shipping_criteria = MagicMock(
+        return_value=False
+    )
 
     # Call process_payment_line() with a labor cost line
     invoice_processor.process_payment_line(
@@ -242,7 +253,9 @@ def test_process_payment_line_shipping_cost(
 
     # Mock functions to determine this is a shipping cost
     invoice_processor.search_for_labor_criteria = MagicMock(return_value=False)
-    invoice_processor.search_for_shipping = MagicMock(return_value=True)
+    invoice_processor.search_for_shipping_criteria = MagicMock(
+        return_value=True
+    )
 
     # Call process_payment_line() with a shipping cost line
     invoice_processor.process_payment_line(
@@ -290,7 +303,9 @@ def test_process_payment_line_material_cost(
 
     # Mock functions to determine this is neither a labor or shipping cost
     invoice_processor.search_for_labor_criteria = MagicMock(return_value=False)
-    invoice_processor.search_for_shipping = MagicMock(return_value=False)
+    invoice_processor.search_for_shipping_criteria = MagicMock(
+        return_value=False
+    )
 
     # Call process_payment_line()
     invoice_processor.process_payment_line(
@@ -473,3 +488,170 @@ def test_find_hr_cost_returns_zero_when_no_match(
 
     # Verify that no cost was found
     assert cost == DECIMAL_ZERO
+
+
+###############################################################################
+###           Tests InvoiceProcessor -> process_end_of_invoice()            ###
+###############################################################################
+@patch(
+    "source.InvoiceProcessor.format_currency",
+    side_effect=lambda value: Decimal(value),
+)
+def test_process_end_of_invoice_sets_values(
+    mock_format_currency, invoice_processor, invoice
+):
+    """
+    Verifies that process_end_of_invoice correctly extracts sales tax and listed total
+    and computes the invoice total
+
+    Args:
+        mock_format_currency (unittest.mock.MagicMock): Mocked format_currency function
+        invoice_processor (pytest.fixture): Test fixture for InvoiceProcessor
+        invoice (pytest.fixture): Test fixture for Invoice
+    """
+
+    # Setup: Assume subtotal is already computed
+    invoice.subtotal = Decimal("100.00")
+
+    # Simulated end-of-invoice text, typically from PDF page content
+    text = (
+        "Some other content\n"
+        "Total: 100.00\n"
+        "Other Line\n"
+        "$8.50\n"
+        "$108.50\n"
+        "Footer"
+    )
+
+    # Call the method with a known start point
+    invoice_processor.process_end_of_invoice(
+        text=text,
+        starting_line="Total: 100.00",
+        invoice=invoice,
+    )
+
+    # Verify parsed fields
+    assert invoice.sales_tax == Decimal("8.50")
+    assert invoice.listed_total == Decimal("108.50")
+
+    # Verify calculated total
+    assert invoice.total == Decimal("108.50")
+
+    # Verify formatting was applied (subtotal + sales_tax passed to format_currency)
+    mock_format_currency.assert_any_call(value=Decimal("100.00"))
+    mock_format_currency.assert_any_call(value=Decimal("8.50"))
+
+
+###############################################################################
+###         Tests InvoiceProcessor -> search_for_labor_criteria()           ###
+###############################################################################
+def test_search_for_labor_criteria_true(
+    invoice_processor,
+):
+    """
+    Verifies that a line containing a labor criteria but no exclusions returns True
+
+    Args:
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+    """
+
+    # Expect search_for_labor_criteria() to return true since "LABOR" is part of the criteria
+    # and there are no exclusions present in the string
+    line = "Line 1 LABOR unit with no exclusions"
+    assert invoice_processor.search_for_labor_criteria(line) is True
+
+
+def test_search_for_labor_criteria_false(
+    invoice_processor,
+):
+    """
+    Verifies that a line containing no labor criteria returns false
+
+    Args:
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+    """
+
+    # Expect search_for_labor_criteria() to return false since there is no labor criteria
+    # in the string
+    line = "Line 1 NONE unit with no exclusions"
+    assert invoice_processor.search_for_labor_criteria(line) is False
+
+
+def test_search_for_labor_criteria_exclusion(
+    invoice_processor,
+):
+    """
+    Verifies that a line containing labor criteria and labor exclusions will return false
+
+    Args:
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+    """
+
+    # Expect search_for_labor_criteria() to return false since "LABOR" is part of the criteria
+    # but "NO_LABOR" is an exclusion
+    line = "Line 1 NONE unit with exclusion NO-LABOR "
+    assert invoice_processor.search_for_labor_criteria(line) is False
+
+
+###############################################################################
+###        Tests InvoiceProcessor -> search_for_shipping_criteria()         ###
+###############################################################################
+def test_search_for_shipping_criteria_true(
+    invoice_processor,
+):
+    """
+    Verifies that a line containing a shipping criteria returns True
+
+    Args:
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+    """
+
+    # Expect search_for_shipping_criteria() to return true since "SHIPPING" is part of the string
+    line = "Line 1 SHIPPING hourly cost"
+    assert invoice_processor.search_for_shipping_criteria(line) is True
+
+
+def test_search_for_shipping_criteria_false(
+    invoice_processor,
+):
+    """
+    Verifies that a line containing no shipping criteria returns false
+
+    Args:
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+    """
+
+    # Expect search_for_shipping_criteria() to return false since there is no shipping criteria
+    # in the string
+    line = "Line 1 NO hourly cost"
+    assert invoice_processor.search_for_shipping_criteria(line) is False
+
+
+###############################################################################
+###               Tests InvoiceProcessor -> process_invoice()               ###
+###############################################################################
+@patch.object(InvoiceProcessor, "process_payment_line")
+@patch.object(InvoiceProcessor, "process_end_of_invoice")
+def test_process_invoice_calls_internal_methods(
+    mock_process_end, mock_process_line, invoice_processor, invoice
+):
+    """
+    Verifies that process_invoice() calls process_payment_line and process_end_of_invoice
+    with correct arguments and expected number of times
+
+    Args:
+        mock_process_end (unittest.mock.MagicMock): Mocked process_end_of_invoice
+        mock_process_line (unittest.mock.MagicMock): Mocked process_payment_line
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+        invoice (pytest.fixture): Invoice with page contents
+    """
+
+    # Call the function under test
+    invoice_processor.process_invoice(invoice)
+
+    # Verify that process_payment_line is called for every line after "Ordered Total Price"
+    # and before "Total:Subtotal"
+    assert mock_process_line.call_count == 2
+
+    # Verify that process_end_of_invoice is called exactly once with the correct starting line
+    assert mock_process_end.call_count == 1
