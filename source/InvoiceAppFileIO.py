@@ -4,6 +4,13 @@ from typing import List
 
 from source.Invoice import Invoice
 
+# TODO: Change the parsing of the config files to happen after the GUI is initialized
+#       This will allow the GUI to display an error if the config files are not found
+#       rather than crashing the program
+
+# TODO: Also make sure reset_debug_file() does not crash if the debug file does not exist
+#       which it will not right after cloning the repo
+
 
 # InvoiceAppFileIO class to handle all file input/output operations
 class InvoiceAppFileIO:
