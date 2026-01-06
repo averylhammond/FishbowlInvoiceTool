@@ -71,7 +71,7 @@ TO CREATE A RELEASE
           └── FishbowlInvoiceTool/
               └── scripts/package_release.sh</PRE>
 
-4) Run "./scripts/package_release.sh true", this will do the following:
+4) Run "./scripts/package_release.sh false", this will do the following:
     - Run a git clean
     - Create and activate a python virtual environment if one is not in use already
     - Install all project dependencies, even if they are already present
