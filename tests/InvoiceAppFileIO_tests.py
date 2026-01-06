@@ -24,32 +24,6 @@ def file_io():
     )
 
 
-###############################################################################
-###              Tests InvoiceAppFileIO -> reset_debug_file()               ###
-###############################################################################
-@patch("os.path.dirname", return_value="debug.txt")
-@patch("os.path.exists", return_value=False)
-def test_reset_debug_file_path_doesnt_exist(
-    _mock_os_exists, _mock_os_dirname, file_io
-):
-    """
-    Tests that the function reset_debug_file() will raise an exception if
-    the debug.txt file path does not exist where the InvoiceAppFileIO object
-    is told that it will
-
-    Args:
-        _mock_os_exists (unittest.mock.MagicMock): mock os.path.exists to return false
-        _mock_os_dirname (unittest.mock.MagicMock): mock os.path.dirname to return the filename
-        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
-    """
-
-    # Call reset_debug_file(), expecting an exception to be raised
-    with pytest.raises(FileNotFoundError) as exception:
-        file_io.reset_debug_file()
-
-    assert "Debug file directory debug.txt does not exist" in str(exception)
-
-
 @patch("os.remove")
 @patch("os.path.isfile", return_value=True)
 @patch("os.path.dirname", return_value="debug.txt")
@@ -217,9 +191,7 @@ def test_parse_sales_reps_config_success(mock_file, file_io):
     assert sales_reps == expected_sales_reps
 
     # Ensure that the file was opened in reading mode
-    mock_file.assert_called_once_with(
-        file=file_io.sales_reps_filepath, mode="r"
-    )
+    mock_file.assert_called_once_with(file=file_io.sales_reps_filepath, mode="r")
 
 
 @patch(
@@ -244,9 +216,7 @@ def test_parse_sales_reps_config_empty_file(mock_file, file_io):
     assert sales_reps == {}
 
     # Ensure the file was opened in reading mode
-    mock_file.assert_called_once_with(
-        file=file_io.sales_reps_filepath, mode="r"
-    )
+    mock_file.assert_called_once_with(file=file_io.sales_reps_filepath, mode="r")
 
 
 ###############################################################################
@@ -285,9 +255,7 @@ def test_parse_payment_terms_config_success(mock_file, file_io):
     assert payment_terms == expected_payment_terms
 
     # Ensure that the file was opened in reading mode
-    mock_file.assert_called_once_with(
-        file=file_io.payment_terms_filepath, mode="r"
-    )
+    mock_file.assert_called_once_with(file=file_io.payment_terms_filepath, mode="r")
 
 
 @patch(
@@ -312,9 +280,7 @@ def test_parse_payment_terms_config_empty_file(mock_file, file_io):
     assert payment_terms == []
 
     # Ensure the file was opened in reading mode
-    mock_file.assert_called_once_with(
-        file=file_io.payment_terms_filepath, mode="r"
-    )
+    mock_file.assert_called_once_with(file=file_io.payment_terms_filepath, mode="r")
 
 
 ###############################################################################
@@ -332,9 +298,7 @@ def test_add_cost_criteria_field_appends_lists(file_io):
     # Add a criterion to each list
     file_io.add_cost_criteria_field("LABOR CRITERIA", "Labor criterion 1")
     file_io.add_cost_criteria_field("LABOR EXCLUSIONS", "Labor exclusion 1")
-    file_io.add_cost_criteria_field(
-        "SHIPPING CRITERIA", "Shipping criterion 1"
-    )
+    file_io.add_cost_criteria_field("SHIPPING CRITERIA", "Shipping criterion 1")
 
     # Ensure that each element was added to the list
     assert file_io.labor_criteria == ["Labor criterion 1"]

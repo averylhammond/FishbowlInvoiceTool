@@ -1,8 +1,6 @@
 from source.InvoiceAppController import InvoiceAppController
 
 # TODO: Add a /scripts folder to automate PyInstaller process for new release packages
-# TODO: Update README.md with instructions for running the unit tests
-# TODO: Update code to not need a logs/ folder, create it if not there
 
 # Entry Point
 if __name__ == "__main__":

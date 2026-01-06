@@ -52,6 +52,9 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 8) Run application
     - python main.py
 
+9) Run unit tests
+    - pytest tests/*
+
 
 **********************************
 INSTRUCTIONS TO SET UP FOR RELEASE
