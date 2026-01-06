@@ -6,9 +6,16 @@ pipeline {
     }
 
     stages {
-        stage('Run unit tests') {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Run Unit Tests') {
             steps {
                 sh '''
+                    pip install --upgrade pip
                     pip install -r requirements.txt
                     pytest tests/*
                 '''
