@@ -59,13 +59,11 @@ class InvoiceAppFileIO:
         if not __debug__:
             return
 
-        # Check to make sure the filepath exists
-        if not os.path.exists(os.path.dirname(self.debug_filepath)):
-            raise FileNotFoundError(
-                f"Debug file directory {os.path.dirname(self.debug_filepath)} does not exist."
-            )
+        # Get the log directory path and ensure the it exists
+        debug_dir = os.path.dirname(self.debug_filepath)
+        os.makedirs(debug_dir, exist_ok=True)
 
-        # If the file already exists, delete it
+        # If the debug file inside the directory already exists, delete it
         if os.path.isfile(self.debug_filepath):
             os.remove(self.debug_filepath)
 

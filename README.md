@@ -3,18 +3,40 @@
 **************************************
 INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 **************************************
-1) Clone repo
+1) Clone repo into a project folder.
 
-2) Open a Python virtual environment
+2) In order to run on example resources (payment info files and example invoices), clone the default branch
+   of https://github.com/averylhammond/automated-invoice-testing into the same project folder.
+    - The necessary folder structure is shown below:
+        - project_root/
+          ├── automated-invoice-testing/
+          │   └── resources/
+          └── FishbowlInvoiceTool/
+              └── scripts/copy_resources.sh
+
+3) Run ./scripts/copy_resources.sh to copy the necessary configuration files. This will allow you to run
+   the application using sample invoices and other config data. After running the script, your folder
+   structure should look like this:
+     -FishbowlInvoiceTool/
+          ├── Configs/
+          │   └── Cost_Criteria.txt
+          |   └── Payment_Terms.txt
+          |   └── Sales_Reps.txt
+          └── Invoices/
+              └── S0-12345.pdf
+              └── S0-98675.pdf
+              └── etc
+
+4) Open a Python virtual environment
     - python -m venv venv
 
-3) Activate virtual environment
+5) Activate virtual environment
     - Linux
         - source venv/bin/activate
     - Windows
         - source venv/Scripts/activate
 
-4) Install dependencies
+6) Install dependencies
     - pip install -r requirements.txt
 
     - NOTE: If on Linux, you need to install tkinter separately since it's not
@@ -27,14 +49,7 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
         - For Arch based distros:
             - sudo pacman -S python3-tk
 
-5) Create the following folders inside of the project directory
-    - ./Configs: Place your up to date private config files here
-
-    - ./logs: This needs to be created and left empty for the text files
-
-    - ./Invoices: Place your Fishbowl invoice PDFs here to test them
-
-6) Run script
+8) Run application
     - python main.py
 
 
