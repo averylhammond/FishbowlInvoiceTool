@@ -2,9 +2,9 @@ name: Python CI
 
 on:
   pull_request:
-    branches: [ feature/github-actions ]
+    branches: [ main ]
   push:
-    branches: [ feature/github-actions ]
+    branches: [ main ]
 
 jobs:
   test:
