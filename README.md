@@ -8,15 +8,13 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 2) In order to run on example resources (payment info files and example invoices), clone the default branch
    of https://github.com/averylhammond/automated-invoice-testing into the same project folder.
     - The necessary folder structure is shown below:
+        <PRE>
         - project_root/
-
           ├── automated-invoice-testing/
-
           │   └── resources/
-
           └── FishbowlInvoiceTool/
-
               └── scripts/copy_resources.sh
+        </PRE>
 
 3) Run ./scripts/copy_resources.sh to copy the necessary configuration files. This will allow you to run
    the application using sample invoices and other config data. After running the script, your folder
