@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    name: Pass Unit Tests
     runs-on: ubuntu-latest
 
     strategy:
