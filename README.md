@@ -21,22 +21,17 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 3) Run ./scripts/copy_resources.sh to copy the necessary configuration files. This will allow you to run
    the application using sample invoices and other config data. After running the script, your folder
    structure should look like this:
+     <PRE>
      -FishbowlInvoiceTool/
           ├── Configs/
-
           │   └── Cost_Criteria.txt
-
           |   └── Payment_Terms.txt
-
           |   └── Sales_Reps.txt
-
           └── Invoices/
-
               └── S0-12345.pdf
-
               └── S0-98675.pdf
-
               └── etc
+    </PRE>
 
 4) Open a Python virtual environment
     - python -m venv venv
