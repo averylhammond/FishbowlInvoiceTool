@@ -9,9 +9,13 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
    of https://github.com/averylhammond/automated-invoice-testing into the same project folder.
     - The necessary folder structure is shown below:
         - project_root/
+
           ├── automated-invoice-testing/
+
           │   └── resources/
+
           └── FishbowlInvoiceTool/
+
               └── scripts/copy_resources.sh
 
 3) Run ./scripts/copy_resources.sh to copy the necessary configuration files. This will allow you to run
@@ -19,12 +23,19 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
    structure should look like this:
      -FishbowlInvoiceTool/
           ├── Configs/
+
           │   └── Cost_Criteria.txt
+
           |   └── Payment_Terms.txt
+
           |   └── Sales_Reps.txt
+
           └── Invoices/
+
               └── S0-12345.pdf
+
               └── S0-98675.pdf
+
               └── etc
 
 4) Open a Python virtual environment
