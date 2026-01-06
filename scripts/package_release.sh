@@ -30,6 +30,9 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
+# Save the argument specifying whether to populate the Invoices/ folder
+POPULATE_INVOICES="$1"
+
 # Get the location of this script, and use it to derive the project directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -102,12 +105,15 @@ cp "$PROJECT_DIR/ReadMe.txt" "$RELEASE_DIR/"  # Note that this is the customer R
 cp -a "$RESOURCES_DIR/Configs/." "$CONFIGS_DIR/"
 
 # If the user specified to populate the Invoices/ folder, copy those over too
-POPULATE_INVOICES="$1"
-
 if [[ "$POPULATE_INVOICES" == "true" ]]; then
     echo "Populating Invoices/ folder in release with sample invoices from testing framework..."
     cp -a "$RESOURCES_DIR/Invoices/." "$INVOICES_DIR/"
 fi
+
+# Zip up the release folder for distribution
+echo "Creating zip archive of the release..."
+cd "$PROJECT_DIR/release"
+tar -czvf "FishbowlInvoiceTool.zip" "$RELEASE_DIR"
 
 # Exit virtual environment on script exit
 echo "Deactivating virtual environment: $VIRTUAL_ENV"
