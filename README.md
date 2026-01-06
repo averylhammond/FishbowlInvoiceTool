@@ -37,7 +37,7 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
         - source venv/Scripts/activate
 
 6) Install dependencies
-    - pip install -r requirements.txt
+    - pip install -r requirements/dev.txt
 
     - NOTE: If on Linux, you need to install tkinter separately since it's not
             included in the standard library. Then run step 4.
@@ -61,7 +61,6 @@ INSTRUCTIONS TO SET UP FOR RELEASE
 **********************************
 
 1) Follow above instructions for development to set the repo
-    - Additionally, make sure all unit tests pass by running pytest tests/*
 
 2) In virtual environment, install PyInstaller
     - pip install PyInstaller
