@@ -1,25 +1,17 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11.9'
-        }
-    }
-
-    options {
-        skipDefaultCheckout(true)
-    }
+    agent any
 
     stages {
-        stage('Checkout') {
+        stage('Run unit tests in Docker') {
+            agent {
+                docker {
+                    image 'python:3.11.9'
+                }
+            }
             steps {
                 checkout scm
-            }
-        }
-        
-        stage('Run Unit Tests') {
-            steps {
                 sh '''
-                    pip install --upgrade pip
+                    python -m pip install --upgrade pip
                     pip install -r requirements.txt
                     pytest tests/*
                 '''
