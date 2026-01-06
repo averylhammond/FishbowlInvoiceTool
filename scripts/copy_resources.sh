@@ -21,7 +21,6 @@
 # Usage: ./copy_resources.sh                                                        #
 #####################################################################################
 
-
 # Fail safely on errors and undefined variables, and ensure pipelines fully succeed
 set -euo pipefail
 

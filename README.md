@@ -85,7 +85,6 @@ INSTRUCTIONS TO SET UP FOR RELEASE
             - Sales_Reps.txt
             - Cost_Criteria.txt
         - Invoices
-        - logs
         - AutoInvoiceProc.exe
         - ReadMe.txt
     
