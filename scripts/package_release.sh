@@ -98,6 +98,17 @@ mkdir -p "$INVOICES_DIR"
 mv "$PROJECT_DIR/dist/AutoInvoiceProc.exe" "$RELEASE_DIR/"
 cp "$PROJECT_DIR/ReadMe.txt" "$RELEASE_DIR/"  # Note that this is the customer ReadMe.txt, not the GitHub README.md
 
+# Copy over the latest resources/Configs files that live in the automated-invoice-testing repo
+cp -a "$RESOURCES_DIR/Configs/." "$CONFIGS_DIR/"
+
+# If the user specified to populate the Invoices/ folder, copy those over too
+POPULATE_INVOICES="$1"
+
+if [[ "$POPULATE_INVOICES" == "true" ]]; then
+    echo "Populating Invoices/ folder in release with sample invoices from testing framework..."
+    cp -a "$RESOURCES_DIR/Invoices/." "$INVOICES_DIR/"
+fi
+
 # Exit virtual environment on script exit
 echo "Deactivating virtual environment: $VIRTUAL_ENV"
 deactivate
