@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11.9'
+        }
+    }
 
     stages {
         stage('Checkout') {
@@ -7,18 +11,14 @@ pipeline {
                 checkout scm
             }
         }
-
-        stage('Run unit tests') {
+        
+        stage('Run Unit Tests') {
             steps {
-                script {
-                    docker.image('python:3.11.9').inside {
-                        sh '''
-                            python -m pip install --upgrade pip
-                            pip install -r requirements.txt
-                            pytest tests/*
-                        '''
-                    }
-                }
+                sh '''
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                    pytest tests/*
+                '''
             }
         }
     }
