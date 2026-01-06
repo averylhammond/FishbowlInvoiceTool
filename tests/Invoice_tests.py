@@ -18,7 +18,7 @@ def test_invoice_initialization():
     invoice = Invoice()
 
     # Check that all string fields are initialized to an empty string
-    assert invoice.customer_name == ""
+    assert invoice.customer_name == "break tests"
     assert invoice.date == ""
     assert invoice.order_number == ""
     assert invoice.po_number == ""
