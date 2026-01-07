@@ -34,3 +34,14 @@ jobs:
     - name: Run tests and code coverage
       run: |
         pytest --cov=./ --cov-report=xml tests/*
+
+    # Generate code coverage in PR comments
+    - name: Pytest coverage comment
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        pytest-xml-coverage-path: ./coverage.xml
+        title: Code Coverage Report
+        badge-title: Coverage
+        hide-badge: false
+        hide-report: false
+        create-new-comment: false
