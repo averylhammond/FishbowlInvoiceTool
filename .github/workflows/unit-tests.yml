@@ -53,3 +53,4 @@ jobs:
         hide-badge: false
         hide-report: false
         create-new-comment: false
+        github-token: ${{ secrets.GITHUB_TOKEN }}
