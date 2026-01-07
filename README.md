@@ -2,6 +2,8 @@ Current Build Status: [![Python-CI](https://github.com/averylhammond/FishbowlInv
 
 Current Code Coverage Status: ![Coverage Badge](https://raw.githubusercontent.com/averylhammond/FishbowlInvoiceTool/python-coverage-comment-action-data/badge.svg)
 
+Try another badge: ![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/averylhammond/FishbowlInvoiceTool/python-coverage-comment-action-data/data.json)
+
 **************************************
 INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 **************************************
