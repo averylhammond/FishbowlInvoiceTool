@@ -30,7 +30,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
 
-    # Run unit tests with pytest
-    - name: Run tests
+    # Run unit tests with pytest, and generate code coverage report xml
+    - name: Run tests and code coverage
       run: |
-        pytest tests/*
+        pytest --cov=./ --cov-report=xml tests/*

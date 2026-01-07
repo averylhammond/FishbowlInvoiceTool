@@ -71,7 +71,7 @@ fi
 echo "Creating a fresh virtual environment for packaging..."
 python -m venv "$PROJECT_DIR/venv"
     
-# Determine the OS type, only linux and Windows are supported
+# Determine the OS type, only Linux and Windows are supported
 # Activating the venv requires different paths on Windows/Linux
 # Exit on unknown OS
 OS_TYPE="$(uname -s 2>/dev/null || echo unknown)"
@@ -80,7 +80,7 @@ if [[ "$OS_TYPE" == "Linux" ]]; then
 elif [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "CYGWIN"* || "$OS_TYPE" == "MSYS"* ]]; then
     source "$PROJECT_DIR/venv/Scripts/activate"
 else
-    echo "Unknown OS: ${OS_TYPE:-}... Exiting"
+    echo "Unknown/Unsupported OS: ${OS_TYPE:-}... Exiting"
     exit 1
 fi
 echo "Activated virtual environment: $VIRTUAL_ENV"
