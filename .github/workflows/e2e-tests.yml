@@ -38,8 +38,7 @@
 #     - name: Install dependencies
 #       run: |
 #         python -m pip install --upgrade pip
-#         pip install -r requirements.txt
-#         pip install pytest
+#         pip install -r requirements/dev.txt
 
 #     # TODO: Build the executable and run it with the resources provided 
 #     # - name: Run E2E tests

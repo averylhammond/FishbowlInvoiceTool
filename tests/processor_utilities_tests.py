@@ -1,4 +1,4 @@
-import pytest  # TODO: Is there a way to separate out pytest in the requirements.txt to only include for debug builds? Or something like that
+import pytest
 from decimal import Decimal
 from source.processor_utilities import *
 
@@ -256,8 +256,7 @@ def test_find_payment_terms_correct_format():
     # Verify the correct payment term is found in the searched text
     text = "Text containing payment_term_1 inside of it"
     assert (
-        find_payment_terms(text=text, payment_terms=payment_terms)
-        == "payment_term_1"
+        find_payment_terms(text=text, payment_terms=payment_terms) == "payment_term_1"
     )
 
 
