@@ -19,9 +19,6 @@
 # Fail safely on errors and undefined variables, and ensure pipelines fully succeed
 set -euo pipefail
 
-# Run a git clean to clean up the project tree before packaging
-git clean -fdxf
-
 # Exit if no argument provided
 if [[ $# -lt 1 ]]; then
     echo "Usage: ./package_release.sh <populate_invoices>, where <populate_invoices> is 'true' or 'false'"
@@ -32,6 +29,16 @@ fi
 
 # Save the argument specifying whether to populate the Invoices/ folder
 POPULATE_INVOICES="$1"
+
+# Check virtual environment, exit if already in one to create a fresh one
+if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+    echo "Exiting current virtual environment to create a fresh one: $VIRTUAL_ENV"
+    deactivate
+fi
+
+# Run a git clean to clean up the project tree before packaging, including removing
+# the old virtual environment if necessary
+git clean -fdxf
 
 # Get the location of this script, and use it to derive the project directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,7 +52,7 @@ PROJECT_DIR="$ROOT_DIR/FishbowlInvoiceTool"
 if [[ ! -d "$RESOURCES_DIR" ]]; then
   echo "Resources directory does not exist in testing framework: $RESOURCES_DIR"
   echo "Make sure to clone the latest version of the automated-invoice-testing"
-  echo "repo into the same parent directory as FishbowlInvoiceTool."
+  echo "repo into the same parent directory as the FishbowlInvoiceTool."
   exit 1
 fi
 if [[ ! -d "$PROJECT_DIR" ]]; then
@@ -53,34 +60,31 @@ if [[ ! -d "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
-# Check virtual environment
-if [[ -n "${VIRTUAL_ENV:-}" ]]; then
-    echo "Already inside of a virtual environment: $VIRTUAL_ENV"
-else
-    # If not in a virtual environment, create one
-    echo "Creating a fresh virtual environment for packaging..."
-    python -m venv "$PROJECT_DIR/venv"
+# Create a fresh virtual environment to ensure the minimal set of dependencies are
+# packaged with the application release
+echo "Creating a fresh virtual environment for packaging..."
+python -m venv "$PROJECT_DIR/venv"
     
-    # Determine the OS type, only linux and Windows are supported
-    # Activating the venv requires different paths on Windows/Linux
-    # Exit on unknown OS
-    OS_TYPE="$(uname -s 2>/dev/null || echo unknown)"
-    if [[ "$OS_TYPE" == "Linux" ]]; then
-        source "$PROJECT_DIR/venv/bin/activate"
-    elif [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "CYGWIN"* || "$OS_TYPE" == "MSYS"* ]]; then
-        source "$PROJECT_DIR/venv/Scripts/activate"
-    else
-        echo "Unknown OS: ${OS_TYPE:-}... Exiting"
-        exit 1
-    fi
-
-    echo "Activated virtual environment: $VIRTUAL_ENV"
+# Determine the OS type, only linux and Windows are supported
+# Activating the venv requires different paths on Windows/Linux
+# Exit on unknown OS
+OS_TYPE="$(uname -s 2>/dev/null || echo unknown)"
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    source "$PROJECT_DIR/venv/bin/activate"
+elif [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "CYGWIN"* || "$OS_TYPE" == "MSYS"* ]]; then
+    source "$PROJECT_DIR/venv/Scripts/activate"
+else
+    echo "Unknown OS: ${OS_TYPE:-}... Exiting"
+    exit 1
 fi
+echo "Activated virtual environment: $VIRTUAL_ENV"
 
 # Make sure that all project dependencies are installed in the virtual environment
+echo "Installing project dependencies into virtual environment..."
 pip install -r "$PROJECT_DIR/requirements/release.txt"
 
 # Install PyInstaller
+echo "Installing PyInstaller into virtual environment..."
 pip install PyInstaller
 
 # Use PyInstaller to package the application into an executable

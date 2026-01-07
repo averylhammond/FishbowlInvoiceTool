@@ -6,7 +6,8 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 1) Clone this repo into a project folder.
 
 2) In order to test with example resources (payment info files and example invoices), clone the default branch
-   of https://github.com/averylhammond/automated-invoice-testing into the same project folder.
+   of https://github.com/averylhammond/automated-invoice-testing into the same project folder. Note that this
+   repo is private in order to protect sensitive customer data.
     - The necessary folder structure is shown below:
      <PRE>- project_root/
           ├── automated-invoice-testing/
@@ -14,9 +15,9 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
           └── FishbowlInvoiceTool/
               └── scripts/copy_resources.sh</PRE>
 
-3) Run ./scripts/copy_resources.sh to copy the necessary configuration files. This will allow you to run
-   the application using sample invoices and other config data. After running the script, your folder
-   structure should look like this:
+3) Run ./FishbowlInvoiceTool/scripts/copy_resources.sh to copy the necessary configuration files. This will
+   allow you to run the application using sample invoices and other config data. After running the script,
+   your folder structure should look like this:
      <PRE>-FishbowlInvoiceTool/
           ├── Configs/
           │   └── Cost_Criteria.txt
@@ -49,21 +50,22 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
         - For Arch based distros:
             - sudo pacman -S python3-tk
 
-8) Run application
+7) Run application
     - python main.py
 
-9) Run unit tests
+8) Run unit tests
     - pytest tests/*
 
 
-**********************************
-TO CREATE A RELEASE
-**********************************
+*******************************************
+INSTRUCTION TO CREATE AND PACKAGE A RELEASE
+*******************************************
 
 1) Clone this repo, or commit existing changes.
 
-2) In order to copy in resources needed for release (payment info files and example invoices), clone the default 
-   branch of https://github.com/averylhammond/automated-invoice-testing into the same project folder.
+2) In order to copy in resources needed for release (payment info and other config files), clone the default 
+   branch of https://github.com/averylhammond/automated-invoice-testing into the same project folder. Note that
+   this repo is private in order to protect sensitive customer data.
     - The necessary folder structure is shown below:
      <PRE>- project_root/
           ├── automated-invoice-testing/
@@ -71,19 +73,23 @@ TO CREATE A RELEASE
           └── FishbowlInvoiceTool/
               └── scripts/package_release.sh</PRE>
 
-4) Run "./scripts/package_release.sh false", this will do the following:
+3) Run "./FishbowlInvoiceTool/scripts/package_release.sh false", this will do the following:
+    - Deactivate the current python virtual environment (if active)
     - Run a git clean
-    - Create and activate a python virtual environment if one is not in use already
-    - Install all project dependencies, even if they are already present
+    - Create and activate a fresh python virtual environment
+    - Install all project dependencies for the release configuration
     - Install and run the latest version of PyInstaller to generate an executable
-    - Copy the latest Configs/ folder from the automated-invoice-testing repo
-    - If the first argument was true, it will also copy the latest Invoices/ folder
-      from the automated-invoice-testing repo for use in automated testing. If the
-      argument is false, it will create the folder, but not move the existing
-      invoices over.
-    - Zips up the release folder and places it into the /release folder.
-    - Deactivate the currently active virtual environment
+        - The executable will be placed into the release/FishbowlInvoiceTool folder
+    - Copy the latest Configs/ folder from the automated-invoice-testing repo and
+      place it into the release/FishbowlInvoiceTool folder
+        - If the first argument was true, it will also copy the latest Invoices/ folder
+          from the automated-invoice-testing repo for use in automated testing. If the
+          argument is false, it will create the folder, but not move the existing
+          invoices over.
+    - Zips up the release/FishbowlInvoiceTool/ folder and saves it in the release folder
+      as: release/FishbowlInvoiceTool.zip
+    - Deactivates the python virtual environment
 
-6) The zipped up release folder can now be published on GitHub.
+4) The zipped up application release can now be published on GitHub as an official release.
 
    https://github.com/averylhammond/FishbowlInvoiceTool#
