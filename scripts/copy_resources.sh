@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
 #####################################################################################
+#                                                                                   #
+# 01/07/2026 - Author - Avery Hammond                                               #
+#                                                                                   #
 # This script is intended to copy resource files from the automated-invoice-testing #
 # repo into the FishbowlInvoiceTool repo for use during testing. The application    #
-# does not contain resource files that contain private company data since it is a   #
-# public repository. This helper script assumes that the FishbowlInvoiceTool        #
+# repo does not contain resource files that contain private company data since it   #
+# is a public repository. This helper script assumes that the FishbowlInvoiceTool   #
 # application and the automated-invoice-testing repository have both been cloned    #
 # into the same parent directory, and automates the file copy process.              #
 #                                                                                   #

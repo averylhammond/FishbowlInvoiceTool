@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 #####################################################################################
+#                                                                                   #
+# 01/07/2026 - Author - Avery Hammond                                               #
+#                                                                                   #
 # This script is intended to take the FishbowlInvoiceTool and package it as a       #
 # release executable using PyInstaller. It assumes that the FishbowlInvoiceTool     #
 # repository has been cloned into a directory alongside the automated-invoice-      #
@@ -14,6 +17,9 @@
 # │   └── resources/                                                                #
 # └── FishbowlInvoiceTool/                                                          #
 #   └── scripts/package_release.sh                                                  #
+#                                                                                   #
+# Usage: ./package_release.sh <populate_invoices>                                   #
+# where <populate_invoices> is 'true' or 'false'                                    #
 #####################################################################################
 
 # Fail safely on errors and undefined variables, and ensure pipelines fully succeed
