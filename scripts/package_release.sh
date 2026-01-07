@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 #####################################################################################
+#                                                                                   #
+# 01/07/2026 - Author - Avery Hammond                                               #
+#                                                                                   #
 # This script is intended to take the FishbowlInvoiceTool and package it as a       #
 # release executable using PyInstaller. It assumes that the FishbowlInvoiceTool     #
 # repository has been cloned into a directory alongside the automated-invoice-      #
@@ -14,6 +17,9 @@
 # │   └── resources/                                                                #
 # └── FishbowlInvoiceTool/                                                          #
 #   └── scripts/package_release.sh                                                  #
+#                                                                                   #
+# Usage: ./package_release.sh <populate_invoices>                                   #
+# where <populate_invoices> is 'true' or 'false'                                    #
 #####################################################################################
 
 # Fail safely on errors and undefined variables, and ensure pipelines fully succeed
@@ -65,7 +71,7 @@ fi
 echo "Creating a fresh virtual environment for packaging..."
 python -m venv "$PROJECT_DIR/venv"
     
-# Determine the OS type, only linux and Windows are supported
+# Determine the OS type, only Linux and Windows are supported
 # Activating the venv requires different paths on Windows/Linux
 # Exit on unknown OS
 OS_TYPE="$(uname -s 2>/dev/null || echo unknown)"
@@ -74,7 +80,7 @@ if [[ "$OS_TYPE" == "Linux" ]]; then
 elif [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "CYGWIN"* || "$OS_TYPE" == "MSYS"* ]]; then
     source "$PROJECT_DIR/venv/Scripts/activate"
 else
-    echo "Unknown OS: ${OS_TYPE:-}... Exiting"
+    echo "Unknown/Unsupported OS: ${OS_TYPE:-}... Exiting"
     exit 1
 fi
 echo "Activated virtual environment: $VIRTUAL_ENV"

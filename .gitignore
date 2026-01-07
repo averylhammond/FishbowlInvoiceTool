@@ -16,6 +16,10 @@ build/
 *.spec
 release/
 
+# Ignore code coverage files
+.coverage
+coverage.xml
+
 # Ignore invoices moved into this folder for testing
 Invoices/*
 
