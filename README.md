@@ -1,6 +1,6 @@
 Current Build Status: [![Python-CI](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/unit-tests.yml)
 
-Current Code Coverage Status: ![Coverage Badge](https://raw.githubusercontent.com/averylhammond/FishbowlInvoiceTool/python-coverage-comment-action-data/badge.svg)
+Current Code Coverage Status: ![Coverage](https://averylhammond.github.io/FishbowlInvoiceTool/badge.svg)
 
 **************************************
 INSTRUCTIONS TO SET UP FOR DEVELOPMENT
