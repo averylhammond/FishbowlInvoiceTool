@@ -1,0 +1,224 @@
+***********************************
+Processed Invoice Results:
+Customer Name: DH PACE CHICAGO
+Invoice Date: 10/11/2023
+Order Number: S15082
+PO Number: 264.623744
+Payment Terms: Net 30
+Sales Rep: John
+Labor Cost: $79.00
+Material Cost: $1813.14
+Shipping Cost: $0.00
+Subtotal: $1892.14
+Sales Tax: $0.00
+Calculated Total: $1892.14
+Listed Total: $1892.15
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: INDUSTRIAL DOOR COMPANY
+Invoice Date: 09/14/2023
+Order Number: S16192
+PO Number: 00077758-1
+Payment Terms: Net 30
+Sales Rep: John
+Labor Cost: $154.00
+Material Cost: $2052.29
+Shipping Cost: $0.00
+Subtotal: $2206.29
+Sales Tax: $0.00
+Calculated Total: $2206.29
+Listed Total: $2206.29
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: MILWAUKEE PLATE GLASS CO
+Invoice Date: 10/11/2023
+Order Number: S16884
+PO Number: 65262
+Payment Terms: Net 30
+Sales Rep: Jackie
+Labor Cost: $0.00
+Material Cost: $615.48
+Shipping Cost: $0.00
+Subtotal: $615.48
+Sales Tax: $0.00
+Calculated Total: $615.48
+Listed Total: $615.48
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: INDUSTRIAL DOOR COMPANY
+Invoice Date: 10/11/2023
+Order Number: S16923
+PO Number: 00077877
+Payment Terms: Net 30
+Sales Rep: John
+Labor Cost: $254.00
+Material Cost: $3042.27
+Shipping Cost: $0.00
+Subtotal: $3296.27
+Sales Tax: $0.00
+Calculated Total: $3296.27
+Listed Total: $3296.28
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: CHICAGO HOLLOW METAL
+Invoice Date: 08/29/2023
+Order Number: S16952
+PO Number: P2301-65APD
+Payment Terms: Net 30
+Sales Rep: Jackie
+Labor Cost: $0.00
+Material Cost: $642.93
+Shipping Cost: $0.00
+Subtotal: $642.93
+Sales Tax: $54.65
+Calculated Total: $697.58
+Listed Total: $697.58
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: CHICAGO HOLLOW METAL
+Invoice Date: 09/18/2023
+Order Number: S17069
+PO Number: P2306-29P
+Payment Terms: Net 30
+Sales Rep: Jackie
+Labor Cost: $0.00
+Material Cost: $1611.24
+Shipping Cost: $0.00
+Subtotal: $1611.24
+Sales Tax: $136.96
+Calculated Total: $1748.20
+Listed Total: $1748.20
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: GLASS DOORS & MORE
+Invoice Date: 09/14/2023
+Order Number: S17092
+PO Number: 10737
+Payment Terms: Net 30
+Sales Rep: Jackie
+Labor Cost: $0.00
+Material Cost: $1194.76
+Shipping Cost: $268.52
+Subtotal: $1463.28
+Sales Tax: $0.00
+Calculated Total: $1463.28
+Listed Total: $1463.28
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: GLASS DOORS & MORE
+Invoice Date: 09/14/2023
+Order Number: S17093
+PO Number: 10732
+Payment Terms: Net 30
+Sales Rep: Jackie
+Labor Cost: $0.00
+Material Cost: $1593.02
+Shipping Cost: $0.00
+Subtotal: $1593.02
+Sales Tax: $0.00
+Calculated Total: $1593.02
+Listed Total: $1593.02
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: INDUSTRIAL DOOR COMPANY
+Invoice Date: 10/11/2023
+Order Number: S17214
+PO Number: 00078310
+Payment Terms: Net 30
+Sales Rep: John
+Labor Cost: $313.00
+Material Cost: $3281.44
+Shipping Cost: $0.00
+Subtotal: $3594.44
+Sales Tax: $0.00
+Calculated Total: $3594.44
+Listed Total: $3594.46
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: DOUBLE A GLASS
+Invoice Date: 10/17/2023
+Order Number: S17271
+PO Number: 671
+Payment Terms: Net 30
+Sales Rep: Jackie
+Labor Cost: $0.00
+Material Cost: $651.24
+Shipping Cost: $273.23
+Subtotal: $924.47
+Sales Tax: $0.00
+Calculated Total: $924.47
+Listed Total: $924.47
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: DOUBLE A GLASS
+Invoice Date: 10/13/2023
+Order Number: S17338
+PO Number: 673
+Payment Terms: Net 30
+Sales Rep: Jackie
+Labor Cost: $0.00
+Material Cost: $1168.00
+Shipping Cost: $584.47
+Subtotal: $1752.47
+Sales Tax: $0.00
+Calculated Total: $1752.47
+Listed Total: $1752.47
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: JGR COMMERCIAL SOLUTIONS
+Invoice Date: 07/11/2025
+Order Number: S24292
+PO Number: STK062525-BACKORDER
+Payment Terms: Net 30
+Sales Rep: John
+Labor Cost: $0.00
+Material Cost: $3397.48
+Shipping Cost: $0.00
+Subtotal: $3397.48
+Sales Tax: $0.00
+Calculated Total: $3397.48
+Listed Total: $3397.48
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: CHICAGO HOLLOW METAL
+Invoice Date: 07/03/2025
+Order Number: S24359
+PO Number: 2506-40P-2
+Payment Terms: Net 30
+Sales Rep: John
+Labor Cost: $0.00
+Material Cost: $194.60
+Shipping Cost: $0.00
+Subtotal: $194.60
+Sales Tax: $16.54
+Calculated Total: $211.14
+Listed Total: $211.14
+***********************************
+***********************************
+Processed Invoice Results:
+Customer Name: ADDISON BUILDING MATERIALS COMPANY
+Invoice Date: 07/23/2025
+Order Number: S24531
+PO Number: 81942
+Payment Terms: Net 30
+Sales Rep: Nick
+Labor Cost: $60.00
+Material Cost: $1200.00
+Shipping Cost: $0.00
+Subtotal: $1260.00
+Sales Tax: $0.00
+Calculated Total: $1260.00
+Listed Total: $1260.00
+***********************************
