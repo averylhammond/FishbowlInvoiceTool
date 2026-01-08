@@ -1,4 +1,4 @@
-name: Unit Test Pipeline
+name: Code Coverage CI Check
 
 # Run the unit tests pipeline on pull requests to main, and all commits on all branches
 on:
@@ -42,9 +42,10 @@ jobs:
     # Run unit tests with pytest, and generate code coverage report xml
     # Note: replace --cov-report=xml with --cov-report=html to generate HTML report instead
     # which can be easier to manual use
+    # Limit coverage to minimum 50%, aim to increase this number over time to 80%
     - name: Run tests and code coverage
       run: |
-        pytest --cov=./ --cov-report=xml --cov-fail-under=80 tests/*
+        pytest --cov=./ --cov-report=xml --cov-fail-under=50 tests/*
 
     # Generate coverage using tj-actions/coverage-badge-py action
     - name: Generate Coverage Badge

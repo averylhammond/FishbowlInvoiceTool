@@ -1,4 +1,4 @@
-name: Unit Test Pipeline
+name: Unit Test CI Check
 
 # Run the unit tests pipeline on pull requests to main, and all commits on all branches
 on:
