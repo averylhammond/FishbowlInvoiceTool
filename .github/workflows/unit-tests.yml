@@ -18,6 +18,11 @@ permissions:
 
 jobs:
   test:
+
+    # Specify that all job steps should be run from within the project directory
+    defaults:
+      run:
+        working-directory: ./project_directory
     
     # Give the job a name to link into the Github Rules UI
     name: Unit Test CI Check
@@ -25,7 +30,10 @@ jobs:
 
     # Checkout repo
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      with:
+        path: project_directory
 
     # Set up Python environment
     - name: Set up Python environment
