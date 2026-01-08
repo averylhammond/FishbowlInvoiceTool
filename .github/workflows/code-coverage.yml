@@ -62,6 +62,7 @@ jobs:
 
     # If the code coverage percentage has changed, commit the new badge
     - name: Commit badge
+      if: steps.changed-files.outputs.files_changed == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
