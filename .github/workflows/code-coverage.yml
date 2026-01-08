@@ -30,7 +30,10 @@ jobs:
 
     # Checkout repo
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      with:
+        path: project_directory
 
     # Set up Python environment
     - name: Set up Python environment
