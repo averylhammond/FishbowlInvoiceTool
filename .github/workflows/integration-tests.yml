@@ -37,7 +37,7 @@ jobs:
       with:
         repository: averylhammond/automated-invoice-testing
         path: automated-invoice-testing # clone into a different subdirectory
-        token: ${{ secrets.E2E_REPO_PAT }}
+        token: ${{ secrets.CUSTOMER_DATA_PAT }}
 
     # Set up Python environment
     - name: Set up Python environment
