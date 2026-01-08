@@ -1,0 +1,70 @@
+name: Unit Test Pipeline
+
+# Run the unit tests pipeline on pull requests to main, and all commits on all branches
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: ["*"]
+
+# Allow for the job to be ran manually from the GitHub Actions UI
+  workflow_dispatch:
+
+# Define the jobs permissions
+# Let the code coverage job add PR comments with coverage results
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    
+    # Give the job a name to link into the Github Rules UI
+    name: Pass 50% Code Coverage
+    runs-on: ubuntu-latest
+
+    # Checkout repo
+    steps:
+    - uses: actions/checkout@v3
+
+    # Set up Python environment
+    - name: Set up Python environment
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11.9"
+
+    # Install development project dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+
+    # Run unit tests with pytest, and generate code coverage report xml
+    # Note: replace --cov-report=xml with --cov-report=html to generate HTML report instead
+    # which can be easier to manual use
+    - name: Run tests and code coverage
+      run: |
+        pytest --cov=./ --cov-report=xml --cov-fail-under=80 tests/*
+
+    # Generate coverage using tj-actions/coverage-badge-py action
+    - name: Generate Coverage Badge
+      uses: tj-actions/coverage-badge-py@v2
+      with:
+        output: coverage.svg
+
+    # Commit coverage badge if it has changed, this will add a .coverage.svg file to the repo
+    - name: Verify Changed files
+      uses: tj-actions/verify-changed-files@v16
+      id: changed-files
+      with:
+        files: coverage.svg
+
+    # If the code coverage percentage has changed, commit the new badge
+    - name: Commit badge
+      if: steps.changed-files.outputs.files_changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add coverage.svg
+        git commit -m "Updated coverage.svg"
+        git push

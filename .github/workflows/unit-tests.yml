@@ -39,29 +39,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
 
-    # Run unit tests with pytest, and generate code coverage report xml
-    # Note: replace --cov-report=xml with --cov-report=html to generate HTML report instead
-    # which can be easier to manual use
+    # Run unit tests with pytest
     - name: Run tests and code coverage
       run: |
-        pytest --cov=./ --cov-report=xml tests/*
-
-    - name: Generate Coverage Badge
-      uses: tj-actions/coverage-badge-py@v2
-      with:
-        output: coverage.svg
-
-    - name: Verify Changed files
-      uses: tj-actions/verify-changed-files@v16
-      id: changed-files
-      with:
-        files: coverage.svg
-
-    - name: Commit badge
-      if: steps.changed-files.outputs.files_changed == 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add coverage.svg
-        git commit -m "Updated coverage.svg"
-        git push
+        pytest tests/*
