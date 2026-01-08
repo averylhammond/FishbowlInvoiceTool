@@ -45,7 +45,7 @@ jobs:
     # Limit coverage to minimum 50%, aim to increase this number over time to 80%
     - name: Run tests and code coverage
       run: |
-        pytest --cov=./ --cov-report=xml --cov-fail-under=50 tests/*
+        pytest --cov=./ --cov-report=xml --cov-fail-under=80 tests/*
 
     # Generate coverage using tj-actions/coverage-badge-py action
     - name: Generate Coverage Badge
