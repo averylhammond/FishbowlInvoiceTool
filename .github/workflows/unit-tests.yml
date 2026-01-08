@@ -18,6 +18,11 @@ permissions:
 
 jobs:
   test:
+
+    # Specify that all job steps should be run from within the project directory
+    defaults:
+      run:
+        working-directory: ./project_directory
     
     # Give the job a name to link into the Github Rules UI
     name: Unit Test CI Check
