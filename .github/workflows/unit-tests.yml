@@ -7,6 +7,9 @@ on:
   push:
     branches: ["*"]
 
+# Allow for the job to be ran manually from the GitHub Actions UI
+  workflow_dispatch:
+
 # Define the jobs permissions
 # Let the code coverage job add PR comments with coverage results
 permissions:
@@ -53,4 +56,5 @@ jobs:
         hide-badge: false
         hide-report: false
         create-new-comment: false
+        update_coverage_badge: true
         github-token: ${{ secrets.GITHUB_TOKEN }}
