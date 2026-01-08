@@ -53,16 +53,15 @@ jobs:
       with:
         output: coverage.svg
 
-    # Commit coverage badge if it has changed, this will add a .coverage.svg file to the repo
-    - name: Verify Changed files
-      uses: tj-actions/verify-changed-files@v16
-      id: changed-files
-      with:
-        files: coverage.svg
+    # # Commit coverage badge if it has changed, this will add a .coverage.svg file to the repo
+    # - name: Verify Changed files
+    #   uses: tj-actions/verify-changed-files@v16
+    #   id: changed-files
+    #   with:
+    #     files: coverage.svg
 
     # If the code coverage percentage has changed, commit the new badge
     - name: Commit badge
-      if: steps.changed-files.outputs.files_changed == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
