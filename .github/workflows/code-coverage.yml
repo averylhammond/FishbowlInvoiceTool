@@ -1,4 +1,4 @@
-name: Code Coverage CI Check
+name: Code Coverage Workflow
 
 # Run the unit tests pipeline on pull requests to main, and all commits on all branches
 on:
@@ -20,7 +20,7 @@ jobs:
   test:
     
     # Give the job a name to link into the Github Rules UI
-    name: Pass 50% Code Coverage
+    name: 50% Min Code Coverage CI Check
     runs-on: ubuntu-latest
 
     # Checkout repo
