@@ -1,4 +1,4 @@
-name: Unit Test Pipeline
+name: Unit Test CI Check
 
 # Run the unit tests pipeline on pull requests to main, and all commits on all branches
 on:
@@ -39,22 +39,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
 
-    # Run unit tests with pytest, and generate code coverage report xml
-    # Note: replace --cov-report=xml with --cov-report=html to generate HTML report instead
-    # which can be easier to manual use
+    # Run unit tests with pytest
     - name: Run tests and code coverage
       run: |
-        pytest --cov=./ --cov-report=xml tests/*
-
-    # Generate code coverage in PR comments
-    - name: Pytest coverage comment
-      uses: MishaKav/pytest-coverage-comment@main
-      with:
-        pytest-xml-coverage-path: ./coverage.xml
-        title: Code Coverage Report
-        badge-title: Coverage
-        hide-badge: false
-        hide-report: false
-        create-new-comment: false
-        update_coverage_badge: true
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        pytest tests/*

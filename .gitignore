@@ -19,6 +19,7 @@ release/
 # Ignore code coverage files
 .coverage
 coverage.xml
+coverage.svg
 
 # Ignore invoices moved into this folder for testing
 Invoices/*
