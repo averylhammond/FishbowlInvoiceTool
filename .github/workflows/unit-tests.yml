@@ -1,4 +1,4 @@
-name: Unit Test CI Check
+name: Unit Test Workflow
 
 # Run the unit tests pipeline on pull requests to main, and all commits on all branches
 on:
@@ -20,7 +20,7 @@ jobs:
   test:
     
     # Give the job a name to link into the Github Rules UI
-    name: Pass Unit Tests
+    name: Unit Test CI Check
     runs-on: ubuntu-latest
 
     # Checkout repo
