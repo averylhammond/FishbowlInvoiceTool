@@ -2,6 +2,7 @@
 from source.InvoiceAppDisplay import InvoiceAppDisplay
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
+from source.ArgumentProvider import ArgumentProvider
 from source.Invoice import Invoice
 
 # TODO: Add tests style function headers to each header to improve readability
@@ -68,9 +69,7 @@ class InvoiceAppController:
         )
 
         # Build payment terms dictionary containing all possible sales rep name codes that could appear on an invoice
-        self.payment_terms = (
-            self.file_io_controller.parse_payment_terms_config()
-        )
+        self.payment_terms = self.file_io_controller.parse_payment_terms_config()
 
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
         self.sales_reps = self.file_io_controller.parse_sales_reps_config()
@@ -79,6 +78,8 @@ class InvoiceAppController:
         """
         Starts the application by entering the tkinter main GUI loop
         """
+
+        # TODO: Check if we are in integration test mode, if so just run the integration tests and exit
 
         # Reset text files before starting the application
         if __debug__:
@@ -89,9 +90,7 @@ class InvoiceAppController:
         # Start the GUI application
         self.display.mainloop()
 
-    def handle_process_invoice(
-        self, invoice_filepath: str, append_output: bool
-    ):
+    def handle_process_invoice(self, invoice_filepath: str, append_output: bool):
         """
         Directs components to process the invoice located at invoice_filepath
 
