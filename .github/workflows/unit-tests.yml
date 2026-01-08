@@ -46,15 +46,22 @@ jobs:
       run: |
         pytest --cov=./ --cov-report=xml tests/*
 
-    # Generate code coverage in PR comments
-    - name: Pytest coverage comment
-      uses: MishaKav/pytest-coverage-comment@main
+    - name: Generate Coverage Badge
+      uses: tj-actions/coverage-badge-py@v2
       with:
-        pytest-xml-coverage-path: ./coverage.xml
-        title: Code Coverage Report
-        badge-title: Coverage
-        hide-badge: false
-        hide-report: false
-        create-new-comment: false
-        update_coverage_badge: true
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        output: coverage.svg
+
+    - name: Verify Changed files
+      uses: tj-actions/verify-changed-files@v16
+      id: changed-files
+      with:
+        files: coverage.svg
+
+    - name: Commit badge
+      if: steps.changed-files.outputs.files_changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add coverage.svg
+        git commit -m "Updated coverage.svg"
+        git push
