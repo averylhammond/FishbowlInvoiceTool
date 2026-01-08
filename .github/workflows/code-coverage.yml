@@ -23,17 +23,9 @@ jobs:
     name: 50% Min Code Coverage CI Check
     runs-on: ubuntu-latest
 
-    # Specify that all job steps should be run from within the project directory
-    defaults:
-      run:
-        working-directory: ./project_directory
-
     # Checkout repo
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
-      with:
-        path: project_directory
+    - uses: actions/checkout@v3
 
     # Set up Python environment
     - name: Set up Python environment
