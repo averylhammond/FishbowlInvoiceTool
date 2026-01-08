@@ -21,6 +21,9 @@ class InvoiceAppController:
         Note that all defined filepaths are relative to the executable's current working directory.
         """
 
+        # Argument provider to check for integration test mode
+        self.argument_provider = ArgumentProvider()
+
         # Define the filepath for the debug log
         self.debug_log_path = "logs/debug.txt"
 
@@ -77,9 +80,10 @@ class InvoiceAppController:
     def start_application(self):
         """
         Starts the application by entering the tkinter main GUI loop
-        """
 
-        # TODO: Check if we are in integration test mode, if so just run the integration tests and exit
+        Note: If the application is running in integration test mode, the GUI loop is not started,
+        and the application is instead directed to process all invoices directly.
+        """
 
         # Reset text files before starting the application
         if __debug__:
@@ -87,8 +91,12 @@ class InvoiceAppController:
 
         self.file_io_controller.reset_results_file()
 
-        # Start the GUI application
-        self.display.mainloop()
+        if self.argument_provider.integration_test_mode:
+            # If in integration test mode, process all invoices directly without starting the GUI
+            self.display.handle_process_all_invoices()
+        else:
+            # Else, normally start the GUI application
+            self.display.mainloop()
 
     def handle_process_invoice(self, invoice_filepath: str, append_output: bool):
         """
