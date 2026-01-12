@@ -22,7 +22,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        path: FishboelInvoiceTool # Specific subdirectory expected by scripts
+        path: FishbowlInvoiceTool # Specific subdirectory expected by scripts
 
     # Checkout external private repo containing integration test data
     # Note: These are kept private since they contain sensitive customer data
