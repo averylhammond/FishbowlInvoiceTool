@@ -54,7 +54,7 @@ jobs:
     # Copy integration test data into the expected input directory
     - name: Copy integration test data
       run: |
-        ./scripts/copy_resources
+        ./scripts/copy_resources.sh
 
     # Run integration tests to generate results.txt
     - name: Run integration tests
