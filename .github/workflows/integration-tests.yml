@@ -30,7 +30,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: averylhammond/automated-invoice-testing
-        path: ../automated-invoice-testing # Specific subdirectory expected by scripts
+        path: automated-invoice-testing # Specific subdirectory expected by scripts
         token: ${{ secrets.CUSTOMER_DATA_PAT }}
 
     # Set up Python environment
