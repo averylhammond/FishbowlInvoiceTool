@@ -5,21 +5,21 @@
 # 01/07/2026 - Author - Avery Hammond                                               #
 #                                                                                   #
 # This script is intended to copy resource files from the automated-invoice-testing #
-# repo into the FishbowlInvoiceTool repo for use during testing. The application    #
-# repo does not contain resource files that contain private company data since it   #
-# is a public repository. This helper script assumes that the FishbowlInvoiceTool   #
-# application and the automated-invoice-testing repository have both been cloned    #
-# into the same parent directory, and automates the file copy process.              #
+# submodule into the FishbowlInvoiceTool repo for use during testing. The           #
+# application repo does not contain resource files that contain private company     #
+# data since it is a public repository. This helper script assumes that the         #
+# FishbowlInvoice tool has been cloned, and the automated-invoice-testing submodule #
+# has been cloned inside of the project.                                            #
 #                                                                                   #
-# The required project structure is as follows:                                     #
+# An example project structure is as follows, after initializing the submodule:     #
 # project_root/                                                                     #
-# ├── automated-invoice-testing/                                                    #
-# │   └── resources/                                                                #
 # └── FishbowlInvoiceTool/                                                          #
 #   └── scripts/copy_resources.sh                                                   #
+#   └── automated-invoice-testing/                                                  #
+#       └── resources/                                                              #
 #                                                                                   #
-# Note: This script will not work unless the above structure is maintained, meaning #
-# that both repositories must be cloned into the same parent directory.             #
+# Note: This script will not work if the automated-invoice-testing submodule has    #
+# not been initialized and cloned with a git submodule update --init                #
 #                                                                                   #
 # Usage: ./copy_resources.sh                                                        #
 #####################################################################################
@@ -29,11 +29,13 @@ set -euo pipefail
 
 # Get the location of this script, and use it to derive the project directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+echo "Project root directory: $ROOT_DIR"
 
 # Use the derived project directory to set source and destination paths
 SRC="$ROOT_DIR/automated-invoice-testing/resources"
-DST="$ROOT_DIR/FishbowlInvoiceTool"
+DST="$ROOT_DIR"
 
 # Ensure that the source and destination directories exist
 if [[ ! -d "$SRC" ]]; then
@@ -46,4 +48,6 @@ if [[ ! -d "$DST" ]]; then
 fi
 
 # Copy the resources over to the application folder
+echo "Copying resources from submodule..."
 cp -a "$SRC"/. "$DST"/
+echo "Done."
