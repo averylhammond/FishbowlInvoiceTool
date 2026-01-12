@@ -31,6 +31,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+echo "Derived project root directory: $ROOT_DIR"
+
 # Use the derived project directory to set source and destination paths
 SRC="$ROOT_DIR/automated-invoice-testing/resources"
 DST="$ROOT_DIR/FishbowlInvoiceTool"
