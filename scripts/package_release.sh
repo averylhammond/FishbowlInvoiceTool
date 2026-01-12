@@ -48,37 +48,40 @@ git clean -fdxf
 
 # Get the location of this script, and use it to derive the project directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Use the derived parent directory to set the resources and project paths
+# Use the derived parent directory to set the resources path
 RESOURCES_DIR="$ROOT_DIR/automated-invoice-testing/resources"
-PROJECT_DIR="$ROOT_DIR/FishbowlInvoiceTool"
+
+echo "Derived project root: $ROOT_DIR"
+echo "Resources location: $RESOURCES_DIR"
+
+# Check if the submodule directory is empty or missing
+if [ ! -f "$ROOT_DIR/automated-invoice-testing/" ]; then
+    echo "Testing resources not found. Attempting to initialize submodules..."
+    git -C "$ROOT_DIR" submodule update --init --recursive
+fi
 
 # Ensure that the source and destination directories exist
 if [[ ! -d "$RESOURCES_DIR" ]]; then
-  echo "Resources directory does not exist in testing framework: $RESOURCES_DIR"
-  echo "Make sure to clone the latest version of the automated-invoice-testing"
-  echo "repo into the same parent directory as the FishbowlInvoiceTool."
-  exit 1
-fi
-if [[ ! -d "$PROJECT_DIR" ]]; then
-  echo "Application directory does not exist: $PROJECT_DIR"
+  echo "Error: Submodule resources not found at: $RESOURCES_DIR"
+  echo "Did you forget to run 'git submodule update --init'?"
   exit 1
 fi
 
 # Create a fresh virtual environment to ensure the minimal set of dependencies are
 # packaged with the application release
 echo "Creating a fresh virtual environment for packaging..."
-python -m venv "$PROJECT_DIR/venv"
+python -m venv "$ROOT_DIR/venv"
     
 # Determine the OS type, only Linux and Windows are supported
 # Activating the venv requires different paths on Windows/Linux
 # Exit on unknown OS
 OS_TYPE="$(uname -s 2>/dev/null || echo unknown)"
 if [[ "$OS_TYPE" == "Linux" ]]; then
-    source "$PROJECT_DIR/venv/bin/activate"
+    source "$ROOT_DIR/venv/bin/activate"
 elif [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "CYGWIN"* || "$OS_TYPE" == "MSYS"* ]]; then
-    source "$PROJECT_DIR/venv/Scripts/activate"
+    source "$ROOT_DIR/venv/Scripts/activate"
 else
     echo "Unknown/Unsupported OS: ${OS_TYPE:-}... Exiting"
     exit 1
@@ -87,7 +90,7 @@ echo "Activated virtual environment: $VIRTUAL_ENV"
 
 # Make sure that all project dependencies are installed in the virtual environment
 echo "Installing project dependencies into virtual environment..."
-pip install -r "$PROJECT_DIR/requirements/release.txt"
+pip install -r "$ROOT_DIR/requirements/release.txt"
 
 # Install PyInstaller
 echo "Installing PyInstaller into virtual environment..."
@@ -98,7 +101,7 @@ echo "Packaging the application into a release executable..."
 python -OO -m PyInstaller --onefile --noconsole --name AutoInvoiceProc main.py
 
 # Set up the desired release project structure
-RELEASE_DIR="$PROJECT_DIR/release/FishbowlInvoiceTool"
+RELEASE_DIR="$ROOT_DIR/release/FishbowlInvoiceTool"
 CONFIGS_DIR="$RELEASE_DIR/Configs"
 INVOICES_DIR="$RELEASE_DIR/Invoices"
 
@@ -108,8 +111,8 @@ mkdir -p "$INVOICES_DIR"
 
 # Move the necessary existing files over to the release directory, including
 # the executable created by PyInstaller, and the ReadMe
-mv "$PROJECT_DIR/dist/AutoInvoiceProc.exe" "$RELEASE_DIR/"
-cp "$PROJECT_DIR/ReadMe.txt" "$RELEASE_DIR/"  # Note that this is the customer ReadMe.txt, not the GitHub README.md
+mv "$ROOT_DIR/dist/AutoInvoiceProc.exe" "$RELEASE_DIR/"
+cp "$ROOT_DIR/ReadMe.txt" "$RELEASE_DIR/"  # Note that this is the customer ReadMe.txt, not the GitHub README.md
 
 # Copy over the latest resources/Configs files that live in the automated-invoice-testing repo
 cp -a "$RESOURCES_DIR/Configs/." "$CONFIGS_DIR/"
@@ -122,7 +125,7 @@ fi
 
 # Zip up the release folder for distribution
 echo "Creating zip archive of the release..."
-cd "$PROJECT_DIR/release"
+cd "$ROOT_DIR/release"
 tar -czvf "FishbowlInvoiceTool.zip" "$RELEASE_DIR"
 
 # Exit virtual environment on script exit
