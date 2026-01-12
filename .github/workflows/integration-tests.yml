@@ -17,20 +17,12 @@ jobs:
     name: Integration Tests CI Check
     runs-on: ubuntu-latest
 
-    # Checkout this repo
+    # Checkout repo
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        path: FishbowlInvoiceTool # Specific subdirectory expected by scripts
-
-    # Checkout external private repo containing integration test data
-    # Note: These are kept private since they contain sensitive customer data
-    - name: Checkout automated testing repo
-      uses: actions/checkout@v4
-      with:
-        repository: averylhammond/automated-invoice-testing
-        path: automated-invoice-testing # Specific subdirectory expected by scripts
+        submodules: recursive
         token: ${{ secrets.CUSTOMER_DATA_PAT }}
 
     # Set up Python environment
@@ -42,15 +34,12 @@ jobs:
     # Install project dependencies
     - name: Install dependencies
       run: |
-        cd ./FishbowlInvoiceTool/
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
 
     # Copy integration test data into the expected input directory
     - name: Copy integration test data
       run: |
-        pwd
-        ls -l
         ./scripts/copy_resources.sh
 
     # Run integration tests to generate results.txt
@@ -61,7 +50,7 @@ jobs:
     # Verify that the results.txt file matches the expected output
     - name: Verify integration test results
       run: |
-        cp ../automated-invoice-testing/canonical_correct_results.txt .
+        cp ./automated-invoice-testing/canonical_correct_results.txt .
         if diff -q ./logs/results.txt canonical_correct_results.txt >/dev/null; then
             echo -e "\e[1;3;32mOutput matches, tests pass.\e[0m"
             exit 0
