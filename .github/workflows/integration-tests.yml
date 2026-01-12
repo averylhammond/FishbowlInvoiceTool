@@ -43,6 +43,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pwd
         pip install -r FishbowlInvoiceTool/requirements/dev.txt
 
     # Copy integration test data into the expected input directory
