@@ -20,9 +20,7 @@ jobs:
     # Checkout this repo
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        path: FishbowlInvoiceTool # Specific subdirectory expected by scripts
+      uses: actions/checkout@v3
 
     # Checkout external private repo containing integration test data
     # Note: These are kept private since they contain sensitive customer data
@@ -42,7 +40,6 @@ jobs:
     # Install project dependencies
     - name: Install dependencies
       run: |
-        cd FishbowlInvoiceTool/
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
 
