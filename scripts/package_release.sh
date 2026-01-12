@@ -59,7 +59,7 @@ echo "Resources location: $RESOURCES_DIR"
 # Check if the submodule directory is empty or missing
 if [ ! -f "$ROOT_DIR/automated-invoice-testing/" ]; then
     echo "Testing resources not found. Attempting to initialize submodules..."
-    git -C "$ROOT_DIR" submodule update --init --recursive
+    git submodule update --init --recursive
 fi
 
 # Ensure that the source and destination directories exist
