@@ -15,7 +15,12 @@ jobs:
 
     # Give the job a name to link into the Github Rules UI
     name: Integration Tests CI Check
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+
+    # Make sure that windows is using bash shell, since all terminal commands in this job are bash style
+    defaults:
+      run:
+        shell: bash
 
     # Checkout repo
     steps:
