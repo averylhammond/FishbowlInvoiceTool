@@ -5,18 +5,18 @@
 #                                                                                   #
 # This script is intended to take the FishbowlInvoiceTool and package it as a       #
 # release executable using PyInstaller. It assumes that the FishbowlInvoiceTool     #
-# repository has been cloned into a directory alongside the automated-invoice-      #
-# testing repository, which contains resource files that are packaged into the      #
-# release. This helper script automates the packaging process for speed and also    #
-# automated testing purposes. It can be ran in or out of the python virtual         #
-# environment, as it will create it's own if needed.                                #
+# repository has been cloned and that its submodule automated-invoice-testing       #
+# repository has been initialized. The submod contains resource files that are      #
+# packaged into the release. This helper script automates the packaging process for #
+# speed and automated testing purposes. It can be ran in or out of the python       #
+# virtual environment, as it will create it's own if needed.                        #
 #                                                                                   #
-# The required project structure is as follows:                                     #
+# An example project structure is as follows, after initializing the submodule:     #
 # project_root/                                                                     #
-# ├── automated-invoice-testing/                                                    #
-# │   └── resources/                                                                #
 # └── FishbowlInvoiceTool/                                                          #
-#   └── scripts/package_release.sh                                                  #
+#   └── scripts/copy_resources.sh                                                   #
+#   └── automated-invoice-testing/                                                  #
+#       └── resources/                                                              #
 #                                                                                   #
 # Usage: ./package_release.sh <populate_invoices>                                   #
 # where <populate_invoices> is 'true' or 'false'                                    #

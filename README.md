@@ -7,19 +7,21 @@ INSTRUCTIONS TO SET UP FOR DEVELOPMENT
 **************************************
 1) Clone this repo into a project folder.
 
-2) In order to test with example resources (payment info files and example invoices), clone the default branch
-   of https://github.com/averylhammond/automated-invoice-testing into the same project folder. Note that this
-   repo is private in order to protect sensitive customer data.
-    - The necessary folder structure is shown below:
+2) In order to test with example resources (payment info files and example invoices, located here 
+   https://github.com/averylhammond/automated-invoice-testing), the automated-invoice-testing repo
+   has been added as a submodule to this project. 
+   
+   Run git submodule update --init to clone and initialize the repo
+    - The resulting folder structure is shown below:
      <PRE>- project_root/
-          ├── automated-invoice-testing/
-          │   └── resources/
           └── FishbowlInvoiceTool/
-              └── scripts/copy_resources.sh</PRE>
+              └── scripts/copy_resources.sh
+              └── automated-invoice-testing/
+                  └── resources/</PRE>
 
 3) Run ./FishbowlInvoiceTool/scripts/copy_resources.sh to copy the necessary configuration files. This will
    allow you to run the application using sample invoices and other config data. After running the script,
-   your folder structure should look like this:
+   your folder structure should have the following additions:
      <PRE>-FishbowlInvoiceTool/
           ├── Configs/
           │   └── Cost_Criteria.txt
@@ -65,20 +67,11 @@ INSTRUCTION TO CREATE AND PACKAGE A RELEASE
 
 1) Clone this repo, or commit existing changes.
 
-2) In order to copy in resources needed for release (payment info and other config files), clone the default 
-   branch of https://github.com/averylhammond/automated-invoice-testing into the same project folder. Note that
-   this repo is private in order to protect sensitive customer data.
-    - The necessary folder structure is shown below:
-     <PRE>- project_root/
-          ├── automated-invoice-testing/
-          │   └── resources/
-          └── FishbowlInvoiceTool/
-              └── scripts/package_release.sh</PRE>
-
-3) Run "./FishbowlInvoiceTool/scripts/package_release.sh false", this will do the following:
+2) Run "./FishbowlInvoiceTool/scripts/package_release.sh false", which will do the following:
     - Deactivate the current python virtual environment (if active)
     - Run a git clean
     - Create and activate a fresh python virtual environment
+    - Clone and initialize the automated-invoice-testing submodule
     - Install all project dependencies for the release configuration
     - Install and run the latest version of PyInstaller to generate an executable
         - The executable will be placed into the release/FishbowlInvoiceTool folder
