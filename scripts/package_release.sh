@@ -109,9 +109,16 @@ mkdir -p "$RELEASE_DIR"
 mkdir -p "$CONFIGS_DIR"
 mkdir -p "$INVOICES_DIR"
 
+# Determine the extension of the binary depending on OS
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    BINARY_EXT=""
+else
+    BINARY_EXT=".exe"
+fi
+
 # Move the necessary existing files over to the release directory, including
 # the executable created by PyInstaller, and the ReadMe
-mv "$ROOT_DIR/dist/AutoInvoiceProc.exe" "$RELEASE_DIR/"
+mv "$ROOT_DIR/dist/AutoInvoiceProc$BINARY_EXT" "$RELEASE_DIR/"
 cp "$ROOT_DIR/ReadMe.txt" "$RELEASE_DIR/"  # Note that this is the customer ReadMe.txt, not the GitHub README.md
 
 # Copy over the latest resources/Configs files that live in the automated-invoice-testing repo
