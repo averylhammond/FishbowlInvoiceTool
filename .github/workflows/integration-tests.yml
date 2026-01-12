@@ -17,26 +17,20 @@ jobs:
     name: Integration Tests CI Check
     runs-on: ubuntu-latest
 
-    # Specify that all job steps should be run from within the project directory
-    defaults:
-      run:
-        working-directory: ./project_directory
-
-
     # Checkout this repo
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        path: project_directory
+        path: FishboelInvoiceTool # Specific subdirectory expected by scripts
 
     # Checkout external private repo containing integration test data
     # Note: These are kept private since they contain sensitive customer data
     - name: Checkout automated testing repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: averylhammond/automated-invoice-testing
-        path: automated-invoice-testing # clone into a different subdirectory
+        path: automated-invoice-testing # Specific subdirectory expected by scripts
         token: ${{ secrets.CUSTOMER_DATA_PAT }}
 
     # Set up Python environment
