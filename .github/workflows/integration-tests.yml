@@ -20,7 +20,9 @@ jobs:
     # Checkout this repo
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      with:
+        path: FishbowlInvoiceTool # Specific subdirectory expected by scripts
 
     # Checkout external private repo containing integration test data
     # Note: These are kept private since they contain sensitive customer data
@@ -28,7 +30,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: averylhammond/automated-invoice-testing
-        path: automated-invoice-testing # Specific subdirectory expected by scripts
+        path: ../automated-invoice-testing # Specific subdirectory expected by scripts
         token: ${{ secrets.CUSTOMER_DATA_PAT }}
 
     # Set up Python environment
@@ -40,6 +42,7 @@ jobs:
     # Install project dependencies
     - name: Install dependencies
       run: |
+        cd FishbowlInvoiceTool/
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
 
