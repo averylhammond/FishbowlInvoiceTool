@@ -29,13 +29,13 @@ set -euo pipefail
 
 # Get the location of this script, and use it to derive the project directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "Derived project root directory: $ROOT_DIR"
+echo "Project root directory: $ROOT_DIR"
 
 # Use the derived project directory to set source and destination paths
 SRC="$ROOT_DIR/automated-invoice-testing/resources"
-DST="$ROOT_DIR/FishbowlInvoiceTool"
+DST="$ROOT_DIR"
 
 # Ensure that the source and destination directories exist
 if [[ ! -d "$SRC" ]]; then
@@ -48,4 +48,6 @@ if [[ ! -d "$DST" ]]; then
 fi
 
 # Copy the resources over to the application folder
+echo "Copying resources from submodule..."
 cp -a "$SRC"/. "$DST"/
+echo "Done."

@@ -1,0 +1,3 @@
+[submodule "automated-invoice-testing"]
+	path = automated-invoice-testing
+	url = git@github.com:averylhammond/automated-invoice-testing.git
