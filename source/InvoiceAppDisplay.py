@@ -4,6 +4,7 @@ from pathlib import Path
 
 from source.InvoiceAppFileIO import *
 from source.Invoice import *
+from source.ArgumentProvider import ArgumentProvider
 from source.color_theme import *
 
 # FUTURE TODO: Implement a dynamic theme that can be changed at runtime through user input
@@ -35,6 +36,10 @@ class InvoiceAppDisplay(tk.Tk):
         """
 
         super().__init__()
+
+        # Argument provider, needed to check for integration test mode so that popups can be suppressed
+        # to run headless during automated testing
+        self.argument_provider = ArgumentProvider()
 
         # Title applied to the application window
         self.title(title)
@@ -287,5 +292,10 @@ class InvoiceAppDisplay(tk.Tk):
             error_title (str): The title of the error popup
             error_message (str): The error message to display
         """
+
+        # If in integration test mode, do not show popups since this will be running
+        # in a headless environment, and will halt testing
+        if self.argument_provider.integration_test_mode:
+            return
 
         messagebox.showerror(error_title, error_message)
