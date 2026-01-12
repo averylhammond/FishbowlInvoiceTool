@@ -2,7 +2,7 @@ Unit Test Status: [![Python-CI](https://github.com/averylhammond/FishbowlInvoice
 
 Code Coverage Status: ![Coverage](./coverage.svg)
 
-Integration Test Status: ![Integration Tests](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/YOUR_WORKFLOW_FILENAME.yml/badge.svg)
+Integration Test Status: ![Integration Tests](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/integration-tests.yml/badge.svg)
 
 **************************************
 INSTRUCTIONS TO SET UP FOR DEVELOPMENT
