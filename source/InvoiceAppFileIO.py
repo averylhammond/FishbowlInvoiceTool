@@ -10,6 +10,8 @@ from source.Invoice import Invoice
 
 # TODO: Also make sure reset_debug_file() does not crash if the debug file does not exist
 #       which it will not right after cloning the repo
+# TODO: Don't crash the program if files are not present, in parse() functions.
+#       Seems like the file open operation is crashing it
 
 
 # InvoiceAppFileIO class to handle all file input/output operations
@@ -183,6 +185,8 @@ class InvoiceAppFileIO:
                     continue
 
                 res = line.partition("=")
+
+                # Res[0] is the sales rep code, res[2] is the sales rep name translation
                 dict[res[0]] = res[2]
 
         return dict
