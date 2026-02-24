@@ -27,7 +27,7 @@ jobs:
 
     # Set up Python environment
     - name: Set up Python environment
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v3
       with:
         python-version: "3.11"
         cache: 'pip'
