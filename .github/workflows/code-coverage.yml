@@ -4,8 +4,6 @@ name: Code Coverage Workflow
 on:
   pull_request:
     branches: [ main ]
-  push:
-    branches: ["*"]
 
 # Allow for the job to be ran manually from the GitHub Actions UI
   workflow_dispatch:
