@@ -21,13 +21,15 @@ jobs:
     name: 50% Min Code Coverage CI Check
     runs-on: ubuntu-latest
 
-    # Checkout repo
+    # Checkout repo with full history so badge commits can be pushed back
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     # Set up Python environment
     - name: Set up Python environment
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: "3.11"
         cache: 'pip'
@@ -49,7 +51,7 @@ jobs:
 
     - name: Update Coverage Badge (Silent)
       if: success() 
-      uses: MishaKav/pytest-coverage-comment@main
+      uses: MishaKav/pytest-coverage-comment@v1.10.0
       with:
         pytest-xml-coverage-path: ./coverage.xml
         github-token: ${{ secrets.GITHUB_TOKEN }}
