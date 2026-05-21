@@ -69,6 +69,9 @@ class InvoiceAppController:
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
             invoices_dir=self.invoices_path,
+            payment_terms_path=self.payment_terms_path,
+            sales_reps_path=self.sales_reps_path,
+            cost_criteria_path=self.cost_criteria_path,
         )
 
         # Use the File IO Controller to read in the criteria/exclusions for each cost section

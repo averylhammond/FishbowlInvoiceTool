@@ -6,6 +6,7 @@ from source.InvoiceAppFileIO import *
 from source.Invoice import *
 from source.ArgumentProvider import ArgumentProvider
 from source.color_theme import *
+from source.platform_utils import *
 
 # Future TODO: Implement a dynamic theme that can be changed at runtime through user input
 # Future TODO: Let the config text files be controlled through tabs on the GUI, store results
@@ -31,6 +32,9 @@ class InvoiceAppDisplay(tk.Tk):
         title: str,
         window_resolution: str,
         invoices_dir: str,
+        payment_terms_path: str,
+        sales_reps_path: str,
+        cost_criteria_path: str,
     ):
         """
         Initializes the InvoiceAppDisplay object
@@ -40,6 +44,9 @@ class InvoiceAppDisplay(tk.Tk):
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
             invoices_dir (str): Directory where invoice PDFs are located
+            payment_terms_path (str): Path to the payment terms config file
+            sales_reps_path (str): Path to the sales representatives config file
+            cost_criteria_path (str): Path to the cost criteria config file
         """
 
         super().__init__()
@@ -66,8 +73,17 @@ class InvoiceAppDisplay(tk.Tk):
         # The filepath to expect invoice PDFs to be located
         self.invoices_dir = invoices_dir
 
+        # The filepath to the config files
+        self.payment_terms_path = payment_terms_path
+        self.sales_reps_path = sales_reps_path
+        self.cost_criteria_path = cost_criteria_path
+
         # Tkinter Widgets
         # fmt:off
+        self.menu_bar                    = None
+        self.file_menu                   = None
+        self.edit_menu                   = None
+        self.preferences_menu            = None
         self.title_label                 = None
         self.file_frame                  = None
         self.file_entry                  = None
@@ -80,6 +96,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.output_box                  = None
         # fmt:on
 
+        # Build the GUI
         self.build_widgets()
 
     def build_widgets(self):
@@ -98,6 +115,50 @@ class InvoiceAppDisplay(tk.Tk):
         label_fg = BLUE
 
         self.configure(bg=bg_main)
+
+        # Menu bar containing dropdowns for File, Edit, and Preferences
+        self.menu_bar = tk.Menu(self)
+
+        # File dropdown
+        #  -> Exit option to close the application
+        #  -> Open option to open a single invoice
+        self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.file_menu.add_command(
+            label="Open", command=self.handle_browse_button
+        )
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=self.quit)
+        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
+
+        # Edit dropdown
+        # -> Cost Criteria option to open the cost criteria config file in the default text editor for user editing
+        self.edit_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.edit_menu.add_command(
+            label="Cost Criteria", command=self.handle_cost_criteria
+        )
+        self.edit_menu.add_command(
+            label="Payment Terms", command=self.handle_payment_terms
+        )
+        self.edit_menu.add_command(
+            label="Sales Reps", command=self.handle_sales_reps
+        )
+        self.menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
+
+        # TODO: Still need to figure out this menu option
+        # Probably themes and maybe other settings
+        self.preferences_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.preferences_menu.add_command(label="Theme")
+        self.preferences_menu.add_command(label="Font Size")
+        self.preferences_menu.add_separator()
+        self.preferences_menu.add_command(label="Settings")
+        self.menu_bar.add_cascade(
+            label="Preferences", menu=self.preferences_menu
+        )
+
+        # TODO: Add a view tab with the debug.txt and results.txt logs? Are those
+        # even present on the released version? Determine
+
+        self.config(menu=self.menu_bar)
 
         # Title Label
         self.title_label = tk.Label(
@@ -310,3 +371,21 @@ class InvoiceAppDisplay(tk.Tk):
             return
 
         messagebox.showerror(error_title, error_message)
+
+    def handle_cost_criteria(self):
+        """
+        Opens the Cost Criteria config file in the system default text editor
+        """
+        open_in_system_editor(self.cost_criteria_path)
+
+    def handle_payment_terms(self):
+        """
+        Opens the Payment Terms config file in the system default text editor
+        """
+        open_in_system_editor(self.payment_terms_path)
+
+    def handle_sales_reps(self):
+        """
+        Opens the Sales Reps config file in the system default text editor
+        """
+        open_in_system_editor(self.sales_reps_path)
