@@ -50,12 +50,22 @@ jobs:
       run: |
         pytest --cov=./ --cov-report=xml --cov-fail-under=50 tests/*
 
-    - name: Update Coverage Badge (Silent)
-      if: success() 
-      uses: MishaKav/pytest-coverage-comment@v1.7.2
+    - name: Generate Coverage Badge
+      run: |
+        pip install genbadge[coverage]
+        genbadge coverage -i coverage.xml -o coverage.svg
+
+    - name: Verify Changed files
+      uses: tj-actions/verify-changed-files@v20.0.4
+      id: changed-files
       with:
-        pytest-xml-coverage-path: ./coverage.xml
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        hide-comment: true
-        update-coverage-badge: true
-        badge-title: Coverage
+        files: coverage.svg
+
+    - name: Commit badge
+      if: steps.changed-files.outputs.files_changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add coverage.svg
+        git commit -m "Updated coverage.svg"
+        git push
