@@ -6,6 +6,9 @@ from source.ArgumentProvider import ArgumentProvider
 from source.Invoice import Invoice
 
 # TODO: Add tests style function headers to each header to improve readability
+# TODO: Lots of magic numbers and hardcoded strings here. Figure out how to define these
+#       all somewhere, like a static const in c++
+# TODO: See if there is a good logging method to add for debugging
 
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
@@ -52,9 +55,6 @@ class InvoiceAppController:
             cost_criteria_filepath=self.cost_criteria_path,
         )
 
-        # Use the File IO Controller to read in the criteria/exclusions for each cost section
-        self.file_io_controller.parse_cost_criteria_file()
-
         # Create InvoiceProcessor, provide it with the File IO Controller and criteria for processing invoices
         self.invoice_processor = InvoiceProcessor(
             file_io_controller=self.file_io_controller,
@@ -71,8 +71,13 @@ class InvoiceAppController:
             invoices_dir=self.invoices_path,
         )
 
+        # Use the File IO Controller to read in the criteria/exclusions for each cost section
+        self.file_io_controller.parse_cost_criteria_file()
+
         # Build payment terms dictionary containing all possible sales rep name codes that could appear on an invoice
-        self.payment_terms = self.file_io_controller.parse_payment_terms_config()
+        self.payment_terms = (
+            self.file_io_controller.parse_payment_terms_config()
+        )
 
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
         self.sales_reps = self.file_io_controller.parse_sales_reps_config()
@@ -98,7 +103,9 @@ class InvoiceAppController:
             # Else, normally start the GUI application
             self.display.mainloop()
 
-    def handle_process_invoice(self, invoice_filepath: str, append_output: bool):
+    def handle_process_invoice(
+        self, invoice_filepath: str, append_output: bool
+    ):
         """
         Directs components to process the invoice located at invoice_filepath
 

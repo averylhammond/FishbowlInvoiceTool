@@ -7,14 +7,21 @@ from source.Invoice import *
 from source.ArgumentProvider import ArgumentProvider
 from source.color_theme import *
 
-# FUTURE TODO: Implement a dynamic theme that can be changed at runtime through user input
+# Future TODO: Implement a dynamic theme that can be changed at runtime through user input
 # Future TODO: Let the config text files be controlled through tabs on the GUI, store results
 #              in database somewhere so the txt files don't need to be retained
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
 #              pop up windows when Fishbowl invoices present rounding errors
+# Future TODO: Make abstract GUI class and try and use other frameworks? PyQT could be cool
+# Future TODO: Once the GUI is more configurable (fonts/colors), find out how to cache the
+#              user settings so that they don't have to be changed every time the app runs
+#              Could use a database for this
+#              Also figure out how the installation/update would work in order to not wipe
+#              out that database file. Could the application reach out to my homeserver to
+#              query it for an update? That would be cool
 
 
-# Invoice App Display class to hold the GUI for selecting and processing invoices
+# Invoice App Display class to own the GUI for selecting and processing invoices
 # This implementation uses tkinter for the GUI
 class InvoiceAppDisplay(tk.Tk):
 
@@ -47,8 +54,8 @@ class InvoiceAppDisplay(tk.Tk):
         # Resolution of the application window
         self.geometry(window_resolution)
 
-        # Whether the user can resize the window
-        self.resizable(False, False)
+        # Allow user to resize window in x and y direction
+        self.resizable(True, True)
 
         # Holds the last selected invoice filepath
         self.selected_file = tk.StringVar()
@@ -116,7 +123,9 @@ class InvoiceAppDisplay(tk.Tk):
             insertbackground=fg_text,
             relief="flat",
         )
-        self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 5), pady=8)
+        self.file_entry.pack(
+            side="left", fill="x", expand=True, padx=(0, 5), pady=8
+        )
 
         # Browse button to open file dialog
         self.browse_button = tk.Button(
@@ -219,7 +228,9 @@ class InvoiceAppDisplay(tk.Tk):
         if file_path:
             self.selected_file.set(file_path)
 
-    def display_invoice_output(self, invoice: Invoice, append_output: bool = False):
+    def display_invoice_output(
+        self, invoice: Invoice, append_output: bool = False
+    ):
         """
         Displays the calculated totals of the invoice in the output box
 

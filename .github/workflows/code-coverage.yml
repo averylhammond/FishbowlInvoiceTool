@@ -4,8 +4,6 @@ name: Code Coverage Workflow
 on:
   pull_request:
     branches: [ main ]
-  push:
-    branches: ["*"]
 
 # Allow for the job to be ran manually from the GitHub Actions UI
   workflow_dispatch:
@@ -23,17 +21,22 @@ jobs:
     name: 50% Min Code Coverage CI Check
     runs-on: ubuntu-latest
 
-    # Checkout repo
+    # Checkout repo with full history so badge commits can be pushed back
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     # Set up Python environment
     - name: Set up Python environment
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.11.9"
+        python-version: "3.11"
+        cache: 'pip'
+        cache-dependency-path: requirements/dev.txt
 
     # Install development project dependencies
+    # Note: pkg-resources needed with latest python
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -47,26 +50,12 @@ jobs:
       run: |
         pytest --cov=./ --cov-report=xml --cov-fail-under=50 tests/*
 
-    # Generate coverage using tj-actions/coverage-badge-py action
-    - name: Generate Coverage Badge
-      uses: tj-actions/coverage-badge-py@v2
+    - name: Update Coverage Badge (Silent)
+      if: success() 
+      uses: MishaKav/pytest-coverage-comment@v1.7.2
       with:
-        output: coverage.svg
-
-    # Commit coverage badge if it has changed, this will add a .coverage.svg file to the repo
-    - name: Verify Changed files
-      uses: tj-actions/verify-changed-files@v16
-      id: changed-files
-      continue-on-error: true
-      with:
-        files: coverage.svg
-
-    # If the code coverage percentage has changed, commit the new badge
-    - name: Commit badge
-      if: steps.changed-files.outputs.files_changed == 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add coverage.svg
-        git commit -m "Updated coverage.svg"
-        git push
+        pytest-xml-coverage-path: ./coverage.xml
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        hide-comment: true
+        update-coverage-badge: true
+        badge-title: Coverage
