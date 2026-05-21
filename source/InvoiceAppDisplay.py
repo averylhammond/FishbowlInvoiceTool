@@ -35,6 +35,8 @@ class InvoiceAppDisplay(tk.Tk):
         payment_terms_path: str,
         sales_reps_path: str,
         cost_criteria_path: str,
+        results_log_path: str,
+        debug_log_path: str,
     ):
         """
         Initializes the InvoiceAppDisplay object
@@ -47,6 +49,8 @@ class InvoiceAppDisplay(tk.Tk):
             payment_terms_path (str): Path to the payment terms config file
             sales_reps_path (str): Path to the sales representatives config file
             cost_criteria_path (str): Path to the cost criteria config file
+            results_log_path (str): Path to the results log file
+            debug_log_path (str): Path to the debug log file (not present in the release configuration)
         """
 
         super().__init__()
@@ -78,11 +82,16 @@ class InvoiceAppDisplay(tk.Tk):
         self.sales_reps_path = sales_reps_path
         self.cost_criteria_path = cost_criteria_path
 
+        # The filepath to the log files
+        self.results_log_path = results_log_path
+        self.debug_log_path = debug_log_path
+
         # Tkinter Widgets
         # fmt:off
         self.menu_bar                    = None
         self.file_menu                   = None
         self.edit_menu                   = None
+        self.view_menu                   = None
         self.preferences_menu            = None
         self.title_label                 = None
         self.file_frame                  = None
@@ -131,7 +140,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
 
         # Edit dropdown
-        # -> Cost Criteria option to open the cost criteria config file in the default text editor for user editing
+        #  -> Cost Criteria option to open the cost criteria config file in the default text editor for user editing
         self.edit_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.edit_menu.add_command(
             label="Cost Criteria", command=self.handle_cost_criteria
@@ -144,8 +153,21 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
 
+        # View dropdown
+        #  -> Results Log option to open the results log file
+        #  -> Debug Log option to open the debug log file (only in debug configuration)
+        self.view_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.view_menu.add_command(
+            label="Results Log", command=self.handle_results_log
+        )
+        if __debug__:
+            self.view_menu.add_command(
+                label="Debug Log", command=self.handle_debug_log
+            )
+        self.menu_bar.add_cascade(label="View", menu=self.view_menu)
+
         # TODO: Still need to figure out this menu option
-        # Probably themes and maybe other settings
+        # Probably themes and font and maybe other settings
         self.preferences_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.preferences_menu.add_command(label="Theme")
         self.preferences_menu.add_command(label="Font Size")
@@ -155,9 +177,7 @@ class InvoiceAppDisplay(tk.Tk):
             label="Preferences", menu=self.preferences_menu
         )
 
-        # TODO: Add a view tab with the debug.txt and results.txt logs? Are those
-        # even present on the released version? Determine
-
+        # Configure the menu bar
         self.config(menu=self.menu_bar)
 
         # Title Label
@@ -389,3 +409,29 @@ class InvoiceAppDisplay(tk.Tk):
         Opens the Sales Reps config file in the system default text editor
         """
         open_in_system_editor(self.sales_reps_path)
+
+    def handle_results_log(self):
+        """
+        Opens the results log file in the system default text editor if it exists.
+        Shows an error popup if the file has not been created yet.
+        """
+        if Path(self.results_log_path).exists():
+            open_in_system_editor(self.results_log_path)
+        else:
+            self.show_error_popup(
+                error_title="File Not Found",
+                error_message=f"Results log not found at: {self.results_log_path}",
+            )
+
+    def handle_debug_log(self):
+        """
+        Opens the debug log file in the system default text editor if it exists.
+        Shows an error popup if the file has not been created yet.
+        """
+        if Path(self.debug_log_path).exists():
+            open_in_system_editor(self.debug_log_path)
+        else:
+            self.show_error_popup(
+                error_title="File Not Found",
+                error_message=f"Debug log not found at: {self.debug_log_path}",
+            )
