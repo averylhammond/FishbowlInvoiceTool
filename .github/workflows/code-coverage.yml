@@ -51,7 +51,7 @@ jobs:
 
     - name: Update Coverage Badge (Silent)
       if: success() 
-      uses: MishaKav/pytest-coverage-comment@v1.10.0
+      uses: MishaKav/pytest-coverage-comment@v1.7.2
       with:
         pytest-xml-coverage-path: ./coverage.xml
         github-token: ${{ secrets.GITHUB_TOKEN }}
