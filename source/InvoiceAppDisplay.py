@@ -129,11 +129,15 @@ class InvoiceAppDisplay(tk.Tk):
         self.menu_bar = tk.Menu(self)
 
         # File dropdown
-        #  -> Exit option to close the application
         #  -> Open option to open a single invoice
+        #  -> Clear option to clear the output box and reset the selected file
+        #  -> Exit option to close the application
         self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(
             label="Open", command=self.handle_browse_button
+        )
+        self.file_menu.add_command(
+            label="Clear", command=self.handle_clear
         )
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.quit)
@@ -391,6 +395,14 @@ class InvoiceAppDisplay(tk.Tk):
             return
 
         messagebox.showerror(error_title, error_message)
+
+    def handle_clear(self):
+        """
+        Clears the output box and resets the selected file path
+        """
+        self.selected_file.set("")
+        if self.output_box:
+            self.output_box.delete(1.0, tk.END)
 
     def handle_cost_criteria(self):
         """
