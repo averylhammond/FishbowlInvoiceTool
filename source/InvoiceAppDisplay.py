@@ -86,23 +86,26 @@ class InvoiceAppDisplay(tk.Tk):
         self.results_log_path = results_log_path
         self.debug_log_path = debug_log_path
 
+        # Active theme, defaults to Dark
+        self.current_theme = DARK
+
         # Tkinter Widgets
         # fmt:off
-        self.menu_bar                    = None
-        self.file_menu                   = None
-        self.edit_menu                   = None
-        self.view_menu                   = None
-        self.preferences_menu            = None
-        self.title_label                 = None
-        self.file_frame                  = None
-        self.file_entry                  = None
-        self.browse_button               = None
-        self.button_frame                = None
-        self.process_invoice_button      = None
-        self.exit_button                 = None
-        self.process_all_invoices_button = None
-        self.output_label                = None
-        self.output_box                  = None
+        self.menu_bar:                    tk.Menu                    | None = None
+        self.file_menu:                   tk.Menu                    | None = None
+        self.edit_menu:                   tk.Menu                    | None = None
+        self.view_menu:                   tk.Menu                    | None = None
+        self.preferences_menu:            tk.Menu                    | None = None
+        self.title_label:                 tk.Label                   | None = None
+        self.file_frame:                  tk.Frame                   | None = None
+        self.file_entry:                  tk.Entry                   | None = None
+        self.browse_button:               tk.Button                  | None = None
+        self.button_frame:                tk.Frame                   | None = None
+        self.process_invoice_button:      tk.Button                  | None = None
+        self.exit_button:                 tk.Button                  | None = None
+        self.process_all_invoices_button: tk.Button                  | None = None
+        self.output_label:                tk.Label                   | None = None
+        self.output_box:                  scrolledtext.ScrolledText  | None = None
         # fmt:on
 
         # Build the GUI
@@ -136,9 +139,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.file_menu.add_command(
             label="Open", command=self.handle_browse_button
         )
-        self.file_menu.add_command(
-            label="Clear", command=self.handle_clear
-        )
+        self.file_menu.add_command(label="Clear", command=self.handle_clear)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.quit)
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
@@ -173,7 +174,15 @@ class InvoiceAppDisplay(tk.Tk):
         # TODO: Still need to figure out this menu option
         # Probably themes and font and maybe other settings
         self.preferences_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.preferences_menu.add_command(label="Theme")
+
+        theme_menu = tk.Menu(self.preferences_menu, tearoff=0)
+        for theme in ALL_THEMES:
+            theme_menu.add_command(
+                label=theme.name,
+                command=lambda t=theme: self.apply_theme(t),
+            )
+        self.preferences_menu.add_cascade(label="Theme", menu=theme_menu)
+
         self.preferences_menu.add_command(label="Font Size")
         self.preferences_menu.add_separator()
         self.preferences_menu.add_command(label="Settings")
@@ -447,3 +456,47 @@ class InvoiceAppDisplay(tk.Tk):
                 error_title="File Not Found",
                 error_message=f"Debug log not found at: {self.debug_log_path}",
             )
+
+    def apply_theme(self, theme: Theme):
+        """
+        Applies a color theme to all widgets in the application
+
+        Args:
+            theme (Theme): The theme to apply
+        """
+        self.current_theme = theme
+
+        self.configure(bg=theme.bg_main)
+        self.title_label.configure(bg=theme.bg_main, fg=theme.label_fg)
+        self.file_frame.configure(bg=theme.bg_main)
+        self.file_entry.configure(
+            bg=theme.bg_entry, fg=theme.bg_main, insertbackground=theme.fg_text
+        )
+        self.browse_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
+        self.button_frame.configure(bg=theme.bg_main)
+        self.process_invoice_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
+        self.exit_button.configure(
+            bg=theme.bg_entry,
+            fg=theme.fg_text,
+            activeforeground=theme.fg_text,
+        )
+        self.process_all_invoices_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
+        self.output_label.configure(bg=theme.bg_main, fg=theme.label_fg)
+        self.output_box.configure(
+            bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
+        )
