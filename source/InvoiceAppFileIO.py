@@ -172,7 +172,7 @@ class InvoiceAppFileIO:
 
         # Open sales rep config file for reading
         with open(file=self.sales_reps_filepath, mode="r") as f:
-            dict = {}
+            sales_reps = {}
 
             # Search through text file, only take non-comment entries
             for line in f:
@@ -187,9 +187,9 @@ class InvoiceAppFileIO:
                 res = line.partition("=")
 
                 # Res[0] is the sales rep code, res[2] is the sales rep name translation
-                dict[res[0]] = res[2]
+                sales_reps[res[0]] = res[2]
 
-        return dict
+        return sales_reps
 
     def parse_payment_terms_config(self) -> list:
         """
@@ -202,7 +202,7 @@ class InvoiceAppFileIO:
 
         # Open payment terms config file for reading
         with open(file=self.payment_terms_filepath, mode="r") as f:
-            list = []
+            payment_terms = []
 
             # Search through text file, only take non-comment entries
             for line in f:
@@ -215,9 +215,9 @@ class InvoiceAppFileIO:
                     continue
 
                 # Append the payment term to the list
-                list.append(line)
+                payment_terms.append(line)
 
-        return list
+        return payment_terms
 
     def add_cost_criteria_field(self, category: str, line: str):
         """
