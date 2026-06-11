@@ -4,9 +4,17 @@ from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 from source.ArgumentProvider import ArgumentProvider
 from source.Invoice import Invoice
+from source.constants import (
+    DEBUG_LOG_PATH,
+    RESULTS_LOG_PATH,
+    INVOICES_PATH,
+    PAYMENT_TERMS_PATH,
+    SALES_REPS_PATH,
+    COST_CRITERIA_PATH,
+)
 
-# TODO: Lots of magic numbers and hardcoded strings here. Figure out how to define these
-#       all somewhere, like a static const in c++
+# TODO: The GUI title and window resolution below are still hardcoded; move these
+#       into named constants (e.g. alongside the font/theme settings) as well
 # TODO: See if there is a good logging method to add for debugging
 
 
@@ -30,22 +38,22 @@ class InvoiceAppController:
         self.argument_provider = ArgumentProvider()
 
         # Define the filepath for the debug log
-        self.debug_log_path = "logs/debug.txt"
+        self.debug_log_path = DEBUG_LOG_PATH
 
         # Define the filepath for the saved results log
-        self.results_log_path = "logs/results.txt"
+        self.results_log_path = RESULTS_LOG_PATH
 
         # Define the filepath for Invoices to be processed
-        self.invoices_path = "Invoices"
+        self.invoices_path = INVOICES_PATH
 
         # Define the filepath for the payment terms config file
-        self.payment_terms_path = "Configs/Payment_Terms.txt"
+        self.payment_terms_path = PAYMENT_TERMS_PATH
 
         # Define the filepath for the sales reps config file
-        self.sales_reps_path = "Configs/Sales_Reps.txt"
+        self.sales_reps_path = SALES_REPS_PATH
 
         # Define the filepath for the cost criteria config file
-        self.cost_criteria_path = "Configs/Cost_Criteria.txt"
+        self.cost_criteria_path = COST_CRITERIA_PATH
 
         # Create File IO Controller, provide it with all necessary file paths
         self.file_io_controller = InvoiceAppFileIO(
