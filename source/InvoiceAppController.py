@@ -5,7 +5,6 @@ from source.InvoiceProcessor import InvoiceProcessor
 from source.ArgumentProvider import ArgumentProvider
 from source.Invoice import Invoice
 
-# TODO: Add tests style function headers to each header to improve readability
 # TODO: Lots of magic numbers and hardcoded strings here. Figure out how to define these
 #       all somewhere, like a static const in c++
 # TODO: See if there is a good logging method to add for debugging
@@ -14,6 +13,9 @@ from source.Invoice import Invoice
 # InvoiceAppController class to drive logic for processing invoice PDFs.
 class InvoiceAppController:
 
+    ###########################################################################
+    ###                 InvoiceAppController -> __init__()                  ###
+    ###########################################################################
     def __init__(self):
         """
         Initializes the InvoiceAppController object
@@ -88,6 +90,9 @@ class InvoiceAppController:
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
         self.sales_reps = self.file_io_controller.parse_sales_reps_config()
 
+    ###########################################################################
+    ###             InvoiceAppController -> start_application()             ###
+    ###########################################################################
     def start_application(self):
         """
         Starts the application by entering the tkinter main GUI loop
@@ -109,6 +114,9 @@ class InvoiceAppController:
             # Else, normally start the GUI application
             self.display.mainloop()
 
+    ###########################################################################
+    ###          InvoiceAppController -> handle_process_invoice()           ###
+    ###########################################################################
     def handle_process_invoice(
         self, invoice_filepath: str, append_output: bool
     ):

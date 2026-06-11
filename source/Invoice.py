@@ -6,6 +6,9 @@ from source.constants import DECIMAL_ZERO
 # by the Fishbowl software
 class Invoice:
 
+    ###########################################################################
+    ###                        Invoice -> __init__()                        ###
+    ###########################################################################
     def __init__(self):
         """
         Initializes the Invoice object with default values for all attributes
@@ -28,6 +31,9 @@ class Invoice:
         self.page_contents   = []               # List of strings, each string is the text from a page of the invoice PDF
         # fmt:on
 
+    ###########################################################################
+    ###                  Invoice -> to_formatted_string()                   ###
+    ###########################################################################
     def to_formatted_string(self):
         """
         Returns a formatted string to output invoice contents

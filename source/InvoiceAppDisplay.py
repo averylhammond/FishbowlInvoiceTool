@@ -32,6 +32,9 @@ from source.platform_utils import open_in_system_editor
 # This implementation uses tkinter for the GUI
 class InvoiceAppDisplay(tk.Tk):
 
+    ###########################################################################
+    ###                   InvoiceAppDisplay -> __init__()                   ###
+    ###########################################################################
     def __init__(
         self,
         process_callback,
@@ -123,6 +126,9 @@ class InvoiceAppDisplay(tk.Tk):
         # Build the GUI
         self.build_widgets()
 
+    ###########################################################################
+    ###                InvoiceAppDisplay -> build_widgets()                 ###
+    ###########################################################################
     def build_widgets(self):
         """
         Creates the GUI widgets for the application
@@ -321,6 +327,9 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.output_box.pack(padx=20, pady=(0, 10), fill="both", expand=True)
 
+    ###########################################################################
+    ###             InvoiceAppDisplay -> handle_browse_button()             ###
+    ###########################################################################
     def handle_browse_button(self):
         """
         On "Browse" button press, opens a file dialog to select a PDF invoice file.
@@ -339,6 +348,9 @@ class InvoiceAppDisplay(tk.Tk):
         if file_path:
             self.selected_file.set(file_path)
 
+    ###########################################################################
+    ###            InvoiceAppDisplay -> display_invoice_output()            ###
+    ###########################################################################
     def display_invoice_output(self, invoice: Invoice, append_output: bool = False):
         """
         Displays the calculated totals of the invoice in the output box
@@ -363,6 +375,9 @@ class InvoiceAppDisplay(tk.Tk):
                 self.output_box.insert(tk.END, "\n")
                 self.output_box.insert(tk.END, invoice.to_formatted_string())
 
+    ###########################################################################
+    ###            InvoiceAppDisplay -> handle_process_invoice()            ###
+    ###########################################################################
     def handle_process_invoice(self):
         """
         On "Process This Invoice" button press, processes the selected PDF invoice file
@@ -384,6 +399,9 @@ class InvoiceAppDisplay(tk.Tk):
         # output windows and results.txt file since this is the only invoice being processed
         self.process_callback(file_path, append_output=False)
 
+    ###########################################################################
+    ###         InvoiceAppDisplay -> handle_process_all_invoices()          ###
+    ###########################################################################
     def handle_process_all_invoices(self):
         """
         On "Process All Invoices" button press, processes all invoice PDF files in the specified invoices directory
@@ -404,6 +422,9 @@ class InvoiceAppDisplay(tk.Tk):
                 error_message=f"An error occurred while processing invoices: {e}",
             )
 
+    ###########################################################################
+    ###               InvoiceAppDisplay -> show_error_popup()               ###
+    ###########################################################################
     def show_error_popup(self, error_title: str, error_message: str):
         """
         Displays an error message in a popup window
@@ -420,6 +441,9 @@ class InvoiceAppDisplay(tk.Tk):
 
         messagebox.showerror(error_title, error_message)
 
+    ###########################################################################
+    ###                 InvoiceAppDisplay -> handle_clear()                 ###
+    ###########################################################################
     def handle_clear(self):
         """
         Clears the output box and resets the selected file path
@@ -428,24 +452,36 @@ class InvoiceAppDisplay(tk.Tk):
         if self.output_box:
             self.output_box.delete(1.0, tk.END)
 
+    ###########################################################################
+    ###             InvoiceAppDisplay -> handle_cost_criteria()             ###
+    ###########################################################################
     def handle_cost_criteria(self):
         """
         Opens the Cost Criteria config file in the system default text editor
         """
         open_in_system_editor(self.cost_criteria_path)
 
+    ###########################################################################
+    ###             InvoiceAppDisplay -> handle_payment_terms()             ###
+    ###########################################################################
     def handle_payment_terms(self):
         """
         Opens the Payment Terms config file in the system default text editor
         """
         open_in_system_editor(self.payment_terms_path)
 
+    ###########################################################################
+    ###              InvoiceAppDisplay -> handle_sales_reps()               ###
+    ###########################################################################
     def handle_sales_reps(self):
         """
         Opens the Sales Reps config file in the system default text editor
         """
         open_in_system_editor(self.sales_reps_path)
 
+    ###########################################################################
+    ###              InvoiceAppDisplay -> handle_results_log()              ###
+    ###########################################################################
     def handle_results_log(self):
         """
         Opens the results log file in the system default text editor if it exists.
@@ -459,6 +495,9 @@ class InvoiceAppDisplay(tk.Tk):
                 error_message=f"Results log not found at: {self.results_log_path}",
             )
 
+    ###########################################################################
+    ###               InvoiceAppDisplay -> handle_debug_log()               ###
+    ###########################################################################
     def handle_debug_log(self):
         """
         Opens the debug log file in the system default text editor if it exists.
@@ -472,6 +511,9 @@ class InvoiceAppDisplay(tk.Tk):
                 error_message=f"Debug log not found at: {self.debug_log_path}",
             )
 
+    ###########################################################################
+    ###                 InvoiceAppDisplay -> apply_theme()                  ###
+    ###########################################################################
     def apply_theme(self, theme: Theme):
         """
         Applies a color theme to all widgets in the application
@@ -516,6 +558,9 @@ class InvoiceAppDisplay(tk.Tk):
             bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
         )
 
+    ###########################################################################
+    ###              InvoiceAppDisplay -> apply_font_family()               ###
+    ###########################################################################
     def apply_font_family(self, family: str):
         """
         Applies a font family to all text on screen
@@ -526,6 +571,9 @@ class InvoiceAppDisplay(tk.Tk):
         self.current_font_family = family
         self._apply_font()
 
+    ###########################################################################
+    ###               InvoiceAppDisplay -> apply_font_size()                ###
+    ###########################################################################
     def apply_font_size(self, size: int):
         """
         Applies a font size to all text on screen
@@ -536,6 +584,9 @@ class InvoiceAppDisplay(tk.Tk):
         self.current_font_size = size
         self._apply_font()
 
+    ###########################################################################
+    ###                 InvoiceAppDisplay -> _apply_font()                  ###
+    ###########################################################################
     def _apply_font(self):
         """
         Applies the current font family and size to all text on screen

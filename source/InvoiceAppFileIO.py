@@ -17,6 +17,9 @@ from source.Invoice import Invoice
 # InvoiceAppFileIO class to handle all file input/output operations
 class InvoiceAppFileIO:
 
+    ###########################################################################
+    ###                   InvoiceAppFileIO -> __init__()                    ###
+    ###########################################################################
     def __init__(
         self,
         debug_filepath: str,
@@ -51,6 +54,9 @@ class InvoiceAppFileIO:
         self.labor_exclusions = []
         self.shipping_criteria = []
 
+    ###########################################################################
+    ###               InvoiceAppFileIO -> reset_debug_file()                ###
+    ###########################################################################
     def reset_debug_file(self):
         """
         Deletes the debug.txt file if it exists, to reset the debug log for the next execution
@@ -69,6 +75,9 @@ class InvoiceAppFileIO:
         if os.path.isfile(self.debug_filepath):
             os.remove(self.debug_filepath)
 
+    ###########################################################################
+    ###              InvoiceAppFileIO -> reset_results_file()               ###
+    ###########################################################################
     def reset_results_file(self):
         """
         Deletes the results.txt file if it exists, to reset the results log for the next execution
@@ -84,6 +93,9 @@ class InvoiceAppFileIO:
         if os.path.isfile(self.results_filepath):
             os.remove(self.results_filepath)
 
+    ###########################################################################
+    ###              InvoiceAppFileIO -> print_to_debug_file()              ###
+    ###########################################################################
     def print_to_debug_file(self, contents: str):
         """
         Writes the string contents to the debug.txt file
@@ -107,6 +119,9 @@ class InvoiceAppFileIO:
         with open(file=self.debug_filepath, mode=write_or_append) as f:
             f.write(contents + "\n")
 
+    ###########################################################################
+    ###         InvoiceAppFileIO -> print_invoice_to_output_file()          ###
+    ###########################################################################
     def print_invoice_to_output_file(
         self, invoice: Invoice, append_output: bool = False
     ):
@@ -135,6 +150,9 @@ class InvoiceAppFileIO:
         with open(file=self.results_filepath, mode=write_or_append) as f:
             f.write(invoice.to_formatted_string())
 
+    ###########################################################################
+    ###               InvoiceAppFileIO -> read_invoice_file()               ###
+    ###########################################################################
     def read_invoice_file(self, invoice_filepath: str) -> list:
         """
         Converts the given invoice PDF into a list of strings
@@ -161,6 +179,9 @@ class InvoiceAppFileIO:
         # Get Number of Pages
         return pages
 
+    ###########################################################################
+    ###            InvoiceAppFileIO -> parse_sales_reps_config()            ###
+    ###########################################################################
     def parse_sales_reps_config(self) -> dict:
         """
         Builds the Sales Reps dictionary that contains the invoice code and
@@ -191,6 +212,9 @@ class InvoiceAppFileIO:
 
         return sales_reps
 
+    ###########################################################################
+    ###          InvoiceAppFileIO -> parse_payment_terms_config()           ###
+    ###########################################################################
     def parse_payment_terms_config(self) -> list:
         """
         Builds the payment_terms list that contains each possible
@@ -219,6 +243,9 @@ class InvoiceAppFileIO:
 
         return payment_terms
 
+    ###########################################################################
+    ###            InvoiceAppFileIO -> add_cost_criteria_field()            ###
+    ###########################################################################
     def add_cost_criteria_field(self, category: str, line: str):
         """
         Given the current category being read in the cost criteria config file, add the entry
@@ -247,6 +274,9 @@ class InvoiceAppFileIO:
                 f"Unknown category read out of Cost Criteria configuration file: {category}"
             )
 
+    ###########################################################################
+    ###           InvoiceAppFileIO -> parse_cost_criteria_file()            ###
+    ###########################################################################
     def parse_cost_criteria_file(self):
         """
         Reads all cost criteria/exclusions from the provided config file and stores them
