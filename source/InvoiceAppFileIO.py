@@ -1,5 +1,5 @@
 import os
-import PyPDF2  # TODO: PyPDF2 is deprecated, use pypdf instead
+import PyPDF2
 from typing import List
 
 from source.Invoice import Invoice

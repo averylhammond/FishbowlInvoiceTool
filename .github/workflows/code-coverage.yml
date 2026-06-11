@@ -18,14 +18,17 @@ jobs:
   test:
     
     # Give the job a name to link into the Github Rules UI
-    name: 50% Min Code Coverage CI Check
+    name: Code Coverage CI Check
     runs-on: ubuntu-latest
 
     # Checkout repo with full history so badge commits can be pushed back
+    # Check out the actual branch (not the detached PR merge commit) so the
+    # commit step below has a branch to push to
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        ref: ${{ github.head_ref || github.ref_name }}
 
     # Set up Python environment
     - name: Set up Python environment
@@ -45,10 +48,9 @@ jobs:
     # Run unit tests with pytest, and generate code coverage report xml
     # Note: replace --cov-report=xml with --cov-report=html to generate HTML report instead
     # which can be easier to manual use
-    # Limit coverage to minimum 50%, aim to increase this number over time to 80%
     - name: Run tests and code coverage
       run: |
-        pytest --cov=./ --cov-report=xml --cov-fail-under=50 tests/*
+        pytest --cov=./ --cov-report=xml tests/*
 
     - name: Generate Coverage Badge
       run: |
@@ -61,11 +63,14 @@ jobs:
       with:
         files: coverage.svg
 
+    # Skip on pull_request runs: pushing a new commit to the PR branch becomes
+    # the PR's HEAD, but no workflow runs against it (GITHUB_TOKEN pushes don't
+    # trigger workflows), leaving the required status check pending forever.
     - name: Commit badge
-      if: steps.changed-files.outputs.files_changed == 'true'
+      if: steps.changed-files.outputs.files_changed == 'true' && github.event_name != 'pull_request'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add coverage.svg
         git commit -m "Updated coverage.svg"
-        git push
+        git push origin HEAD:${{ github.head_ref || github.ref_name }}

@@ -63,12 +63,18 @@ class InvoiceAppController:
             shipping_criteria=self.file_io_controller.shipping_criteria,
         )
 
-        # Create the InvoiceAppDisplay GUI, provide it with callback function to process invoices
+        # Create the InvoiceAppDisplay GUI, provide it with callback function to process invoices and all
+        # relevant file paths to logs and configs
         self.display = InvoiceAppDisplay(
             title="Invoice Processor",
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
             invoices_dir=self.invoices_path,
+            payment_terms_path=self.payment_terms_path,
+            sales_reps_path=self.sales_reps_path,
+            cost_criteria_path=self.cost_criteria_path,
+            results_log_path=self.results_log_path,
+            debug_log_path=self.debug_log_path,
         )
 
         # Use the File IO Controller to read in the criteria/exclusions for each cost section

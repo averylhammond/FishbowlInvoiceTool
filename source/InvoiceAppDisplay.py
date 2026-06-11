@@ -6,19 +6,12 @@ from source.InvoiceAppFileIO import *
 from source.Invoice import *
 from source.ArgumentProvider import ArgumentProvider
 from source.color_theme import *
+from source.font_settings import *
+from source.platform_utils import *
 
-# Future TODO: Implement a dynamic theme that can be changed at runtime through user input
-# Future TODO: Let the config text files be controlled through tabs on the GUI, store results
-#              in database somewhere so the txt files don't need to be retained
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
 #              pop up windows when Fishbowl invoices present rounding errors
 # Future TODO: Make abstract GUI class and try and use other frameworks? PyQT could be cool
-# Future TODO: Once the GUI is more configurable (fonts/colors), find out how to cache the
-#              user settings so that they don't have to be changed every time the app runs
-#              Could use a database for this
-#              Also figure out how the installation/update would work in order to not wipe
-#              out that database file. Could the application reach out to my homeserver to
-#              query it for an update? That would be cool
 
 
 # Invoice App Display class to own the GUI for selecting and processing invoices
@@ -31,6 +24,11 @@ class InvoiceAppDisplay(tk.Tk):
         title: str,
         window_resolution: str,
         invoices_dir: str,
+        payment_terms_path: str,
+        sales_reps_path: str,
+        cost_criteria_path: str,
+        results_log_path: str,
+        debug_log_path: str,
     ):
         """
         Initializes the InvoiceAppDisplay object
@@ -40,6 +38,11 @@ class InvoiceAppDisplay(tk.Tk):
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
             invoices_dir (str): Directory where invoice PDFs are located
+            payment_terms_path (str): Path to the payment terms config file
+            sales_reps_path (str): Path to the sales representatives config file
+            cost_criteria_path (str): Path to the cost criteria config file
+            results_log_path (str): Path to the results log file
+            debug_log_path (str): Path to the debug log file (not present in the release configuration)
         """
 
         super().__init__()
@@ -66,20 +69,44 @@ class InvoiceAppDisplay(tk.Tk):
         # The filepath to expect invoice PDFs to be located
         self.invoices_dir = invoices_dir
 
+        # The filepath to the config files
+        self.payment_terms_path = payment_terms_path
+        self.sales_reps_path = sales_reps_path
+        self.cost_criteria_path = cost_criteria_path
+
+        # The filepath to the log files
+        self.results_log_path = results_log_path
+        self.debug_log_path = debug_log_path
+
+        # Active theme, defaults to Dark
+        self.current_theme = DARK
+
+        # Active font family, defaults to DEFAULT_FONT_FAMILY
+        self.current_font_family = DEFAULT_FONT_FAMILY
+
+        # Active font size, defaults to DEFAULT_FONT_SIZE
+        self.current_font_size = DEFAULT_FONT_SIZE
+
         # Tkinter Widgets
         # fmt:off
-        self.title_label                 = None
-        self.file_frame                  = None
-        self.file_entry                  = None
-        self.browse_button               = None
-        self.button_frame                = None
-        self.process_invoice_button      = None
-        self.exit_button                 = None
-        self.process_all_invoices_button = None
-        self.output_label                = None
-        self.output_box                  = None
+        self.menu_bar:                    tk.Menu                    | None = None
+        self.file_menu:                   tk.Menu                    | None = None
+        self.edit_menu:                   tk.Menu                    | None = None
+        self.view_menu:                   tk.Menu                    | None = None
+        self.preferences_menu:            tk.Menu                    | None = None
+        self.title_label:                 tk.Label                   | None = None
+        self.file_frame:                  tk.Frame                   | None = None
+        self.file_entry:                  tk.Entry                   | None = None
+        self.browse_button:               tk.Button                  | None = None
+        self.button_frame:                tk.Frame                   | None = None
+        self.process_invoice_button:      tk.Button                  | None = None
+        self.exit_button:                 tk.Button                  | None = None
+        self.process_all_invoices_button: tk.Button                  | None = None
+        self.output_label:                tk.Label                   | None = None
+        self.output_box:                  scrolledtext.ScrolledText  | None = None
         # fmt:on
 
+        # Build the GUI
         self.build_widgets()
 
     def build_widgets(self):
@@ -99,11 +126,83 @@ class InvoiceAppDisplay(tk.Tk):
 
         self.configure(bg=bg_main)
 
+        # Menu bar containing dropdowns for File, Edit, and Preferences
+        self.menu_bar = tk.Menu(self)
+
+        # File dropdown
+        #  -> Open option to open a single invoice
+        #  -> Clear option to clear the output box and reset the selected file
+        #  -> Exit option to close the application
+        self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.file_menu.add_command(label="Open", command=self.handle_browse_button)
+        self.file_menu.add_command(label="Clear", command=self.handle_clear)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=self.quit)
+        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
+
+        # Edit dropdown
+        #  -> Cost Criteria option to open the cost criteria config file in the default text editor for user editing
+        self.edit_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.edit_menu.add_command(
+            label="Cost Criteria", command=self.handle_cost_criteria
+        )
+        self.edit_menu.add_command(
+            label="Payment Terms", command=self.handle_payment_terms
+        )
+        self.edit_menu.add_command(label="Sales Reps", command=self.handle_sales_reps)
+        self.menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
+
+        # View dropdown
+        #  -> Results Log option to open the results log file
+        #  -> Debug Log option to open the debug log file (only in debug configuration)
+        self.view_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.view_menu.add_command(label="Results Log", command=self.handle_results_log)
+        if __debug__:
+            self.view_menu.add_command(label="Debug Log", command=self.handle_debug_log)
+        self.menu_bar.add_cascade(label="View", menu=self.view_menu)
+
+        # Preferences dropdown
+        #  -> Theme option to select from available color themes
+        #  -> Font option to select the font family used throughout the application
+        #  -> Font Size option to adjust the text size throughout the application
+        self.preferences_menu = tk.Menu(self.menu_bar, tearoff=0)
+
+        theme_menu = tk.Menu(self.preferences_menu, tearoff=0)
+        for theme in ALL_THEMES:
+            theme_menu.add_command(
+                label=theme.name,
+                command=lambda t=theme: self.apply_theme(t),
+            )
+        self.preferences_menu.add_cascade(label="Theme", menu=theme_menu)
+
+        font_menu = tk.Menu(self.preferences_menu, tearoff=0)
+        for family in FONT_FAMILIES:
+            font_menu.add_command(
+                label=family,
+                command=lambda f=family: self.apply_font_family(f),
+            )
+        self.preferences_menu.add_cascade(label="Font", menu=font_menu)
+
+        font_size_menu = tk.Menu(self.preferences_menu, tearoff=0)
+        for size in FONT_SIZES:
+            font_size_menu.add_command(
+                label=str(size),
+                command=lambda s=size: self.apply_font_size(s),
+            )
+        self.preferences_menu.add_cascade(label="Font Size", menu=font_size_menu)
+
+        self.preferences_menu.add_separator()
+        self.preferences_menu.add_command(label="Settings")
+        self.menu_bar.add_cascade(label="Preferences", menu=self.preferences_menu)
+
+        # Configure the menu bar
+        self.config(menu=self.menu_bar)
+
         # Title Label
         self.title_label = tk.Label(
             self,
             text="Choose a Fishbowl Invoice PDF to Process",
-            font=("Segoe UI", 16, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
             bg=bg_main,
             fg=label_fg,
         )
@@ -123,9 +222,7 @@ class InvoiceAppDisplay(tk.Tk):
             insertbackground=fg_text,
             relief="flat",
         )
-        self.file_entry.pack(
-            side="left", fill="x", expand=True, padx=(0, 5), pady=8
-        )
+        self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 5), pady=8)
 
         # Browse button to open file dialog
         self.browse_button = tk.Button(
@@ -137,7 +234,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=accent_blue,
             activeforeground=fg_text,
             relief="flat",
-            font=("Segoe UI", 10, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.browse_button.pack(side="left", padx=(10, 0), pady=8)
 
@@ -155,7 +252,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=accent_blue,
             activeforeground=fg_text,
             relief="flat",
-            font=("Segoe UI", 10, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.process_invoice_button.grid(row=0, column=0, padx=10)
 
@@ -169,7 +266,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=RED,
             activeforeground=fg_text,
             relief="flat",
-            font=("Segoe UI", 10, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.exit_button.grid(row=0, column=1, padx=10)
 
@@ -183,7 +280,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=accent_blue,
             activeforeground=fg_text,
             relief="flat",
-            font=("Segoe UI", 10, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.process_all_invoices_button.grid(row=0, column=2, padx=10)
 
@@ -191,7 +288,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.output_label = tk.Label(
             self,
             text="Output:",
-            font=("Segoe UI", 12, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
             bg=bg_main,
             fg=label_fg,
         )
@@ -202,7 +299,7 @@ class InvoiceAppDisplay(tk.Tk):
             self,
             height=8,
             wrap="word",
-            font=("Segoe UI", 15, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
             bg=bg_entry,
             fg=fg_text,
             insertbackground=fg_text,
@@ -228,9 +325,7 @@ class InvoiceAppDisplay(tk.Tk):
         if file_path:
             self.selected_file.set(file_path)
 
-    def display_invoice_output(
-        self, invoice: Invoice, append_output: bool = False
-    ):
+    def display_invoice_output(self, invoice: Invoice, append_output: bool = False):
         """
         Displays the calculated totals of the invoice in the output box
 
@@ -310,3 +405,132 @@ class InvoiceAppDisplay(tk.Tk):
             return
 
         messagebox.showerror(error_title, error_message)
+
+    def handle_clear(self):
+        """
+        Clears the output box and resets the selected file path
+        """
+        self.selected_file.set("")
+        if self.output_box:
+            self.output_box.delete(1.0, tk.END)
+
+    def handle_cost_criteria(self):
+        """
+        Opens the Cost Criteria config file in the system default text editor
+        """
+        open_in_system_editor(self.cost_criteria_path)
+
+    def handle_payment_terms(self):
+        """
+        Opens the Payment Terms config file in the system default text editor
+        """
+        open_in_system_editor(self.payment_terms_path)
+
+    def handle_sales_reps(self):
+        """
+        Opens the Sales Reps config file in the system default text editor
+        """
+        open_in_system_editor(self.sales_reps_path)
+
+    def handle_results_log(self):
+        """
+        Opens the results log file in the system default text editor if it exists.
+        Shows an error popup if the file has not been created yet.
+        """
+        if Path(self.results_log_path).exists():
+            open_in_system_editor(self.results_log_path)
+        else:
+            self.show_error_popup(
+                error_title="File Not Found",
+                error_message=f"Results log not found at: {self.results_log_path}",
+            )
+
+    def handle_debug_log(self):
+        """
+        Opens the debug log file in the system default text editor if it exists.
+        Shows an error popup if the file has not been created yet.
+        """
+        if Path(self.debug_log_path).exists():
+            open_in_system_editor(self.debug_log_path)
+        else:
+            self.show_error_popup(
+                error_title="File Not Found",
+                error_message=f"Debug log not found at: {self.debug_log_path}",
+            )
+
+    def apply_theme(self, theme: Theme):
+        """
+        Applies a color theme to all widgets in the application
+
+        Args:
+            theme (Theme): The theme to apply
+        """
+        self.current_theme = theme
+
+        self.configure(bg=theme.bg_main)
+        self.title_label.configure(bg=theme.bg_main, fg=theme.label_fg)
+        self.file_frame.configure(bg=theme.bg_main)
+        self.file_entry.configure(
+            bg=theme.bg_entry, fg=theme.bg_main, insertbackground=theme.fg_text
+        )
+        self.browse_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
+        self.button_frame.configure(bg=theme.bg_main)
+        self.process_invoice_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
+        self.exit_button.configure(
+            bg=theme.bg_entry,
+            fg=theme.fg_text,
+            activeforeground=theme.fg_text,
+        )
+        self.process_all_invoices_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
+        self.output_label.configure(bg=theme.bg_main, fg=theme.label_fg)
+        self.output_box.configure(
+            bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
+        )
+
+    def apply_font_family(self, family: str):
+        """
+        Applies a font family to all text on screen
+
+        Args:
+            family (str): The font family to apply
+        """
+        self.current_font_family = family
+        self._apply_font()
+
+    def apply_font_size(self, size: int):
+        """
+        Applies a font size to all text on screen
+
+        Args:
+            size (int): The font size to apply
+        """
+        self.current_font_size = size
+        self._apply_font()
+
+    def _apply_font(self):
+        """
+        Applies the current font family and size to all text on screen
+        """
+        font = (self.current_font_family, self.current_font_size, "bold")
+        self.title_label.configure(font=font)
+        self.browse_button.configure(font=font)
+        self.process_invoice_button.configure(font=font)
+        self.exit_button.configure(font=font)
+        self.process_all_invoices_button.configure(font=font)
+        self.output_label.configure(font=font)
+        self.output_box.configure(font=font)
