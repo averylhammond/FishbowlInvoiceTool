@@ -6,5 +6,5 @@ FONT_FAMILY = "Segoe UI"
 # Default font size applied on startup
 DEFAULT_FONT_SIZE = 12
 
-# Selectable font sizes, from 6 to 20 in increments of 2
-FONT_SIZES = list(range(6, 21, 2))
+# Selectable font sizes, from 6 to 32 in increments of 2
+FONT_SIZES = list(range(6, 33, 2))
