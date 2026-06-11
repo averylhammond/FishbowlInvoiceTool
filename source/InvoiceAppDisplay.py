@@ -113,10 +113,7 @@ class InvoiceAppDisplay(tk.Tk):
         This includes a title label, file selection entry, browse button, and action buttons
         """
 
-        # Use the active theme's color scheme (defaults to DARK)
-        theme = self.current_theme
-
-        self.configure(bg=theme.bg_main)
+        self.configure(bg=self.current_theme.bg_main)
 
         # Menu bar containing dropdowns for File, Edit, and Preferences
         self.menu_bar = tk.Menu(self)
@@ -195,13 +192,13 @@ class InvoiceAppDisplay(tk.Tk):
             self,
             text="Choose a Fishbowl Invoice PDF to Process",
             font=(self.current_font_family, self.current_font_size, "bold"),
-            bg=theme.bg_main,
-            fg=theme.label_fg,
+            bg=self.current_theme.bg_main,
+            fg=self.current_theme.label_fg,
         )
         self.title_label.pack(pady=(20, 10))
 
         # File selection frame
-        self.file_frame = tk.Frame(self, bg=theme.bg_main)
+        self.file_frame = tk.Frame(self, bg=self.current_theme.bg_main)
         self.file_frame.pack(padx=20, fill="x")
 
         self.file_entry = tk.Entry(
@@ -209,9 +206,9 @@ class InvoiceAppDisplay(tk.Tk):
             textvariable=self.selected_file,
             state="readonly",
             width=50,
-            bg=theme.bg_entry,
-            fg=theme.bg_main,
-            insertbackground=theme.fg_text,
+            bg=self.current_theme.bg_entry,
+            fg=self.current_theme.bg_main,
+            insertbackground=self.current_theme.fg_text,
             relief="flat",
         )
         self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 5), pady=8)
@@ -221,17 +218,17 @@ class InvoiceAppDisplay(tk.Tk):
             self.file_frame,
             text="Browse",
             command=self.handle_browse_button,
-            bg=theme.button_bg,
-            fg=theme.button_fg,
-            activebackground=theme.accent,
-            activeforeground=theme.fg_text,
+            bg=self.current_theme.button_bg,
+            fg=self.current_theme.button_fg,
+            activebackground=self.current_theme.accent,
+            activeforeground=self.current_theme.fg_text,
             relief="flat",
             font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.browse_button.pack(side="left", padx=(10, 0), pady=8)
 
         # Action buttons frame
-        self.button_frame = tk.Frame(self, bg=theme.bg_main)
+        self.button_frame = tk.Frame(self, bg=self.current_theme.bg_main)
         self.button_frame.pack(pady=20)
 
         # Create button for processing a single invoice
@@ -239,10 +236,10 @@ class InvoiceAppDisplay(tk.Tk):
             self.button_frame,
             text="Process This Invoice",
             command=self.handle_process_invoice,
-            bg=theme.button_bg,
-            fg=theme.button_fg,
-            activebackground=theme.accent,
-            activeforeground=theme.fg_text,
+            bg=self.current_theme.button_bg,
+            fg=self.current_theme.button_fg,
+            activebackground=self.current_theme.accent,
+            activeforeground=self.current_theme.fg_text,
             relief="flat",
             font=(self.current_font_family, self.current_font_size, "bold"),
         )
@@ -253,10 +250,10 @@ class InvoiceAppDisplay(tk.Tk):
             self.button_frame,
             text="Exit",
             command=self.quit,
-            bg=theme.bg_entry,
-            fg=theme.fg_text,
+            bg=self.current_theme.bg_entry,
+            fg=self.current_theme.fg_text,
             activebackground=RED,
-            activeforeground=theme.fg_text,
+            activeforeground=self.current_theme.fg_text,
             relief="flat",
             font=(self.current_font_family, self.current_font_size, "bold"),
         )
@@ -267,10 +264,10 @@ class InvoiceAppDisplay(tk.Tk):
             self.button_frame,
             text="Process All Invoices",
             command=self.handle_process_all_invoices,
-            bg=theme.button_bg,
-            fg=theme.button_fg,
-            activebackground=theme.accent,
-            activeforeground=theme.fg_text,
+            bg=self.current_theme.button_bg,
+            fg=self.current_theme.button_fg,
+            activebackground=self.current_theme.accent,
+            activeforeground=self.current_theme.fg_text,
             relief="flat",
             font=(self.current_font_family, self.current_font_size, "bold"),
         )
@@ -281,8 +278,8 @@ class InvoiceAppDisplay(tk.Tk):
             self,
             text="Output:",
             font=(self.current_font_family, self.current_font_size, "bold"),
-            bg=theme.bg_main,
-            fg=theme.label_fg,
+            bg=self.current_theme.bg_main,
+            fg=self.current_theme.label_fg,
         )
         self.output_label.pack(anchor="w", padx=22, pady=(0, 2))
 
@@ -292,9 +289,9 @@ class InvoiceAppDisplay(tk.Tk):
             height=8,
             wrap="word",
             font=(self.current_font_family, self.current_font_size, "bold"),
-            bg=theme.bg_entry,
-            fg=theme.fg_text,
-            insertbackground=theme.fg_text,
+            bg=self.current_theme.bg_entry,
+            fg=self.current_theme.fg_text,
+            insertbackground=self.current_theme.fg_text,
             relief="flat",
         )
         self.output_box.pack(padx=20, pady=(0, 10), fill="both", expand=True)
