@@ -22,10 +22,13 @@ jobs:
     runs-on: ubuntu-latest
 
     # Checkout repo with full history so badge commits can be pushed back
+    # Check out the actual branch (not the detached PR merge commit) so the
+    # commit step below has a branch to push to
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        ref: ${{ github.head_ref || github.ref_name }}
 
     # Set up Python environment
     - name: Set up Python environment
@@ -67,4 +70,4 @@ jobs:
         git config --local user.name "GitHub Action"
         git add coverage.svg
         git commit -m "Updated coverage.svg"
-        git push
+        git push origin HEAD:${{ github.head_ref || github.ref_name }}
