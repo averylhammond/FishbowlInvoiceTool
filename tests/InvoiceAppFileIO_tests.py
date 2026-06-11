@@ -2,6 +2,13 @@ import pytest
 from unittest.mock import patch, mock_open, call
 
 from source.InvoiceAppFileIO import *
+from source.constants import (
+    DEBUG_LOG_PATH,
+    RESULTS_LOG_PATH,
+    PAYMENT_TERMS_PATH,
+    SALES_REPS_PATH,
+    COST_CRITERIA_PATH,
+)
 
 
 ###############################################################################
@@ -14,14 +21,7 @@ def file_io():
     code reuse
     """
 
-    return InvoiceAppFileIO(
-        debug_filepath="debug.txt",
-        results_filepath="results.txt",
-        invoices_filepath="invoices/",
-        payment_terms_filepath="payment_terms.txt",
-        sales_reps_filepath="sales_reps.txt",
-        cost_criteria_filepath="cost_criteria.txt",
-    )
+    return InvoiceAppFileIO()
 
 
 @patch("os.remove")
@@ -44,7 +44,7 @@ def test_reset_debug_file_file_exists(
 
     # Call reset_debug_file(), expecting os.remove() to be called once
     file_io.reset_debug_file()
-    mock_os_remove.assert_called_once_with(file_io.debug_filepath)
+    mock_os_remove.assert_called_once_with(DEBUG_LOG_PATH)
 
 
 @patch("os.remove")
@@ -118,7 +118,7 @@ def test_reset_results_file_file_exists(
 
     # Call reset_results_file(), expecting os.remove() to be called once
     file_io.reset_results_file()
-    mock_os_remove.assert_called_once_with(file_io.results_filepath)
+    mock_os_remove.assert_called_once_with(RESULTS_LOG_PATH)
 
 
 @patch("os.remove")
@@ -191,7 +191,7 @@ def test_parse_sales_reps_config_success(mock_file, file_io):
     assert sales_reps == expected_sales_reps
 
     # Ensure that the file was opened in reading mode
-    mock_file.assert_called_once_with(file=file_io.sales_reps_filepath, mode="r")
+    mock_file.assert_called_once_with(file=SALES_REPS_PATH, mode="r")
 
 
 @patch(
@@ -216,7 +216,7 @@ def test_parse_sales_reps_config_empty_file(mock_file, file_io):
     assert sales_reps == {}
 
     # Ensure the file was opened in reading mode
-    mock_file.assert_called_once_with(file=file_io.sales_reps_filepath, mode="r")
+    mock_file.assert_called_once_with(file=SALES_REPS_PATH, mode="r")
 
 
 ###############################################################################
@@ -255,7 +255,7 @@ def test_parse_payment_terms_config_success(mock_file, file_io):
     assert payment_terms == expected_payment_terms
 
     # Ensure that the file was opened in reading mode
-    mock_file.assert_called_once_with(file=file_io.payment_terms_filepath, mode="r")
+    mock_file.assert_called_once_with(file=PAYMENT_TERMS_PATH, mode="r")
 
 
 @patch(
@@ -280,7 +280,7 @@ def test_parse_payment_terms_config_empty_file(mock_file, file_io):
     assert payment_terms == []
 
     # Ensure the file was opened in reading mode
-    mock_file.assert_called_once_with(file=file_io.payment_terms_filepath, mode="r")
+    mock_file.assert_called_once_with(file=PAYMENT_TERMS_PATH, mode="r")
 
 
 ###############################################################################
@@ -381,4 +381,4 @@ def test_parse_cost_criteria_file_calls_add_cost_criteria_field(
     assert mock_add_field.call_count == len(expected_calls)
 
     # Verify file was opened for reading
-    mock_file.assert_called_once_with(file="cost_criteria.txt", mode="r")
+    mock_file.assert_called_once_with(file=COST_CRITERIA_PATH, mode="r")

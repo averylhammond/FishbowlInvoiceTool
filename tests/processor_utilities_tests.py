@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from source.processor_utilities import *
 
-from source.globals import DECIMAL_ZERO
+from source.constants import DECIMAL_ZERO
 
 
 ###############################################################################

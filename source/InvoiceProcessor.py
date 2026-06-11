@@ -9,12 +9,15 @@ from source.processor_utilities import (
 )
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.Invoice import Invoice
-from source.globals import DECIMAL_ZERO
+from source.constants import DECIMAL_ZERO
 
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
 class InvoiceProcessor:
 
+    ###########################################################################
+    ###                   InvoiceProcessor -> __init__()                    ###
+    ###########################################################################
     def __init__(
         self,
         file_io_controller: InvoiceAppFileIO,
@@ -36,8 +39,10 @@ class InvoiceProcessor:
         self.labor_criteria = labor_criteria
         self.labor_exclusions = labor_exclusions
         self.shipping_criteria = shipping_criteria
-        return
 
+    ###########################################################################
+    ###               InvoiceProcessor -> populate_invoice()                ###
+    ###########################################################################
     def populate_invoice(
         self, invoice: Invoice, sales_reps: dict, payment_terms: list
     ):
@@ -81,6 +86,9 @@ class InvoiceProcessor:
             text=first_page, sales_reps=sales_reps
         )
 
+    ###########################################################################
+    ###             InvoiceProcessor -> process_payment_line()              ###
+    ###########################################################################
     def process_payment_line(
         self, text: str, line: str, invoice: Invoice, curr_line_num: int
     ):
@@ -145,6 +153,9 @@ class InvoiceProcessor:
             invoice.material_cost += format_currency(value=line_cost)
             invoice.subtotal += format_currency(value=line_cost)
 
+    ###########################################################################
+    ###                 InvoiceProcessor -> find_ea_cost()                  ###
+    ###########################################################################
     def find_ea_cost(self, payment_lines: str) -> Decimal:
         """
         Searches the payment_lines for any listing of cost listed in quantity
@@ -167,6 +178,9 @@ class InvoiceProcessor:
         # If no cost was found, return 0.0
         return DECIMAL_ZERO
 
+    ###########################################################################
+    ###                 InvoiceProcessor -> find_hr_cost()                  ###
+    ###########################################################################
     def find_hr_cost(self, payment_lines: str) -> Decimal:
         """
         Searches the payment_lines for any listing of cost listed in hourly rate
@@ -189,6 +203,9 @@ class InvoiceProcessor:
         # If no cost was found, return None
         return DECIMAL_ZERO
 
+    ###########################################################################
+    ###            InvoiceProcessor -> process_end_of_invoice()             ###
+    ###########################################################################
     def process_end_of_invoice(
         self, text: str, starting_line: str, invoice: Invoice
     ):
@@ -218,6 +235,9 @@ class InvoiceProcessor:
             value=invoice.subtotal
         ) + format_currency(value=invoice.sales_tax)
 
+    ###########################################################################
+    ###           InvoiceProcessor -> search_for_labor_criteria()           ###
+    ###########################################################################
     def search_for_labor_criteria(self, line: str) -> bool:
         """
         Takes a given payment line and searches it for the criteria
@@ -245,6 +265,9 @@ class InvoiceProcessor:
         # If no labor criteria was found, return False
         return False
 
+    ###########################################################################
+    ###         InvoiceProcessor -> search_for_shipping_criteria()          ###
+    ###########################################################################
     def search_for_shipping_criteria(self, line: str) -> bool:
         """
         Takes a given payment line and searches it for the criteria
@@ -264,6 +287,9 @@ class InvoiceProcessor:
 
         return False
 
+    ###########################################################################
+    ###                InvoiceProcessor -> process_invoice()                ###
+    ###########################################################################
     def process_invoice(self, invoice: Invoice):
         """
         Main function that processes the invoice PDF

@@ -3,6 +3,13 @@ import PyPDF2
 from typing import List
 
 from source.Invoice import Invoice
+from source.constants import (
+    DEBUG_LOG_PATH,
+    RESULTS_LOG_PATH,
+    PAYMENT_TERMS_PATH,
+    SALES_REPS_PATH,
+    COST_CRITERIA_PATH,
+)
 
 # TODO: Change the parsing of the config files to happen after the GUI is initialized
 #       This will allow the GUI to display an error if the config files are not found
@@ -17,40 +24,22 @@ from source.Invoice import Invoice
 # InvoiceAppFileIO class to handle all file input/output operations
 class InvoiceAppFileIO:
 
-    def __init__(
-        self,
-        debug_filepath: str,
-        results_filepath: str,
-        invoices_filepath: str,
-        payment_terms_filepath: str,
-        sales_reps_filepath: str,
-        cost_criteria_filepath: str,
-    ):
+    ###########################################################################
+    ###                   InvoiceAppFileIO -> __init__()                    ###
+    ###########################################################################
+    def __init__(self):
         """
         Initializes the InvoiceAppFileIO object
-
-        Args:
-            debug_filepath (str): The filepath for the debug log
-            results_filepath (str): The filepath for the results log
-            invoices_filepath (str): The filepath where invoice PDFs are located
-            payment_terms_filepath (str): The filepath for the payment terms config file
-            sales_reps_filepath (str): The filepath for the sales reps config file
-            cost_criteria_filepath (str): The filepath for the cost criteria config file
         """
-
-        # Initialize file paths
-        self.debug_filepath = debug_filepath
-        self.results_filepath = results_filepath
-        self.invoices_filepath = invoices_filepath
-        self.payment_terms_filepath = payment_terms_filepath
-        self.sales_reps_filepath = sales_reps_filepath
-        self.cost_criteria_filepath = cost_criteria_filepath
 
         # Initialize cost criteria/exclusion lists
         self.labor_criteria = []
         self.labor_exclusions = []
         self.shipping_criteria = []
 
+    ###########################################################################
+    ###               InvoiceAppFileIO -> reset_debug_file()                ###
+    ###########################################################################
     def reset_debug_file(self):
         """
         Deletes the debug.txt file if it exists, to reset the debug log for the next execution
@@ -62,28 +51,34 @@ class InvoiceAppFileIO:
             return
 
         # Get the log directory path and ensure the it exists
-        debug_dir = os.path.dirname(self.debug_filepath)
+        debug_dir = os.path.dirname(DEBUG_LOG_PATH)
         os.makedirs(debug_dir, exist_ok=True)
 
         # If the debug file inside the directory already exists, delete it
-        if os.path.isfile(self.debug_filepath):
-            os.remove(self.debug_filepath)
+        if os.path.isfile(DEBUG_LOG_PATH):
+            os.remove(DEBUG_LOG_PATH)
 
+    ###########################################################################
+    ###              InvoiceAppFileIO -> reset_results_file()               ###
+    ###########################################################################
     def reset_results_file(self):
         """
         Deletes the results.txt file if it exists, to reset the results log for the next execution
         """
 
         # Check to make sure the filepath exists
-        if not os.path.exists(os.path.dirname(self.debug_filepath)):
+        if not os.path.exists(os.path.dirname(DEBUG_LOG_PATH)):
             raise FileNotFoundError(
-                f"Results file path {os.path.dirname(self.results_filepath)} does not exist."
+                f"Results file path {os.path.dirname(RESULTS_LOG_PATH)} does not exist."
             )
 
         # If the file already exists, delete it
-        if os.path.isfile(self.results_filepath):
-            os.remove(self.results_filepath)
+        if os.path.isfile(RESULTS_LOG_PATH):
+            os.remove(RESULTS_LOG_PATH)
 
+    ###########################################################################
+    ###              InvoiceAppFileIO -> print_to_debug_file()              ###
+    ###########################################################################
     def print_to_debug_file(self, contents: str):
         """
         Writes the string contents to the debug.txt file
@@ -98,15 +93,18 @@ class InvoiceAppFileIO:
             return
 
         # If debug.txt already exists, append to it, otherwise write from beginning
-        if os.path.exists(os.path.dirname(self.debug_filepath)):
+        if os.path.exists(os.path.dirname(DEBUG_LOG_PATH)):
             write_or_append = "a"
         else:
             write_or_append = "w"
 
         # Write contents to file
-        with open(file=self.debug_filepath, mode=write_or_append) as f:
+        with open(file=DEBUG_LOG_PATH, mode=write_or_append) as f:
             f.write(contents + "\n")
 
+    ###########################################################################
+    ###         InvoiceAppFileIO -> print_invoice_to_output_file()          ###
+    ###########################################################################
     def print_invoice_to_output_file(
         self, invoice: Invoice, append_output: bool = False
     ):
@@ -120,9 +118,9 @@ class InvoiceAppFileIO:
         """
 
         # Check to make sure the filepath exists
-        if not os.path.exists(os.path.dirname(self.results_filepath)):
+        if not os.path.exists(os.path.dirname(RESULTS_LOG_PATH)):
             raise FileNotFoundError(
-                f"Debug file directory {os.path.dirname(self.results_filepath)} does not exist."
+                f"Debug file directory {os.path.dirname(RESULTS_LOG_PATH)} does not exist."
             )
 
         # If appending output, use "a" for the file open call, otherwise use "w"
@@ -132,9 +130,12 @@ class InvoiceAppFileIO:
             write_or_append = "w"
 
         # Write invoice contents to file
-        with open(file=self.results_filepath, mode=write_or_append) as f:
+        with open(file=RESULTS_LOG_PATH, mode=write_or_append) as f:
             f.write(invoice.to_formatted_string())
 
+    ###########################################################################
+    ###               InvoiceAppFileIO -> read_invoice_file()               ###
+    ###########################################################################
     def read_invoice_file(self, invoice_filepath: str) -> list:
         """
         Converts the given invoice PDF into a list of strings
@@ -161,6 +162,9 @@ class InvoiceAppFileIO:
         # Get Number of Pages
         return pages
 
+    ###########################################################################
+    ###            InvoiceAppFileIO -> parse_sales_reps_config()            ###
+    ###########################################################################
     def parse_sales_reps_config(self) -> dict:
         """
         Builds the Sales Reps dictionary that contains the invoice code and
@@ -171,8 +175,8 @@ class InvoiceAppFileIO:
         """
 
         # Open sales rep config file for reading
-        with open(file=self.sales_reps_filepath, mode="r") as f:
-            dict = {}
+        with open(file=SALES_REPS_PATH, mode="r") as f:
+            sales_reps = {}
 
             # Search through text file, only take non-comment entries
             for line in f:
@@ -187,10 +191,13 @@ class InvoiceAppFileIO:
                 res = line.partition("=")
 
                 # Res[0] is the sales rep code, res[2] is the sales rep name translation
-                dict[res[0]] = res[2]
+                sales_reps[res[0]] = res[2]
 
-        return dict
+        return sales_reps
 
+    ###########################################################################
+    ###          InvoiceAppFileIO -> parse_payment_terms_config()           ###
+    ###########################################################################
     def parse_payment_terms_config(self) -> list:
         """
         Builds the payment_terms list that contains each possible
@@ -201,8 +208,8 @@ class InvoiceAppFileIO:
         """
 
         # Open payment terms config file for reading
-        with open(file=self.payment_terms_filepath, mode="r") as f:
-            list = []
+        with open(file=PAYMENT_TERMS_PATH, mode="r") as f:
+            payment_terms = []
 
             # Search through text file, only take non-comment entries
             for line in f:
@@ -215,10 +222,13 @@ class InvoiceAppFileIO:
                     continue
 
                 # Append the payment term to the list
-                list.append(line)
+                payment_terms.append(line)
 
-        return list
+        return payment_terms
 
+    ###########################################################################
+    ###            InvoiceAppFileIO -> add_cost_criteria_field()            ###
+    ###########################################################################
     def add_cost_criteria_field(self, category: str, line: str):
         """
         Given the current category being read in the cost criteria config file, add the entry
@@ -247,6 +257,9 @@ class InvoiceAppFileIO:
                 f"Unknown category read out of Cost Criteria configuration file: {category}"
             )
 
+    ###########################################################################
+    ###           InvoiceAppFileIO -> parse_cost_criteria_file()            ###
+    ###########################################################################
     def parse_cost_criteria_file(self):
         """
         Reads all cost criteria/exclusions from the provided config file and stores them
@@ -258,7 +271,7 @@ class InvoiceAppFileIO:
         """
 
         # Open payment terms config file for reading
-        with open(file=self.cost_criteria_filepath, mode="r") as f:
+        with open(file=COST_CRITERIA_PATH, mode="r") as f:
 
             # Default to empty strings
             line = ""
