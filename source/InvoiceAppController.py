@@ -4,14 +4,6 @@ from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 from source.ArgumentProvider import ArgumentProvider
 from source.Invoice import Invoice
-from source.constants import (
-    DEBUG_LOG_PATH,
-    RESULTS_LOG_PATH,
-    INVOICES_PATH,
-    PAYMENT_TERMS_PATH,
-    SALES_REPS_PATH,
-    COST_CRITERIA_PATH,
-)
 
 # TODO: The GUI title and window resolution below are still hardcoded; move these
 #       into named constants (e.g. alongside the font/theme settings) as well
@@ -28,42 +20,15 @@ class InvoiceAppController:
         """
         Initializes the InvoiceAppController object
 
-        This includes specifying the file paths for logs, invoices, config files, and initializing
-        the File IO Controller, Invoice Processor, and GUI Display.
-
-        Note that all defined filepaths are relative to the executable's current working directory.
+        This includes initializing the File IO Controller, Invoice Processor,
+        and GUI Display
         """
 
         # Argument provider to check for integration test mode
         self.argument_provider = ArgumentProvider()
 
-        # Define the filepath for the debug log
-        self.debug_log_path = DEBUG_LOG_PATH
-
-        # Define the filepath for the saved results log
-        self.results_log_path = RESULTS_LOG_PATH
-
-        # Define the filepath for Invoices to be processed
-        self.invoices_path = INVOICES_PATH
-
-        # Define the filepath for the payment terms config file
-        self.payment_terms_path = PAYMENT_TERMS_PATH
-
-        # Define the filepath for the sales reps config file
-        self.sales_reps_path = SALES_REPS_PATH
-
-        # Define the filepath for the cost criteria config file
-        self.cost_criteria_path = COST_CRITERIA_PATH
-
-        # Create File IO Controller, provide it with all necessary file paths
-        self.file_io_controller = InvoiceAppFileIO(
-            debug_filepath=self.debug_log_path,
-            results_filepath=self.results_log_path,
-            invoices_filepath=self.invoices_path,
-            payment_terms_filepath=self.payment_terms_path,
-            sales_reps_filepath=self.sales_reps_path,
-            cost_criteria_filepath=self.cost_criteria_path,
-        )
+        # Create File IO Controller, which reads its file paths from source.constants
+        self.file_io_controller = InvoiceAppFileIO()
 
         # Create InvoiceProcessor, provide it with the File IO Controller and criteria for processing invoices
         self.invoice_processor = InvoiceProcessor(
@@ -73,27 +38,18 @@ class InvoiceAppController:
             shipping_criteria=self.file_io_controller.shipping_criteria,
         )
 
-        # Create the InvoiceAppDisplay GUI, provide it with callback function to process invoices and all
-        # relevant file paths to logs and configs
+        # Create the InvoiceAppDisplay GUI, provide it with the callback function to process invoices.
         self.display = InvoiceAppDisplay(
             title="Invoice Processor",
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
-            invoices_dir=self.invoices_path,
-            payment_terms_path=self.payment_terms_path,
-            sales_reps_path=self.sales_reps_path,
-            cost_criteria_path=self.cost_criteria_path,
-            results_log_path=self.results_log_path,
-            debug_log_path=self.debug_log_path,
         )
 
         # Use the File IO Controller to read in the criteria/exclusions for each cost section
         self.file_io_controller.parse_cost_criteria_file()
 
         # Build payment terms dictionary containing all possible sales rep name codes that could appear on an invoice
-        self.payment_terms = (
-            self.file_io_controller.parse_payment_terms_config()
-        )
+        self.payment_terms = self.file_io_controller.parse_payment_terms_config()
 
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
         self.sales_reps = self.file_io_controller.parse_sales_reps_config()
@@ -125,9 +81,7 @@ class InvoiceAppController:
     ###########################################################################
     ###          InvoiceAppController -> handle_process_invoice()           ###
     ###########################################################################
-    def handle_process_invoice(
-        self, invoice_filepath: str, append_output: bool
-    ):
+    def handle_process_invoice(self, invoice_filepath: str, append_output: bool):
         """
         Directs components to process the invoice located at invoice_filepath
 

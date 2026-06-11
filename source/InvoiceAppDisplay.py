@@ -22,6 +22,14 @@ from source.font_settings import (
     FONT_SIZES,
 )
 from source.platform_utils import open_in_system_editor
+from source.constants import (
+    INVOICES_PATH,
+    PAYMENT_TERMS_PATH,
+    SALES_REPS_PATH,
+    COST_CRITERIA_PATH,
+    RESULTS_LOG_PATH,
+    DEBUG_LOG_PATH,
+)
 
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
 #              pop up windows when Fishbowl invoices present rounding errors
@@ -40,12 +48,6 @@ class InvoiceAppDisplay(tk.Tk):
         process_callback,
         title: str,
         window_resolution: str,
-        invoices_dir: str,
-        payment_terms_path: str,
-        sales_reps_path: str,
-        cost_criteria_path: str,
-        results_log_path: str,
-        debug_log_path: str,
     ):
         """
         Initializes the InvoiceAppDisplay object
@@ -54,12 +56,6 @@ class InvoiceAppDisplay(tk.Tk):
             process_callback (callable): Callback function to process the selected invoice file
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
-            invoices_dir (str): Directory where invoice PDFs are located
-            payment_terms_path (str): Path to the payment terms config file
-            sales_reps_path (str): Path to the sales representatives config file
-            cost_criteria_path (str): Path to the cost criteria config file
-            results_log_path (str): Path to the results log file
-            debug_log_path (str): Path to the debug log file (not present in the release configuration)
         """
 
         super().__init__()
@@ -82,18 +78,6 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Callback function to process the selected invoice file
         self.process_callback = process_callback
-
-        # The filepath to expect invoice PDFs to be located
-        self.invoices_dir = invoices_dir
-
-        # The filepath to the config files
-        self.payment_terms_path = payment_terms_path
-        self.sales_reps_path = sales_reps_path
-        self.cost_criteria_path = cost_criteria_path
-
-        # The filepath to the log files
-        self.results_log_path = results_log_path
-        self.debug_log_path = debug_log_path
 
         # Active theme, defaults to Dark
         self.current_theme = DARK
@@ -339,7 +323,7 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Open a file dialog to select a PDF invoice file
         file_path = filedialog.askopenfilename(
-            initialdir=self.invoices_dir,
+            initialdir=INVOICES_PATH,
             title="Select Invoice PDF",
             filetypes=[("PDF files", "*.pdf")],  # Filter for PDF files only
         )
@@ -411,7 +395,7 @@ class InvoiceAppDisplay(tk.Tk):
 
         try:
             # Loop through all invoice files in the invoices directory and process each one
-            for file_path in Path(self.invoices_dir).resolve().iterdir():
+            for file_path in Path(INVOICES_PATH).resolve().iterdir():
 
                 # Process each invoice, appending output to the results.txt file and output widget
                 self.process_callback(file_path, append_output=True)
@@ -459,7 +443,7 @@ class InvoiceAppDisplay(tk.Tk):
         """
         Opens the Cost Criteria config file in the system default text editor
         """
-        open_in_system_editor(self.cost_criteria_path)
+        open_in_system_editor(COST_CRITERIA_PATH)
 
     ###########################################################################
     ###             InvoiceAppDisplay -> handle_payment_terms()             ###
@@ -468,7 +452,7 @@ class InvoiceAppDisplay(tk.Tk):
         """
         Opens the Payment Terms config file in the system default text editor
         """
-        open_in_system_editor(self.payment_terms_path)
+        open_in_system_editor(PAYMENT_TERMS_PATH)
 
     ###########################################################################
     ###              InvoiceAppDisplay -> handle_sales_reps()               ###
@@ -477,7 +461,7 @@ class InvoiceAppDisplay(tk.Tk):
         """
         Opens the Sales Reps config file in the system default text editor
         """
-        open_in_system_editor(self.sales_reps_path)
+        open_in_system_editor(SALES_REPS_PATH)
 
     ###########################################################################
     ###              InvoiceAppDisplay -> handle_results_log()              ###
@@ -487,12 +471,12 @@ class InvoiceAppDisplay(tk.Tk):
         Opens the results log file in the system default text editor if it exists.
         Shows an error popup if the file has not been created yet.
         """
-        if Path(self.results_log_path).exists():
-            open_in_system_editor(self.results_log_path)
+        if Path(RESULTS_LOG_PATH).exists():
+            open_in_system_editor(RESULTS_LOG_PATH)
         else:
             self.show_error_popup(
                 error_title="File Not Found",
-                error_message=f"Results log not found at: {self.results_log_path}",
+                error_message=f"Results log not found at: {RESULTS_LOG_PATH}",
             )
 
     ###########################################################################
@@ -503,12 +487,12 @@ class InvoiceAppDisplay(tk.Tk):
         Opens the debug log file in the system default text editor if it exists.
         Shows an error popup if the file has not been created yet.
         """
-        if Path(self.debug_log_path).exists():
-            open_in_system_editor(self.debug_log_path)
+        if Path(DEBUG_LOG_PATH).exists():
+            open_in_system_editor(DEBUG_LOG_PATH)
         else:
             self.show_error_popup(
                 error_title="File Not Found",
-                error_message=f"Debug log not found at: {self.debug_log_path}",
+                error_message=f"Debug log not found at: {DEBUG_LOG_PATH}",
             )
 
     ###########################################################################
