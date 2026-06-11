@@ -119,7 +119,7 @@ fi
 # Move the necessary existing files over to the release directory, including
 # the executable created by PyInstaller, and the user guide
 mv "$ROOT_DIR/dist/AutoInvoiceProc$BINARY_EXT" "$RELEASE_DIR/"
-cp "$ROOT_DIR/USER_GUIDE.txt" "$RELEASE_DIR/"  # Note that this is the customer user guide, not the GitHub README.md
+cp "$ROOT_DIR/USER_GUIDE.txt" "$RELEASE_DIR/"
 
 # Copy over the latest resources/Configs files that live in the automated-invoice-testing repo
 cp -a "$RESOURCES_DIR/Configs/." "$CONFIGS_DIR/"
