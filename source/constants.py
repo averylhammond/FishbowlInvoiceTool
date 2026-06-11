@@ -7,9 +7,18 @@ DECIMAL_ZERO = Decimal("0.00")
 
 # Application file paths, relative to the executable's current working directory.
 # Defined once here so they are not redefined as literals throughout the codebase.
-DEBUG_LOG_PATH = "logs/debug.txt"
-RESULTS_LOG_PATH = "logs/results.txt"
+
+# Base directories. The specific file paths below are composed from these, so
+# relocating the logs or configs only requires changing the directory here.
+LOGS_DIR = "logs"
+CONFIGS_DIR = "Configs"
 INVOICES_PATH = "Invoices"
-PAYMENT_TERMS_PATH = "Configs/Payment_Terms.txt"
-SALES_REPS_PATH = "Configs/Sales_Reps.txt"
-COST_CRITERIA_PATH = "Configs/Cost_Criteria.txt"
+
+# Log files
+DEBUG_LOG_PATH = f"{LOGS_DIR}/debug.txt"
+RESULTS_LOG_PATH = f"{LOGS_DIR}/results.txt"
+
+# Config files
+PAYMENT_TERMS_PATH = f"{CONFIGS_DIR}/Payment_Terms.txt"
+SALES_REPS_PATH = f"{CONFIGS_DIR}/Sales_Reps.txt"
+COST_CRITERIA_PATH = f"{CONFIGS_DIR}/Cost_Criteria.txt"
