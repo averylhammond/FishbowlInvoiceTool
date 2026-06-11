@@ -81,8 +81,11 @@ class InvoiceAppDisplay(tk.Tk):
         # Active theme, defaults to Dark
         self.current_theme = DARK
 
+        # Active font family, defaults to DEFAULT_FONT_FAMILY
+        self.current_font_family = DEFAULT_FONT_FAMILY
+
         # Active font size, defaults to DEFAULT_FONT_SIZE
-        self.FONT_FAMILY_size = DEFAULT_FONT_SIZE
+        self.current_font_size = DEFAULT_FONT_SIZE
 
         # Tkinter Widgets
         # fmt:off
@@ -160,6 +163,7 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Preferences dropdown
         #  -> Theme option to select from available color themes
+        #  -> Font option to select the font family used throughout the application
         #  -> Font Size option to adjust the text size throughout the application
         self.preferences_menu = tk.Menu(self.menu_bar, tearoff=0)
 
@@ -170,6 +174,14 @@ class InvoiceAppDisplay(tk.Tk):
                 command=lambda t=theme: self.apply_theme(t),
             )
         self.preferences_menu.add_cascade(label="Theme", menu=theme_menu)
+
+        font_menu = tk.Menu(self.preferences_menu, tearoff=0)
+        for family in FONT_FAMILIES:
+            font_menu.add_command(
+                label=family,
+                command=lambda f=family: self.apply_font_family(f),
+            )
+        self.preferences_menu.add_cascade(label="Font", menu=font_menu)
 
         font_size_menu = tk.Menu(self.preferences_menu, tearoff=0)
         for size in FONT_SIZES:
@@ -190,7 +202,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.title_label = tk.Label(
             self,
             text="Choose a Fishbowl Invoice PDF to Process",
-            font=(FONT_FAMILY, self.FONT_FAMILY_size, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
             bg=bg_main,
             fg=label_fg,
         )
@@ -222,7 +234,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=accent_blue,
             activeforeground=fg_text,
             relief="flat",
-            font=(FONT_FAMILY, self.FONT_FAMILY_size, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.browse_button.pack(side="left", padx=(10, 0), pady=8)
 
@@ -240,7 +252,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=accent_blue,
             activeforeground=fg_text,
             relief="flat",
-            font=(FONT_FAMILY, self.FONT_FAMILY_size, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.process_invoice_button.grid(row=0, column=0, padx=10)
 
@@ -254,7 +266,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=RED,
             activeforeground=fg_text,
             relief="flat",
-            font=(FONT_FAMILY, self.FONT_FAMILY_size, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.exit_button.grid(row=0, column=1, padx=10)
 
@@ -268,7 +280,7 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=accent_blue,
             activeforeground=fg_text,
             relief="flat",
-            font=(FONT_FAMILY, self.FONT_FAMILY_size, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
         )
         self.process_all_invoices_button.grid(row=0, column=2, padx=10)
 
@@ -276,7 +288,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.output_label = tk.Label(
             self,
             text="Output:",
-            font=(FONT_FAMILY, self.FONT_FAMILY_size, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
             bg=bg_main,
             fg=label_fg,
         )
@@ -287,7 +299,7 @@ class InvoiceAppDisplay(tk.Tk):
             self,
             height=8,
             wrap="word",
-            font=(FONT_FAMILY, self.FONT_FAMILY_size, "bold"),
+            font=(self.current_font_family, self.current_font_size, "bold"),
             bg=bg_entry,
             fg=fg_text,
             insertbackground=fg_text,
@@ -490,6 +502,16 @@ class InvoiceAppDisplay(tk.Tk):
             bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
         )
 
+    def apply_font_family(self, family: str):
+        """
+        Applies a font family to all text on screen
+
+        Args:
+            family (str): The font family to apply
+        """
+        self.current_font_family = family
+        self._apply_font()
+
     def apply_font_size(self, size: int):
         """
         Applies a font size to all text on screen
@@ -497,9 +519,14 @@ class InvoiceAppDisplay(tk.Tk):
         Args:
             size (int): The font size to apply
         """
-        self.FONT_FAMILY_size = size
+        self.current_font_size = size
+        self._apply_font()
 
-        font = (FONT_FAMILY, size, "bold")
+    def _apply_font(self):
+        """
+        Applies the current font family and size to all text on screen
+        """
+        font = (self.current_font_family, self.current_font_size, "bold")
         self.title_label.configure(font=font)
         self.browse_button.configure(font=font)
         self.process_invoice_button.configure(font=font)

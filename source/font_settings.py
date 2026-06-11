@@ -1,7 +1,21 @@
 # This file contains font definitions and font size options for the application.
 
-# Font family used throughout the application
-FONT_FAMILY = "Segoe UI"
+# Default font family applied on startup
+DEFAULT_FONT_FAMILY = "Segoe UI"
+
+# Selectable font families, chosen from the most popular fonts
+FONT_FAMILIES = [
+    "Arial",
+    "Helvetica",
+    "Times New Roman",
+    "Calibri",
+    "Segoe UI",
+    "Verdana",
+    "Georgia",
+    "Cambria",
+    "Courier New",
+    "Tahoma",
+]
 
 # Default font size applied on startup
 DEFAULT_FONT_SIZE = 12
