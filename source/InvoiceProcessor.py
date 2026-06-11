@@ -36,7 +36,6 @@ class InvoiceProcessor:
         self.labor_criteria = labor_criteria
         self.labor_exclusions = labor_exclusions
         self.shipping_criteria = shipping_criteria
-        return
 
     def populate_invoice(
         self, invoice: Invoice, sales_reps: dict, payment_terms: list
