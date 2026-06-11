@@ -1,7 +1,15 @@
-from source.processor_utilities import *
+from decimal import Decimal
+
+from source.processor_utilities import (
+    search_text_by_re,
+    search_payment_line,
+    find_payment_terms,
+    find_sales_rep,
+    format_currency,
+)
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.Invoice import Invoice
-from source.globals import *
+from source.globals import DECIMAL_ZERO
 
 
 # InvoiceProcessor class to handle all logic for text processing on invoices

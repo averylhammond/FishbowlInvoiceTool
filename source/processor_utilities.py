@@ -1,7 +1,7 @@
 from re import search
 from decimal import Decimal, ROUND_HALF_UP
 
-from source.globals import *
+from source.globals import DECIMAL_ZERO
 
 
 def search_text_by_re(text: str, regex: str) -> str:
