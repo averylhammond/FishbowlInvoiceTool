@@ -6,12 +6,7 @@ from source.Invoice import Invoice
 from source.ArgumentProvider import ArgumentProvider
 from source.color_theme import (
     ALL_THEMES,
-    BLUE,
     DARK,
-    DARK_GRAY,
-    IVORY,
-    LIGHT_BLUE,
-    MEDIUM_GRAY,
     RED,
     Theme,
 )
@@ -118,14 +113,15 @@ class InvoiceAppDisplay(tk.Tk):
         This includes a title label, file selection entry, browse button, and action buttons
         """
 
-        # Define color scheme
-        bg_main = DARK_GRAY
-        bg_entry = MEDIUM_GRAY
-        fg_text = IVORY
-        accent_blue = LIGHT_BLUE
-        button_bg = BLUE
-        button_fg = IVORY
-        label_fg = BLUE
+        # Define color scheme from the active theme (defaults to DARK)
+        theme = self.current_theme
+        bg_main = theme.bg_main
+        bg_entry = theme.bg_entry
+        fg_text = theme.fg_text
+        accent_blue = theme.accent
+        button_bg = theme.button_bg
+        button_fg = theme.button_fg
+        label_fg = theme.label_fg
 
         self.configure(bg=bg_main)
 
