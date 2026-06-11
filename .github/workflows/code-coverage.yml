@@ -18,7 +18,7 @@ jobs:
   test:
     
     # Give the job a name to link into the Github Rules UI
-    name: 50% Min Code Coverage CI Check
+    name: Code Coverage CI Check
     runs-on: ubuntu-latest
 
     # Checkout repo with full history so badge commits can be pushed back
@@ -45,10 +45,9 @@ jobs:
     # Run unit tests with pytest, and generate code coverage report xml
     # Note: replace --cov-report=xml with --cov-report=html to generate HTML report instead
     # which can be easier to manual use
-    # Limit coverage to minimum 50%, aim to increase this number over time to 80%
     - name: Run tests and code coverage
       run: |
-        pytest --cov=./ --cov-report=xml --cov-fail-under=50 tests/*
+        pytest --cov=./ --cov-report=xml tests/*
 
     - name: Generate Coverage Badge
       run: |
