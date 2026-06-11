@@ -63,8 +63,11 @@ jobs:
       with:
         files: coverage.svg
 
+    # Skip on pull_request runs: pushing a new commit to the PR branch becomes
+    # the PR's HEAD, but no workflow runs against it (GITHUB_TOKEN pushes don't
+    # trigger workflows), leaving the required status check pending forever.
     - name: Commit badge
-      if: steps.changed-files.outputs.files_changed == 'true'
+      if: steps.changed-files.outputs.files_changed == 'true' && github.event_name != 'pull_request'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
