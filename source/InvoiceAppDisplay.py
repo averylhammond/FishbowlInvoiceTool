@@ -33,7 +33,6 @@ from source.constants import (
 
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
 #              pop up windows when Fishbowl invoices present rounding errors
-# Future TODO: Make abstract GUI class and try and use other frameworks? PyQT could be cool
 
 
 # Invoice App Display class to own the GUI for selecting and processing invoices
