@@ -43,16 +43,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
 
-    # Run unit tests with pytest, and generate code coverage report xml
+    # Run unit tests with pytest, and generate code coverage report xml.
+    # --cov-fail-under=90 fails this job (and thus blocks the PR, once this check
+    # is marked required in branch protection) whenever total coverage drops below 90%.
     # Note: replace --cov-report=xml with --cov-report=html to generate HTML report instead
     # which can be easier to manual use
     - name: Run tests and code coverage
       run: |
-        pytest --cov=./ --cov-report=xml tests/*
+        pytest --cov=./ --cov-report=xml --cov-fail-under=90 tests/*
 
     # Upload the coverage report to Codecov, which serves the README badge and
     # posts the PR coverage comment. CODECOV_TOKEN is the repo upload token.
+    # always() so the report still uploads when the test step fails the coverage
+    # gate above -- that is exactly when the PR coverage comment is most useful.
     - name: Upload coverage to Codecov
+      if: always()
       uses: codecov/codecov-action@v4
       with:
         files: ./coverage.xml
