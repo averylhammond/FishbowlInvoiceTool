@@ -119,6 +119,19 @@ def test_init_loads_config_files(controller):
     assert controller.controller.sales_reps == {"REP1": "Rep Name"}
 
 
+def test_init_wires_error_reporter(controller):
+    """
+    Verifies that __init__ wires the display's error popup into the file IO
+    controller as its error reporter, so file I/O failures surface to the user.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # The file IO controller reports errors through the display's popup
+    assert controller.file_io.report_error is controller.display.show_error_popup
+
+
 ###############################################################################
 ###            Tests InvoiceAppController -> start_application()            ###
 ###############################################################################

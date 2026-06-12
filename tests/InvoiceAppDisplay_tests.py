@@ -1,5 +1,6 @@
 import tkinter as tk
 import pytest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch, call, MagicMock
 
@@ -8,12 +9,9 @@ from source.InvoiceAppDisplay import InvoiceAppDisplay
 from source.color_theme import DARK, LIGHT
 from source.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 from source.constants import (
-    INVOICES_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     COST_CRITERIA_PATH,
-    RESULTS_LOG_PATH,
-    DEBUG_LOG_PATH,
 )
 
 
@@ -317,9 +315,9 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_error, display):
 
     display.display.handle_process_invoice()
 
-    # The callback processes the single invoice without appending, no error shown
+    # The callback processes the single invoice without appending (as a Path), no error shown
     display.process_callback.assert_called_once_with(
-        "C:/invoices/order.pdf", append_output=False
+        Path("C:/invoices/order.pdf"), append_output=False
     )
     mock_show_error.assert_not_called()
 
@@ -327,29 +325,26 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_error, display):
 ###############################################################################
 ###         Tests InvoiceAppDisplay -> handle_process_all_invoices()        ###
 ###############################################################################
-@patch("source.InvoiceAppDisplay.Path")
-def test_handle_process_all_invoices_processes_each(mock_path, display):
+@patch("source.InvoiceAppDisplay.INVOICES_PATH")
+def test_handle_process_all_invoices_processes_each(mock_invoices_path, display):
     """
     Verifies that handle_process_all_invoices iterates the invoices directory and
     forwards each file to the process callback with append_output True.
 
     Args:
-        mock_path (unittest.mock.MagicMock): Mocks the Path class
+        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # The invoices directory yields two invoice files
     first_invoice = MagicMock()
     second_invoice = MagicMock()
-    mock_path.return_value.resolve.return_value.iterdir.return_value = [
+    mock_invoices_path.resolve.return_value.iterdir.return_value = [
         first_invoice,
         second_invoice,
     ]
 
     display.display.handle_process_all_invoices()
-
-    # The directory is resolved from the configured invoices path
-    mock_path.assert_called_once_with(INVOICES_PATH)
 
     # Each invoice is processed in order, appending to the running output
     display.process_callback.assert_has_calls(
@@ -362,22 +357,22 @@ def test_handle_process_all_invoices_processes_each(mock_path, display):
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
-@patch("source.InvoiceAppDisplay.Path")
+@patch("source.InvoiceAppDisplay.INVOICES_PATH")
 def test_handle_process_all_invoices_error_shows_popup(
-    mock_path, mock_show_error, display
+    mock_invoices_path, mock_show_error, display
 ):
     """
     Verifies that handle_process_all_invoices shows an error popup when iterating
     the invoices directory raises an exception.
 
     Args:
-        mock_path (unittest.mock.MagicMock): Mocks the Path class
+        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
         mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # Resolving/iterating the invoices directory fails
-    mock_path.return_value.resolve.return_value.iterdir.side_effect = OSError(
+    mock_invoices_path.resolve.return_value.iterdir.side_effect = OSError(
         "directory unavailable"
     )
 
@@ -519,46 +514,47 @@ def test_handle_sales_reps_opens_config(mock_open_editor, display):
 
 
 @patch("source.InvoiceAppDisplay.open_in_system_editor")
-@patch("source.InvoiceAppDisplay.Path")
-def test_handle_results_log_opens_when_present(mock_path, mock_open_editor, display):
+@patch("source.InvoiceAppDisplay.RESULTS_LOG_PATH")
+def test_handle_results_log_opens_when_present(
+    mock_results_path, mock_open_editor, display
+):
     """
     Verifies that handle_results_log opens the results log when the file exists.
 
     Args:
-        mock_path (unittest.mock.MagicMock): Mocks the Path class
+        mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
         mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # The results log file exists on disk
-    mock_path.return_value.exists.return_value = True
+    mock_results_path.exists.return_value = True
 
     display.display.handle_results_log()
 
     # The existing results log is opened in the system editor
-    mock_path.assert_called_once_with(RESULTS_LOG_PATH)
-    mock_open_editor.assert_called_once_with(RESULTS_LOG_PATH)
+    mock_open_editor.assert_called_once_with(mock_results_path)
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
 @patch("source.InvoiceAppDisplay.open_in_system_editor")
-@patch("source.InvoiceAppDisplay.Path")
+@patch("source.InvoiceAppDisplay.RESULTS_LOG_PATH")
 def test_handle_results_log_missing_shows_error(
-    mock_path, mock_open_editor, mock_show_error, display
+    mock_results_path, mock_open_editor, mock_show_error, display
 ):
     """
     Verifies that handle_results_log shows an error popup (and opens nothing) when
     the results log file does not exist yet.
 
     Args:
-        mock_path (unittest.mock.MagicMock): Mocks the Path class
+        mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
         mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
         mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # The results log file has not been created
-    mock_path.return_value.exists.return_value = False
+    mock_results_path.exists.return_value = False
 
     display.display.handle_results_log()
 
@@ -568,46 +564,47 @@ def test_handle_results_log_missing_shows_error(
 
 
 @patch("source.InvoiceAppDisplay.open_in_system_editor")
-@patch("source.InvoiceAppDisplay.Path")
-def test_handle_debug_log_opens_when_present(mock_path, mock_open_editor, display):
+@patch("source.InvoiceAppDisplay.DEBUG_LOG_PATH")
+def test_handle_debug_log_opens_when_present(
+    mock_debug_path, mock_open_editor, display
+):
     """
     Verifies that handle_debug_log opens the debug log when the file exists.
 
     Args:
-        mock_path (unittest.mock.MagicMock): Mocks the Path class
+        mock_debug_path (unittest.mock.MagicMock): Mocks the DEBUG_LOG_PATH constant
         mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # The debug log file exists on disk
-    mock_path.return_value.exists.return_value = True
+    mock_debug_path.exists.return_value = True
 
     display.display.handle_debug_log()
 
     # The existing debug log is opened in the system editor
-    mock_path.assert_called_once_with(DEBUG_LOG_PATH)
-    mock_open_editor.assert_called_once_with(DEBUG_LOG_PATH)
+    mock_open_editor.assert_called_once_with(mock_debug_path)
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
 @patch("source.InvoiceAppDisplay.open_in_system_editor")
-@patch("source.InvoiceAppDisplay.Path")
+@patch("source.InvoiceAppDisplay.DEBUG_LOG_PATH")
 def test_handle_debug_log_missing_shows_error(
-    mock_path, mock_open_editor, mock_show_error, display
+    mock_debug_path, mock_open_editor, mock_show_error, display
 ):
     """
     Verifies that handle_debug_log shows an error popup (and opens nothing) when
     the debug log file does not exist yet.
 
     Args:
-        mock_path (unittest.mock.MagicMock): Mocks the Path class
+        mock_debug_path (unittest.mock.MagicMock): Mocks the DEBUG_LOG_PATH constant
         mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
         mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # The debug log file has not been created
-    mock_path.return_value.exists.return_value = False
+    mock_debug_path.exists.return_value = False
 
     display.display.handle_debug_log()
 
