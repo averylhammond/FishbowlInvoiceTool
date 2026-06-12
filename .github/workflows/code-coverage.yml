@@ -1,8 +1,8 @@
 name: Code Coverage Workflow
 
-# Run the coverage pipeline on pull requests to main (to compute coverage and
-# post the PR comment), and on pushes to main (to refresh the committed badge
-# once a PR is merged, since the README references coverage.svg on main).
+# Run the coverage pipeline on pull requests to main (so Codecov can post the PR
+# coverage comment/diff) and on pushes to main (so Codecov records the main-branch
+# baseline that PRs are compared against).
 on:
   pull_request:
     branches: [ main ]
@@ -13,27 +13,20 @@ on:
 # Allow for the job to be ran manually from the GitHub Actions UI
   workflow_dispatch:
 
-# Define the jobs permissions
-# Let the code coverage job add PR comments with coverage results
+# Read-only access is all this job needs: it runs the tests and hands the report
+# to Codecov, which hosts the badge and posts PR comments via its GitHub App.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   test:
-    
+
     # Give the job a name to link into the Github Rules UI
     name: Code Coverage CI Check
     runs-on: ubuntu-latest
 
-    # Checkout repo with full history so badge commits can be pushed back
-    # Check out the actual branch (not the detached PR merge commit) so the
-    # commit step below has a branch to push to
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ github.head_ref || github.ref_name }}
 
     # Set up Python environment
     - name: Set up Python environment
@@ -57,28 +50,11 @@ jobs:
       run: |
         pytest --cov=./ --cov-report=xml tests/*
 
-    - name: Generate Coverage Badge
-      run: |
-        pip install genbadge[coverage]
-        genbadge coverage -i coverage.xml -o coverage.svg
-
-    - name: Verify Changed files
-      uses: tj-actions/verify-changed-files@v20.0.4
-      id: changed-files
+    # Upload the coverage report to Codecov, which serves the README badge and
+    # posts the PR coverage comment. CODECOV_TOKEN is the repo upload token.
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
       with:
-        files: coverage.svg
-
-    # Commit the refreshed badge on push-to-main (after a PR merges) and on
-    # manual dispatch. Skip on pull_request runs: pushing a new commit to the PR
-    # branch becomes the PR's HEAD, but no workflow runs against it (GITHUB_TOKEN
-    # pushes don't trigger workflows), leaving the required status check pending
-    # forever. Pushing the badge commit to main is safe for the same reason -- it
-    # does not re-trigger this workflow, so there is no commit loop.
-    - name: Commit badge
-      if: steps.changed-files.outputs.files_changed == 'true' && github.event_name != 'pull_request'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add coverage.svg
-        git commit -m "Updated coverage.svg"
-        git push origin HEAD:${{ github.head_ref || github.ref_name }}
+        files: ./coverage.xml
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
