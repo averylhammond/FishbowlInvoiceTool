@@ -1,6 +1,7 @@
 import pytest
-from unittest.mock import patch, mock_open, call
+from unittest.mock import patch, mock_open, call, MagicMock
 
+from source.Invoice import Invoice
 from source.InvoiceAppFileIO import *
 from source.constants import (
     DEBUG_LOG_PATH,
@@ -144,6 +145,138 @@ def test_reset_results_file_file_doesnt_exist(
     # file doesn't exist
     file_io.reset_results_file()
     mock_os_remove.assert_not_called()
+
+
+###############################################################################
+###             Tests InvoiceAppFileIO -> print_to_debug_file()             ###
+###############################################################################
+@patch("builtins.open", new_callable=mock_open)
+@patch("os.path.dirname", return_value="logs")
+@patch("os.path.exists", return_value=True)
+def test_print_to_debug_file_appends_when_dir_exists(
+    _mock_os_exists, _mock_os_dirname, mock_file, file_io
+):
+    """
+    Tests that print_to_debug_file() opens the debug log in append mode and
+    writes the contents (with a trailing newline) when the log directory exists.
+
+    Args:
+        _mock_os_exists (unittest.mock.MagicMock): mock os.path.exists to return true
+        _mock_os_dirname (unittest.mock.MagicMock): mock os.path.dirname to return the directory
+        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # Call print_to_debug_file(), expecting an append-mode open and a write
+    file_io.print_to_debug_file("some debug message")
+    mock_file.assert_called_once_with(file=DEBUG_LOG_PATH, mode="a")
+    mock_file().write.assert_called_once_with("some debug message\n")
+
+
+@patch("builtins.open", new_callable=mock_open)
+@patch("os.path.dirname", return_value="logs")
+@patch("os.path.exists", return_value=False)
+def test_print_to_debug_file_writes_when_dir_doesnt_exist(
+    _mock_os_exists, _mock_os_dirname, mock_file, file_io
+):
+    """
+    Tests that print_to_debug_file() opens the debug log in write mode and
+    writes the contents (with a trailing newline) when the log directory does
+    not yet exist.
+
+    Args:
+        _mock_os_exists (unittest.mock.MagicMock): mock os.path.exists to return false
+        _mock_os_dirname (unittest.mock.MagicMock): mock os.path.dirname to return the directory
+        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # Call print_to_debug_file(), expecting a write-mode open and a write
+    file_io.print_to_debug_file("some debug message")
+    mock_file.assert_called_once_with(file=DEBUG_LOG_PATH, mode="w")
+    mock_file().write.assert_called_once_with("some debug message\n")
+
+
+###############################################################################
+###        Tests InvoiceAppFileIO -> print_invoice_to_output_file()         ###
+###############################################################################
+@patch("os.path.dirname", return_value="logs")
+@patch("os.path.exists", return_value=False)
+def test_print_invoice_to_output_file_path_doesnt_exist(
+    _mock_os_exists, _mock_os_dirname, file_io
+):
+    """
+    Tests that print_invoice_to_output_file() raises a FileNotFoundError when
+    the results log directory does not exist.
+
+    Args:
+        _mock_os_exists (unittest.mock.MagicMock): mock os.path.exists to return false
+        _mock_os_dirname (unittest.mock.MagicMock): mock os.path.dirname to return the directory
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # A mock invoice is sufficient; the directory check fails before it is used
+    mock_invoice = MagicMock(spec=Invoice)
+
+    # Call print_invoice_to_output_file(), expecting an exception to be raised
+    with pytest.raises(FileNotFoundError) as exception:
+        file_io.print_invoice_to_output_file(mock_invoice)
+
+    assert "Debug file directory logs does not exist" in str(exception)
+
+
+@patch("builtins.open", new_callable=mock_open)
+@patch("os.path.dirname", return_value="logs")
+@patch("os.path.exists", return_value=True)
+def test_print_invoice_to_output_file_overwrites_by_default(
+    _mock_os_exists, _mock_os_dirname, mock_file, file_io
+):
+    """
+    Tests that print_invoice_to_output_file() opens the results log in write
+    mode (overwriting) by default and writes the invoice's formatted string.
+
+    Args:
+        _mock_os_exists (unittest.mock.MagicMock): mock os.path.exists to return true
+        _mock_os_dirname (unittest.mock.MagicMock): mock os.path.dirname to return the directory
+        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # Build a mock invoice whose formatted string is a known value
+    mock_invoice = MagicMock(spec=Invoice)
+    mock_invoice.to_formatted_string.return_value = "formatted invoice"
+
+    # Call print_invoice_to_output_file(), expecting a write-mode open and a write
+    file_io.print_invoice_to_output_file(mock_invoice)
+    mock_file.assert_called_once_with(file=RESULTS_LOG_PATH, mode="w")
+    mock_file().write.assert_called_once_with("formatted invoice")
+
+
+@patch("builtins.open", new_callable=mock_open)
+@patch("os.path.dirname", return_value="logs")
+@patch("os.path.exists", return_value=True)
+def test_print_invoice_to_output_file_appends_when_requested(
+    _mock_os_exists, _mock_os_dirname, mock_file, file_io
+):
+    """
+    Tests that print_invoice_to_output_file() opens the results log in append
+    mode when append_output is True and writes the invoice's formatted string.
+
+    Args:
+        _mock_os_exists (unittest.mock.MagicMock): mock os.path.exists to return true
+        _mock_os_dirname (unittest.mock.MagicMock): mock os.path.dirname to return the directory
+        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # Build a mock invoice whose formatted string is a known value
+    mock_invoice = MagicMock(spec=Invoice)
+    mock_invoice.to_formatted_string.return_value = "formatted invoice"
+
+    # Call with append_output=True, expecting an append-mode open and a write
+    file_io.print_invoice_to_output_file(mock_invoice, append_output=True)
+    mock_file.assert_called_once_with(file=RESULTS_LOG_PATH, mode="a")
+    mock_file().write.assert_called_once_with("formatted invoice")
 
 
 ###############################################################################
