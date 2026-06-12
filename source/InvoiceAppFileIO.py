@@ -1,6 +1,6 @@
-import os
 import PyPDF2
-from typing import List
+from pathlib import Path
+from typing import Callable
 
 from source.Invoice import Invoice
 from source.constants import (
@@ -11,15 +11,6 @@ from source.constants import (
     COST_CRITERIA_PATH,
 )
 
-# TODO: Change the parsing of the config files to happen after the GUI is initialized
-#       This will allow the GUI to display an error if the config files are not found
-#       rather than crashing the program
-
-# TODO: Also make sure reset_debug_file() does not crash if the debug file does not exist
-#       which it will not right after cloning the repo
-# TODO: Don't crash the program if files are not present, in parse() functions.
-#       Seems like the file open operation is crashing it
-
 
 # InvoiceAppFileIO class to handle all file input/output operations
 class InvoiceAppFileIO:
@@ -27,10 +18,19 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###                   InvoiceAppFileIO -> __init__()                    ###
     ###########################################################################
-    def __init__(self):
+    def __init__(self, report_error: Callable[[str, str], None] = lambda *_: None):
         """
         Initializes the InvoiceAppFileIO object
+
+        Args:
+            report_error (Callable[[str, str], None]): Callback used to surface a
+                file I/O failure to the user, taking an error title and message.
+                Defaults to a no-op so file I/O never depends on a reporter being
+                wired in (the controller injects the GUI's error popup)
         """
+
+        # Callback used to report file I/O failures to the user
+        self.report_error = report_error
 
         # Initialize cost criteria/exclusion lists
         self.labor_criteria = []
@@ -38,7 +38,7 @@ class InvoiceAppFileIO:
         self.shipping_criteria = []
 
     ###########################################################################
-    ###               InvoiceAppFileIO -> reset_debug_file()                ###
+    ###                InvoiceAppFileIO -> reset_debug_file()               ###
     ###########################################################################
     def reset_debug_file(self):
         """
@@ -50,31 +50,37 @@ class InvoiceAppFileIO:
         if not __debug__:
             return
 
-        # Get the log directory path and ensure the it exists
-        debug_dir = os.path.dirname(DEBUG_LOG_PATH)
-        os.makedirs(debug_dir, exist_ok=True)
+        try:
+            # Ensure the log directory exists, then delete the debug file if present
+            DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            if DEBUG_LOG_PATH.is_file():
+                DEBUG_LOG_PATH.unlink()
 
-        # If the debug file inside the directory already exists, delete it
-        if os.path.isfile(DEBUG_LOG_PATH):
-            os.remove(DEBUG_LOG_PATH)
+        except OSError as error:
+            self.report_error(
+                "File Error",
+                f"Could not reset the debug log at {DEBUG_LOG_PATH}: {error}",
+            )
 
     ###########################################################################
-    ###              InvoiceAppFileIO -> reset_results_file()               ###
+    ###               InvoiceAppFileIO -> reset_results_file()             ###
     ###########################################################################
     def reset_results_file(self):
         """
         Deletes the results.txt file if it exists, to reset the results log for the next execution
         """
 
-        # Check to make sure the filepath exists
-        if not os.path.exists(os.path.dirname(DEBUG_LOG_PATH)):
-            raise FileNotFoundError(
-                f"Results file path {os.path.dirname(RESULTS_LOG_PATH)} does not exist."
-            )
+        try:
+            # Ensure the log directory exists, then delete the results file if present
+            RESULTS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            if RESULTS_LOG_PATH.is_file():
+                RESULTS_LOG_PATH.unlink()
 
-        # If the file already exists, delete it
-        if os.path.isfile(RESULTS_LOG_PATH):
-            os.remove(RESULTS_LOG_PATH)
+        except OSError as error:
+            self.report_error(
+                "File Error",
+                f"Could not reset the results log at {RESULTS_LOG_PATH}: {error}",
+            )
 
     ###########################################################################
     ###              InvoiceAppFileIO -> print_to_debug_file()              ###
@@ -92,15 +98,17 @@ class InvoiceAppFileIO:
         if not __debug__:
             return
 
-        # If debug.txt already exists, append to it, otherwise write from beginning
-        if os.path.exists(os.path.dirname(DEBUG_LOG_PATH)):
-            write_or_append = "a"
-        else:
-            write_or_append = "w"
+        try:
+            # Ensure the log directory exists, then append the contents
+            DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(file=DEBUG_LOG_PATH, mode="a") as f:
+                f.write(contents + "\n")
 
-        # Write contents to file
-        with open(file=DEBUG_LOG_PATH, mode=write_or_append) as f:
-            f.write(contents + "\n")
+        except OSError as error:
+            self.report_error(
+                "File Error",
+                f"Could not write to the debug log at {DEBUG_LOG_PATH}: {error}",
+            )
 
     ###########################################################################
     ###         InvoiceAppFileIO -> print_invoice_to_output_file()          ###
@@ -117,50 +125,58 @@ class InvoiceAppFileIO:
                                     Defaults to False, meaning the results file will be overwritten
         """
 
-        # Check to make sure the filepath exists
-        if not os.path.exists(os.path.dirname(RESULTS_LOG_PATH)):
-            raise FileNotFoundError(
-                f"Debug file directory {os.path.dirname(RESULTS_LOG_PATH)} does not exist."
-            )
-
         # If appending output, use "a" for the file open call, otherwise use "w"
         if append_output:
             write_or_append = "a"
         else:
             write_or_append = "w"
 
-        # Write invoice contents to file
-        with open(file=RESULTS_LOG_PATH, mode=write_or_append) as f:
-            f.write(invoice.to_formatted_string())
+        try:
+            # Ensure the log directory exists, then write the invoice contents
+            RESULTS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(file=RESULTS_LOG_PATH, mode=write_or_append) as f:
+                f.write(invoice.to_formatted_string())
+
+        except OSError as error:
+            self.report_error(
+                "File Error",
+                f"Could not write to the results log at {RESULTS_LOG_PATH}: {error}",
+            )
 
     ###########################################################################
     ###               InvoiceAppFileIO -> read_invoice_file()               ###
     ###########################################################################
-    def read_invoice_file(self, invoice_filepath: str) -> list:
+    def read_invoice_file(self, invoice_filepath: Path) -> list:
         """
         Converts the given invoice PDF into a list of strings
         Each string in the list represents a page of the invoice PDF
 
         Args:
-            invoice_filepath (str): The file path of the invoice to read in
+            invoice_filepath (Path): The file path of the invoice to read in
 
         Returns:
-            list: A list of strings where each string is the text from a page of the invoice
+            list: A list of strings where each string is the text from a page of the
+                invoice, or an empty list if the PDF could not be read
         """
 
-        # Read text from input PDF
-        pdf = PyPDF2.PdfReader(stream=invoice_filepath)
+        try:
+            # Read text from input PDF
+            pdf = PyPDF2.PdfReader(stream=invoice_filepath)
 
-        # Create empty list
-        pages = []
+            # Extract text from each page and append to list
+            pages = []
+            for page in pdf.pages:
+                text = page.extract_text()
+                pages.append(text)
 
-        # Extract text from each page and append to list
-        for page in pdf.pages:
-            text = page.extract_text()
-            pages.append(text)
+            return pages
 
-        # Get Number of Pages
-        return pages
+        except (OSError, PyPDF2.errors.PdfReadError) as error:
+            self.report_error(
+                "File Error",
+                f"Could not read the invoice PDF at {invoice_filepath}: {error}",
+            )
+            return []
 
     ###########################################################################
     ###            InvoiceAppFileIO -> parse_sales_reps_config()            ###
@@ -171,27 +187,36 @@ class InvoiceAppFileIO:
         matching name for each sales rep as defined in the sales reps config file
 
         Returns:
-            dict: The populated dictionary with all codes as keys and names as values
+            dict: The populated dictionary with all codes as keys and names as
+                values, or an empty dictionary if the config file could not be read
         """
 
-        # Open sales rep config file for reading
-        with open(file=SALES_REPS_PATH, mode="r") as f:
-            sales_reps = {}
+        sales_reps = {}
 
-            # Search through text file, only take non-comment entries
-            for line in f:
+        try:
+            # Open sales rep config file for reading
+            with open(file=SALES_REPS_PATH, mode="r") as f:
 
-                # Strip whitespace from the line
-                line = line.strip()
+                # Search through text file, only take non-comment entries
+                for line in f:
 
-                # Skip empty lines or comment lines
-                if not line or line[0] == "*":
-                    continue
+                    # Strip whitespace from the line
+                    line = line.strip()
 
-                res = line.partition("=")
+                    # Skip empty lines or comment lines
+                    if not line or line[0] == "*":
+                        continue
 
-                # Res[0] is the sales rep code, res[2] is the sales rep name translation
-                sales_reps[res[0]] = res[2]
+                    res = line.partition("=")
+
+                    # Res[0] is the sales rep code, res[2] is the sales rep name translation
+                    sales_reps[res[0]] = res[2]
+
+        except OSError as error:
+            self.report_error(
+                "Config Error",
+                f"Could not read the sales reps config at {SALES_REPS_PATH}: {error}",
+            )
 
         return sales_reps
 
@@ -204,25 +229,34 @@ class InvoiceAppFileIO:
         payment term as defined in the payment terms config file
 
         Returns:
-            list: A list of strings, each string is a payment term that could be found in an invoice
+            list: A list of strings, each string is a payment term that could be
+                found in an invoice, or an empty list if the config could not be read
         """
 
-        # Open payment terms config file for reading
-        with open(file=PAYMENT_TERMS_PATH, mode="r") as f:
-            payment_terms = []
+        payment_terms = []
 
-            # Search through text file, only take non-comment entries
-            for line in f:
+        try:
+            # Open payment terms config file for reading
+            with open(file=PAYMENT_TERMS_PATH, mode="r") as f:
 
-                # Strip whitespace from the line
-                line = line.strip()
+                # Search through text file, only take non-comment entries
+                for line in f:
 
-                # Ignore line if empty or comment line
-                if not line or line[0] == "*":
-                    continue
+                    # Strip whitespace from the line
+                    line = line.strip()
 
-                # Append the payment term to the list
-                payment_terms.append(line)
+                    # Ignore line if empty or comment line
+                    if not line or line[0] == "*":
+                        continue
+
+                    # Append the payment term to the list
+                    payment_terms.append(line)
+
+        except OSError as error:
+            self.report_error(
+                "Config Error",
+                f"Could not read the payment terms config at {PAYMENT_TERMS_PATH}: {error}",
+            )
 
         return payment_terms
 
@@ -264,29 +298,32 @@ class InvoiceAppFileIO:
         """
         Reads all cost criteria/exclusions from the provided config file and stores them
         in member variables
-
-        Args:
-            category (str): The category of criteria being parsed
-            line (str): The current line containing the criteria/exclusion
         """
 
-        # Open payment terms config file for reading
-        with open(file=COST_CRITERIA_PATH, mode="r") as f:
+        try:
+            # Open cost criteria config file for reading
+            with open(file=COST_CRITERIA_PATH, mode="r") as f:
 
-            # Default to empty strings
-            line = ""
-            category = ""
+                # Default to empty strings
+                line = ""
+                category = ""
 
-            # Search through text file, only take non-comment entries
-            for line in f:
+                # Search through text file, only take non-comment entries
+                for line in f:
 
-                # Strip trailing whitespace from line, and skip comment lines
-                line = line.strip()
-                if not line or line[0] == "*":
-                    continue
+                    # Strip trailing whitespace from line, and skip comment lines
+                    line = line.strip()
+                    if not line or line[0] == "*":
+                        continue
 
-                if line.endswith(":"):
-                    category = line.rstrip(":").upper()
+                    if line.endswith(":"):
+                        category = line.rstrip(":").upper()
 
-                else:
-                    self.add_cost_criteria_field(category=category, line=line)
+                    else:
+                        self.add_cost_criteria_field(category=category, line=line)
+
+        except OSError as error:
+            self.report_error(
+                "Config Error",
+                f"Could not read the cost criteria config at {COST_CRITERIA_PATH}: {error}",
+            )

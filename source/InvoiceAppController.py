@@ -1,4 +1,6 @@
 # Import necessary classes from modules
+from pathlib import Path
+
 from source.InvoiceAppDisplay import InvoiceAppDisplay
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
@@ -45,6 +47,11 @@ class InvoiceAppController:
             process_callback=self.handle_process_invoice,
         )
 
+        # Wire the GUI's error popup into the File IO Controller so file I/O failures
+        # surface to the user without coupling file I/O to the GUI. This must happen
+        # before the config files are parsed below so parse failures can be reported.
+        self.file_io_controller.report_error = self.display.show_error_popup
+
         # Use the File IO Controller to read in the criteria/exclusions for each cost section
         self.file_io_controller.parse_cost_criteria_file()
 
@@ -81,12 +88,12 @@ class InvoiceAppController:
     ###########################################################################
     ###          InvoiceAppController -> handle_process_invoice()           ###
     ###########################################################################
-    def handle_process_invoice(self, invoice_filepath: str, append_output: bool):
+    def handle_process_invoice(self, invoice_filepath: Path, append_output: bool):
         """
         Directs components to process the invoice located at invoice_filepath
 
         Args:
-            invoice_filepath (str): The filepath of the invoice PDF to be processed.
+            invoice_filepath (Path): The filepath of the invoice PDF to be processed.
             append_output (bool): Whether to append the Invoice outputs to any existing outputs.
                                     True: append to existing results.txt and output box
                                     False: overwrite existing results.txt and output box
@@ -103,7 +110,7 @@ class InvoiceAppController:
         if not invoice.page_contents or invoice.page_contents[0] is None:
             self.display.show_error_popup(
                 error_title="Error",
-                error_message="No pages were found in the invoice PDF located at {invoice_filepath}.",
+                error_message=f"No pages were found in the invoice PDF located at {invoice_filepath}.",
             )
             return
 

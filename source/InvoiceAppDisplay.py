@@ -306,9 +306,9 @@ class InvoiceAppDisplay(tk.Tk):
 
         """
 
-        # Open a file dialog to select a PDF invoice file
+        # Open a file dialog to select a PDF invoice file (Tk requires a str path)
         file_path = filedialog.askopenfilename(
-            initialdir=INVOICES_PATH,
+            initialdir=str(INVOICES_PATH),
             title="Select Invoice PDF",
             filetypes=[("PDF files", "*.pdf")],  # Filter for PDF files only
         )
@@ -364,9 +364,10 @@ class InvoiceAppDisplay(tk.Tk):
             )
             return
 
-        # Forward the call to the process_callback function with the selected file path. Append output is false to reset the
-        # output windows and results.txt file since this is the only invoice being processed
-        self.process_callback(file_path, append_output=False)
+        # Forward the call to the process_callback function with the selected file path as a Path.
+        # Append output is false to reset the output windows and results.txt file since this is the
+        # only invoice being processed
+        self.process_callback(Path(file_path), append_output=False)
 
     ###########################################################################
     ###         InvoiceAppDisplay -> handle_process_all_invoices()          ###
@@ -380,7 +381,7 @@ class InvoiceAppDisplay(tk.Tk):
 
         try:
             # Loop through all invoice files in the invoices directory and process each one
-            for file_path in Path(INVOICES_PATH).resolve().iterdir():
+            for file_path in INVOICES_PATH.resolve().iterdir():
 
                 # Process each invoice, appending output to the results.txt file and output widget
                 self.process_callback(file_path, append_output=True)
@@ -456,7 +457,7 @@ class InvoiceAppDisplay(tk.Tk):
         Opens the results log file in the system default text editor if it exists.
         Shows an error popup if the file has not been created yet.
         """
-        if Path(RESULTS_LOG_PATH).exists():
+        if RESULTS_LOG_PATH.exists():
             open_in_system_editor(RESULTS_LOG_PATH)
         else:
             self.show_error_popup(
@@ -472,7 +473,7 @@ class InvoiceAppDisplay(tk.Tk):
         Opens the debug log file in the system default text editor if it exists.
         Shows an error popup if the file has not been created yet.
         """
-        if Path(DEBUG_LOG_PATH).exists():
+        if DEBUG_LOG_PATH.exists():
             open_in_system_editor(DEBUG_LOG_PATH)
         else:
             self.show_error_popup(
