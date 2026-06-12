@@ -1,8 +1,13 @@
 name: Code Coverage Workflow
 
-# Run the unit tests pipeline on pull requests to main, and all commits on all branches
+# Run the coverage pipeline on pull requests to main (to compute coverage and
+# post the PR comment), and on pushes to main (to refresh the committed badge
+# once a PR is merged, since the README references coverage.svg on main).
 on:
   pull_request:
+    branches: [ main ]
+
+  push:
     branches: [ main ]
 
 # Allow for the job to be ran manually from the GitHub Actions UI
@@ -63,9 +68,12 @@ jobs:
       with:
         files: coverage.svg
 
-    # Skip on pull_request runs: pushing a new commit to the PR branch becomes
-    # the PR's HEAD, but no workflow runs against it (GITHUB_TOKEN pushes don't
-    # trigger workflows), leaving the required status check pending forever.
+    # Commit the refreshed badge on push-to-main (after a PR merges) and on
+    # manual dispatch. Skip on pull_request runs: pushing a new commit to the PR
+    # branch becomes the PR's HEAD, but no workflow runs against it (GITHUB_TOKEN
+    # pushes don't trigger workflows), leaving the required status check pending
+    # forever. Pushing the badge commit to main is safe for the same reason -- it
+    # does not re-trigger this workflow, so there is no commit loop.
     - name: Commit badge
       if: steps.changed-files.outputs.files_changed == 'true' && github.event_name != 'pull_request'
       run: |
