@@ -1,6 +1,7 @@
 [run]
 source = ./source
 omit =
+    ./main.py
     ./tests/*
     ./venv/*
     .venv/*
