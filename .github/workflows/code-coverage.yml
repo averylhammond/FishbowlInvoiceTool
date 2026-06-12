@@ -13,8 +13,8 @@ on:
 # Allow for the job to be ran manually from the GitHub Actions UI
   workflow_dispatch:
 
-# Read-only: the badge is hosted by Codecov, so this job no longer writes to the
-# repo. Codecov's PR comments are posted by the Codecov GitHub App, not this job.
+# Read-only access is all this job needs: it runs the tests and hands the report
+# to Codecov, which hosts the badge and posts PR comments via its GitHub App.
 permissions:
   contents: read
 
