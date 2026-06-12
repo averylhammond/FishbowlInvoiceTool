@@ -52,3 +52,28 @@ When adding or modifying code, favor changes that keep components focused and su
 - **Dependency Inversion** — Components depend on `InvoiceAppFileIO` and config data passed in at construction time (see `InvoiceAppController.__init__`), not on global state. Shared file paths are centralized in `source/constants.py` and imported where needed rather than hardcoded inline; tests substitute behavior by mocking `open`/`os`/PyPDF2 calls rather than by injecting paths (see existing `tests/*_tests.py` for the mocking patterns already in use).
 - **DRY** — Shared parsing helpers belong in `processor_utilities.py` (e.g., `format_currency`, `search_text_by_re`); shared constants belong in `constants.py`, `color_theme.py`, or `font_settings.py`. Before adding a new regex/lookup/formatting routine, check these modules for an existing equivalent.
 - Add type hints and concise docstrings consistent with the existing style (see any method in `source/InvoiceProcessor.py` for the expected `Args:`/`Returns:` format), and add corresponding tests in `tests/` for any new branch or utility function.
+
+## Unit Testing
+
+Unit tests live in `tests/` and run under `pytest`. When writing or modifying them, follow the two principles below.
+
+### Test one object in isolation
+
+Every unit test exercises exactly **one** class or function (the "unit under test"). Replace **all** collaborating objects with mocks so a failure points unambiguously at the unit being tested — never let a unit test depend on the real behavior of another class, the filesystem, a PDF, or the GUI. Reuse the patterns already established in the suite rather than inventing new ones:
+
+- **Mock injected collaborators with `MagicMock(spec=Collaborator)`** and pass them into the constructor. See the `mock_file_io` and `invoice_processor` fixtures in `tests/InvoiceProcessor_tests.py`, where `InvoiceProcessor` is built with a `MagicMock(spec=InvoiceAppFileIO)` so no real file I/O occurs. The `spec=` argument keeps the mock honest — it only allows attributes/methods the real class defines.
+- **Mock module-level dependencies with `@patch` / `mock_open`.** For classes that call `os`, `open`, or PyPDF2 directly, patch those calls instead of touching the real filesystem — see `tests/InvoiceAppFileIO_tests.py` (e.g. `@patch("os.remove")`, `@patch("os.path.exists", ...)`, `mock_open`).
+- **Construct the unit under test in a pytest fixture** (e.g. the `file_io` fixture) so each test starts from a clean, identically-configured object.
+- **Name unasserted mock parameters with a leading underscore** (`_mock_os_exists`) and reserve plain names (`mock_os_remove`) for mocks you assert against — matching the existing files.
+
+### Follow the FIRST principles
+
+- **Fast** — No real file, PDF, or GUI I/O; mock it. The whole `pytest tests/*` run should stay quick.
+- **Independent** — No ordering dependencies or shared mutable state between tests. Each test builds its own object via a fixture and asserts on its own data.
+- **Repeatable** — Deterministic on every run and machine. Do not rely on the real filesystem, the clock, or the `automated-invoice-testing` submodule — that submodule drives the *integration* test (`python main.py --integration-test`), not unit tests.
+- **Self-validating** — Each test asserts a clear pass/fail (`assert ... ==`, `assert_called_once_with(...)`). Never require manual inspection of `logs/` output to judge the result.
+- **Timely** — Add or extend tests in `tests/` alongside any new branch or utility function, in the same change (reinforcing the final bullet of the SOLID/DRY section above).
+
+### Conventions
+
+Match the existing files: give each test a docstring describing what it verifies, with an `Args:` block documenting each mock/fixture parameter, and group tests for a given function under the `###`-bordered comment banners used throughout `tests/`.
