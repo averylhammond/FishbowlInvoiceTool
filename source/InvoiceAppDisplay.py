@@ -8,8 +8,8 @@ from source.ArgumentProvider import ArgumentProvider
 from source.FileEditorWindow import FileEditorWindow
 from source.color_theme import (
     ALL_THEMES,
-    DARK,
-    RED,
+    DARK,  # Default theme used by GUI
+    RED,  # Used for the EXIT button
     THEME_BY_NAME,
     Theme,
 )
@@ -105,9 +105,7 @@ class InvoiceAppDisplay(tk.Tk):
         # for anything missing or unrecognized. These are set before build_widgets()
         # so every widget is created already using the restored theme and font.
         settings = settings or {}
-        self.current_theme = THEME_BY_NAME.get(
-            settings.get(SETTING_KEY_THEME), DARK
-        )
+        self.current_theme = THEME_BY_NAME.get(settings.get(SETTING_KEY_THEME), DARK)
         self.current_font_family = settings.get(
             SETTING_KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY
         )
