@@ -8,8 +8,9 @@ from source.ArgumentProvider import ArgumentProvider
 from source.FileEditorWindow import FileEditorWindow
 from source.color_theme import (
     ALL_THEMES,
-    DARK,
-    RED,
+    DARK,  # Default theme used by GUI
+    RED,  # Used for the EXIT button
+    THEME_BY_NAME,
     Theme,
 )
 from source.font_settings import (
@@ -25,6 +26,9 @@ from source.constants import (
     COST_CRITERIA_PATH,
     RESULTS_LOG_PATH,
     DEBUG_LOG_PATH,
+    SETTING_KEY_THEME,
+    SETTING_KEY_FONT_FAMILY,
+    SETTING_KEY_FONT_SIZE,
 )
 
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
@@ -43,8 +47,10 @@ class InvoiceAppDisplay(tk.Tk):
         process_callback,
         read_file_callback: Callable[[Path], str],
         save_config_callback: Callable[[Path, str], None],
+        save_settings_callback: Callable[[str, str], None],
         title: str,
         window_resolution: str,
+        settings: dict | None = None,
     ):
         """
         Initializes the InvoiceAppDisplay object
@@ -55,8 +61,14 @@ class InvoiceAppDisplay(tk.Tk):
                 full contents, used to populate the native file editor/viewer window
             save_config_callback (Callable[[Path, str], None]): Callback that persists
                 edited config contents (and reloads them), invoked when the user saves
+            save_settings_callback (Callable[[str, str], None]): Callback that persists
+                a single user setting (key, value), invoked when the user changes a
+                theme/font/font-size preference
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
+            settings (dict | None): Previously persisted settings (theme/font/font-size)
+                used to restore the user's last choices on startup. Missing or unknown
+                values fall back to the application defaults.
         """
 
         super().__init__()
@@ -86,14 +98,20 @@ class InvoiceAppDisplay(tk.Tk):
         # Callback to persist (and reload) edited config file contents
         self.save_config_callback = save_config_callback
 
-        # Active theme, defaults to Dark
-        self.current_theme = DARK
+        # Callback to persist a single changed user setting (theme/font/size)
+        self.save_settings_callback = save_settings_callback
 
-        # Active font family, defaults to DEFAULT_FONT_FAMILY
-        self.current_font_family = DEFAULT_FONT_FAMILY
-
-        # Active font size, defaults to DEFAULT_FONT_SIZE
-        self.current_font_size = DEFAULT_FONT_SIZE
+        # Restore the user's last-chosen settings, falling back to the defaults
+        # for anything missing or unrecognized. These are set before build_widgets()
+        # so every widget is created already using the restored theme and font.
+        settings = settings or {}
+        self.current_theme = THEME_BY_NAME.get(settings.get(SETTING_KEY_THEME), DARK)
+        self.current_font_family = settings.get(
+            SETTING_KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY
+        )
+        self.current_font_size = self._parse_font_size(
+            settings.get(SETTING_KEY_FONT_SIZE)
+        )
 
         # Tkinter Widgets
         # fmt:off
@@ -582,6 +600,9 @@ class InvoiceAppDisplay(tk.Tk):
             bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
         )
 
+        # Persist the choice so it is restored on the next launch
+        self.save_settings_callback(SETTING_KEY_THEME, theme.name)
+
     ###########################################################################
     ###              InvoiceAppDisplay -> apply_font_family()               ###
     ###########################################################################
@@ -595,6 +616,9 @@ class InvoiceAppDisplay(tk.Tk):
         self.current_font_family = family
         self._apply_font()
 
+        # Persist the choice so it is restored on the next launch
+        self.save_settings_callback(SETTING_KEY_FONT_FAMILY, family)
+
     ###########################################################################
     ###               InvoiceAppDisplay -> apply_font_size()                ###
     ###########################################################################
@@ -607,6 +631,31 @@ class InvoiceAppDisplay(tk.Tk):
         """
         self.current_font_size = size
         self._apply_font()
+
+        # Persist the choice so it is restored on the next launch. Settings are
+        # stored as strings, so the size is converted on the way out.
+        self.save_settings_callback(SETTING_KEY_FONT_SIZE, str(size))
+
+    ###########################################################################
+    ###               InvoiceAppDisplay -> _parse_font_size()               ###
+    ###########################################################################
+    def _parse_font_size(self, value) -> int:
+        """
+        Converts a persisted font size value into an int, falling back to the
+        default when it is missing or not a valid integer.
+
+        Args:
+            value: The raw font size loaded from settings (a string, or None when
+                no size has been persisted yet)
+
+        Returns:
+            int: The restored font size, or DEFAULT_FONT_SIZE if value is missing
+                or non-numeric.
+        """
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return DEFAULT_FONT_SIZE
 
     ###########################################################################
     ###                 InvoiceAppDisplay -> _apply_font()                  ###
