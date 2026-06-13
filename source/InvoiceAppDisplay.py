@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
+from typing import Callable
 
 from source.Invoice import Invoice
 from source.ArgumentProvider import ArgumentProvider
+from source.FileEditorWindow import FileEditorWindow
 from source.color_theme import (
     ALL_THEMES,
     DARK,
@@ -16,7 +18,6 @@ from source.font_settings import (
     FONT_FAMILIES,
     FONT_SIZES,
 )
-from source.platform_utils import open_in_system_editor
 from source.constants import (
     INVOICES_PATH,
     PAYMENT_TERMS_PATH,
@@ -40,6 +41,8 @@ class InvoiceAppDisplay(tk.Tk):
     def __init__(
         self,
         process_callback,
+        read_file_callback: Callable[[Path], str],
+        save_config_callback: Callable[[Path, str], None],
         title: str,
         window_resolution: str,
     ):
@@ -48,6 +51,10 @@ class InvoiceAppDisplay(tk.Tk):
 
         Args:
             process_callback (callable): Callback function to process the selected invoice file
+            read_file_callback (Callable[[Path], str]): Callback that reads a file's
+                full contents, used to populate the native file editor/viewer window
+            save_config_callback (Callable[[Path, str], None]): Callback that persists
+                edited config contents (and reloads them), invoked when the user saves
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
         """
@@ -72,6 +79,12 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Callback function to process the selected invoice file
         self.process_callback = process_callback
+
+        # Callback to read a file's contents for the native editor/viewer window
+        self.read_file_callback = read_file_callback
+
+        # Callback to persist (and reload) edited config file contents
+        self.save_config_callback = save_config_callback
 
         # Active theme, defaults to Dark
         self.current_theme = DARK
@@ -423,63 +436,104 @@ class InvoiceAppDisplay(tk.Tk):
             self.output_box.delete(1.0, tk.END)
 
     ###########################################################################
+    ###            InvoiceAppDisplay -> _open_config_editor()               ###
+    ###########################################################################
+    def _open_config_editor(self, config_path: Path, title: str):
+        """
+        Opens a native, editable window for the given config file, prefilled with
+        its current contents and wired to persist edits via the save callback
+
+        Args:
+            config_path (Path): The config file to open for editing
+            title (str): The title to display on the editor window
+        """
+        FileEditorWindow(
+            parent=self,
+            title=title,
+            file_path=config_path,
+            initial_text=self.read_file_callback(config_path),
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
+            editable=True,
+            save_callback=self.save_config_callback,
+        )
+
+    ###########################################################################
+    ###               InvoiceAppDisplay -> _open_log_viewer()               ###
+    ###########################################################################
+    def _open_log_viewer(self, log_path: Path, title: str):
+        """
+        Opens a native, read-only window showing the given log file if it exists.
+        Shows an error popup if the file has not been created yet.
+
+        Args:
+            log_path (Path): The log file to open for viewing
+            title (str): The title to display on the viewer window
+        """
+        if log_path.exists():
+            FileEditorWindow(
+                parent=self,
+                title=title,
+                file_path=log_path,
+                initial_text=self.read_file_callback(log_path),
+                theme=self.current_theme,
+                font_family=self.current_font_family,
+                font_size=self.current_font_size,
+                editable=False,
+            )
+        else:
+            self.show_error_popup(
+                error_title="File Not Found",
+                error_message=f"Log not found at: {log_path}. Process an invoice to generate the log.",
+            )
+
+    ###########################################################################
     ###             InvoiceAppDisplay -> handle_cost_criteria()             ###
     ###########################################################################
     def handle_cost_criteria(self):
         """
-        Opens the Cost Criteria config file in the system default text editor
+        Opens the Cost Criteria config file in a native editor window
         """
-        open_in_system_editor(COST_CRITERIA_PATH)
+        self._open_config_editor(COST_CRITERIA_PATH, "Cost Criteria")
 
     ###########################################################################
     ###             InvoiceAppDisplay -> handle_payment_terms()             ###
     ###########################################################################
     def handle_payment_terms(self):
         """
-        Opens the Payment Terms config file in the system default text editor
+        Opens the Payment Terms config file in a native editor window
         """
-        open_in_system_editor(PAYMENT_TERMS_PATH)
+        self._open_config_editor(PAYMENT_TERMS_PATH, "Payment Terms")
 
     ###########################################################################
     ###              InvoiceAppDisplay -> handle_sales_reps()               ###
     ###########################################################################
     def handle_sales_reps(self):
         """
-        Opens the Sales Reps config file in the system default text editor
+        Opens the Sales Reps config file in a native editor window
         """
-        open_in_system_editor(SALES_REPS_PATH)
+        self._open_config_editor(SALES_REPS_PATH, "Sales Reps")
 
     ###########################################################################
     ###              InvoiceAppDisplay -> handle_results_log()              ###
     ###########################################################################
     def handle_results_log(self):
         """
-        Opens the results log file in the system default text editor if it exists.
-        Shows an error popup if the file has not been created yet.
+        Opens the results log file in a native read-only viewer window if it
+        exists. Shows an error popup if the file has not been created yet.
         """
-        if RESULTS_LOG_PATH.exists():
-            open_in_system_editor(RESULTS_LOG_PATH)
-        else:
-            self.show_error_popup(
-                error_title="File Not Found",
-                error_message=f"Results log not found at: {RESULTS_LOG_PATH}",
-            )
+        self._open_log_viewer(RESULTS_LOG_PATH, "Results Log")
 
     ###########################################################################
     ###               InvoiceAppDisplay -> handle_debug_log()               ###
     ###########################################################################
     def handle_debug_log(self):
         """
-        Opens the debug log file in the system default text editor if it exists.
+        Opens the debug log file in a native read-only viewer window if it exists.
         Shows an error popup if the file has not been created yet.
         """
-        if DEBUG_LOG_PATH.exists():
-            open_in_system_editor(DEBUG_LOG_PATH)
-        else:
-            self.show_error_popup(
-                error_title="File Not Found",
-                error_message=f"Debug log not found at: {DEBUG_LOG_PATH}",
-            )
+        self._open_log_viewer(DEBUG_LOG_PATH, "Debug Log")
 
     ###########################################################################
     ###                 InvoiceAppDisplay -> apply_theme()                  ###

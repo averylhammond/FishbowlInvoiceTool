@@ -24,6 +24,13 @@ A Python/tkinter desktop app that parses Fishbowl-generated invoice PDFs and com
 - Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/*`
 - Package a release executable: `./scripts/package_release.sh false` (pass `true` to also bundle sample invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it.
 
+## Git Workflow (when working on a GitHub issue)
+
+When the work is tied to a specific GitHub issue, always do the following before making any changes:
+
+- **Start from an up-to-date base branch.** Check out the base branch (usually `main` unless another branch is explicitly provided) and pull the latest (`git checkout main && git pull`) before creating the new branch, so work branches off the current tip rather than a stale local copy.
+- **Name the branch so it links to the issue in GitHub.** Include the issue number in the branch name (e.g. `28-native-config-management` or `issue-28-native-config-management`) so GitHub associates the branch and its PR with the issue. Then branch off the freshly pulled base (`git checkout -b <issue-number>-<short-description>`).
+
 ## Architecture
 
 The app is composed of five collaborating classes wired together in `InvoiceAppController`:
@@ -32,7 +39,8 @@ The app is composed of five collaborating classes wired together in `InvoiceAppC
 - **`InvoiceAppFileIO`** (`source/InvoiceAppFileIO.py`) — all file I/O: reads invoice PDFs via PyPDF2 (one string per page), reads/writes `logs/debug.txt` and `logs/results.txt`, and parses the three config files in `Configs/` (`Sales_Reps.txt`, `Payment_Terms.txt`, `Cost_Criteria.txt`) into dicts/lists used by the processor.
 - **`InvoiceProcessor`** (`source/InvoiceProcessor.py`) + **`processor_utilities.py`** — core parsing logic. `populate_invoice()` extracts header fields (order/PO number, date, customer, payment terms, sales rep) from page 1 via regex. `process_invoice()` walks the line-item table across all pages line-by-line, classifying each payment line as labor/shipping/material cost using the criteria/exclusions loaded from `Cost_Criteria.txt`, then `process_end_of_invoice()` reads sales tax and the listed total once it hits the `Total:Subtotal` marker. All currency values use `Decimal` (see `format_currency`, `DECIMAL_ZERO` in `source/constants.py`) to avoid float precision issues — never use `float` for cost values.
 - **`Invoice`** (`source/Invoice.py`) — plain data holder for one invoice's fields plus `to_formatted_string()` for output.
-- **`InvoiceAppDisplay`** (`source/InvoiceAppDisplay.py`) — tkinter GUI (`tk.Tk` subclass). Menu bar (File/Edit/View/Preferences) lets users open config/log files in the system editor (`source/platform_utils.py`), switch themes (`source/color_theme.py`) and fonts (`source/font_settings.py`). In integration-test mode, error popups are suppressed (`show_error_popup` checks `argument_provider.integration_test_mode`).
+- **`InvoiceAppDisplay`** (`source/InvoiceAppDisplay.py`) — tkinter GUI (`tk.Tk` subclass). Menu bar (File/Edit/View/Preferences) lets users edit the three config files (Edit menu) and view the log files (View menu) in a native `FileEditorWindow`, switch themes (`source/color_theme.py`) and fonts (`source/font_settings.py`). In integration-test mode, error popups are suppressed (`show_error_popup` checks `argument_provider.integration_test_mode`).
+- **`FileEditorWindow`** (`source/FileEditorWindow.py`) — a `tk.Toplevel` window that displays one text file's contents, styled with the active theme/font. Editable mode (Edit menu, config files) shows a Save button that calls a `save_config_callback`; read-only mode (View menu, log files) disables editing and shows no Save button. File reads/writes go through `InvoiceAppFileIO` (`read_text_file`/`write_text_file`); the controller's `handle_save_config` persists edits and re-parses the affected config so changes take effect without a restart.
 - **`InvoiceAppController`** (`source/InvoiceAppController.py`) — entry point glue. Constructs the other components, loads config files, and orchestrates `handle_process_invoice()`: read PDF -> populate invoice -> process invoice -> display output -> warn on total mismatch -> write to `logs/results.txt`. The relative file paths (`Configs/`, `Invoices/`, `logs/`) live in `source/constants.py` and are read directly by the components that need them (`InvoiceAppFileIO`, `InvoiceAppDisplay`).
 
 ## Key Conventions

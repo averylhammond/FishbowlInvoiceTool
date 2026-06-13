@@ -1,9 +1,15 @@
 import pytest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 from decimal import Decimal
 
 from source.InvoiceAppController import InvoiceAppController
+from source.constants import (
+    COST_CRITERIA_PATH,
+    PAYMENT_TERMS_PATH,
+    SALES_REPS_PATH,
+)
 
 
 ###############################################################################
@@ -92,11 +98,14 @@ def test_init_constructs_and_wires_collaborators(controller):
         shipping_criteria=["SHIPPING"],
     )
 
-    # The display is wired with the controller's process callback
+    # The display is wired with the controller's process callback, the file IO
+    # controller's text-file reader, and the controller's config save handler
     controller.display_cls.assert_called_once_with(
         title="Invoice Processor",
         window_resolution="750x750",
         process_callback=controller.controller.handle_process_invoice,
+        read_file_callback=controller.file_io.read_text_file,
+        save_config_callback=controller.controller.handle_save_config,
     )
 
 
@@ -285,3 +294,98 @@ def test_handle_process_invoice_total_mismatch_shows_popup(controller):
     controller.file_io.print_invoice_to_output_file.assert_called_once_with(
         invoice=controller.invoice, append_output=False
     )
+
+
+###############################################################################
+###            Tests InvoiceAppController -> handle_save_config()           ###
+###############################################################################
+def test_handle_save_config_cost_criteria_writes_and_reparses(controller):
+    """
+    Verifies that saving the cost criteria config writes the contents to disk and
+    re-parses the cost criteria into the file IO controller.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # Ignore the parse call made during construction so the reload can be asserted
+    controller.file_io.parse_cost_criteria_file.reset_mock()
+
+    controller.controller.handle_save_config(COST_CRITERIA_PATH, "new criteria")
+
+    # The contents are written, then the cost criteria are reloaded
+    controller.file_io.write_text_file.assert_called_once_with(
+        file_path=COST_CRITERIA_PATH, contents="new criteria"
+    )
+    controller.file_io.parse_cost_criteria_file.assert_called_once_with()
+
+
+def test_handle_save_config_payment_terms_writes_and_reloads(controller):
+    """
+    Verifies that saving the payment terms config writes the contents to disk and
+    reloads the controller's payment_terms from the re-parsed config.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # Ignore the parse call made during construction and supply a new parse result
+    controller.file_io.parse_payment_terms_config.reset_mock()
+    controller.file_io.parse_payment_terms_config.return_value = ["Net 60"]
+
+    controller.controller.handle_save_config(PAYMENT_TERMS_PATH, "Net 60")
+
+    # The contents are written and the reloaded terms are stored on the controller
+    controller.file_io.write_text_file.assert_called_once_with(
+        file_path=PAYMENT_TERMS_PATH, contents="Net 60"
+    )
+    controller.file_io.parse_payment_terms_config.assert_called_once_with()
+    assert controller.controller.payment_terms == ["Net 60"]
+
+
+def test_handle_save_config_sales_reps_writes_and_reloads(controller):
+    """
+    Verifies that saving the sales reps config writes the contents to disk and
+    reloads the controller's sales_reps from the re-parsed config.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # Ignore the parse call made during construction and supply a new parse result
+    controller.file_io.parse_sales_reps_config.reset_mock()
+    controller.file_io.parse_sales_reps_config.return_value = {"REP2": "New Rep"}
+
+    controller.controller.handle_save_config(SALES_REPS_PATH, "REP2=New Rep")
+
+    # The contents are written and the reloaded reps are stored on the controller
+    controller.file_io.write_text_file.assert_called_once_with(
+        file_path=SALES_REPS_PATH, contents="REP2=New Rep"
+    )
+    controller.file_io.parse_sales_reps_config.assert_called_once_with()
+    assert controller.controller.sales_reps == {"REP2": "New Rep"}
+
+
+def test_handle_save_config_unknown_path_writes_without_reparsing(controller):
+    """
+    Verifies that saving an unmanaged file path writes the contents but triggers
+    no config re-parse.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # Ignore the parse calls made during construction
+    controller.file_io.parse_cost_criteria_file.reset_mock()
+    controller.file_io.parse_payment_terms_config.reset_mock()
+    controller.file_io.parse_sales_reps_config.reset_mock()
+
+    controller.controller.handle_save_config(Path("logs/results.txt"), "data")
+
+    # The file is written, but no config is reloaded
+    controller.file_io.write_text_file.assert_called_once_with(
+        file_path=Path("logs/results.txt"), contents="data"
+    )
+    controller.file_io.parse_cost_criteria_file.assert_not_called()
+    controller.file_io.parse_payment_terms_config.assert_not_called()
+    controller.file_io.parse_sales_reps_config.assert_not_called()
