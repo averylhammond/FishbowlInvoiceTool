@@ -6,6 +6,11 @@ from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 from source.ArgumentProvider import ArgumentProvider
 from source.Invoice import Invoice
+from source.constants import (
+    COST_CRITERIA_PATH,
+    PAYMENT_TERMS_PATH,
+    SALES_REPS_PATH,
+)
 
 # TODO: The GUI title and window resolution below are still hardcoded; move these
 #       into named constants (e.g. alongside the font/theme settings) as well
@@ -40,11 +45,15 @@ class InvoiceAppController:
             shipping_criteria=self.file_io_controller.shipping_criteria,
         )
 
-        # Create the InvoiceAppDisplay GUI, provide it with the callback function to process invoices.
+        # Create the InvoiceAppDisplay GUI, providing it with the callbacks it
+        # needs: processing invoices, reading a file's contents for the native
+        # editor/viewer windows, and saving edited config files.
         self.display = InvoiceAppDisplay(
             title="Invoice Processor",
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
+            read_file_callback=self.file_io_controller.read_text_file,
+            save_config_callback=self.handle_save_config,
         )
 
         # Wire the GUI's error popup into the File IO Controller so file I/O failures
@@ -152,3 +161,64 @@ class InvoiceAppController:
         self.file_io_controller.print_to_debug_file(
             contents=f"Processed all sales for invoice: {invoice_filepath}\n"
         )
+
+    ###########################################################################
+    ###            InvoiceAppController -> handle_save_config()             ###
+    ###########################################################################
+    def handle_save_config(self, config_path: Path, contents: str):
+        """
+        Persists edited config file contents to disk, then re-parses that config
+        so the changes take effect in the running application without a restart.
+
+        Args:
+            config_path (Path): The config file being saved
+            contents (str): The new contents to write to the config file
+        """
+
+        # Write the edited contents to disk
+        self.file_io_controller.write_text_file(
+            file_path=config_path, contents=contents
+        )
+
+        # Map each config file to the action that reloads it into memory. Using a
+        # dispatch dict keeps this open to new config files without growing an
+        # if/elif chain.
+        reloaders = {
+            COST_CRITERIA_PATH: self._reload_cost_criteria,
+            PAYMENT_TERMS_PATH: self._reload_payment_terms,
+            SALES_REPS_PATH: self._reload_sales_reps,
+        }
+
+        # Reload the config that was just saved, if it is one we manage
+        reloader = reloaders.get(config_path)
+        if reloader:
+            reloader()
+
+    ###########################################################################
+    ###           InvoiceAppController -> _reload_cost_criteria()           ###
+    ###########################################################################
+    def _reload_cost_criteria(self):
+        """
+        Re-parses the cost criteria config into the File IO Controller's criteria
+        lists (cleared and repopulated in place, so the InvoiceProcessor's
+        references stay valid).
+        """
+        self.file_io_controller.parse_cost_criteria_file()
+
+    ###########################################################################
+    ###           InvoiceAppController -> _reload_payment_terms()           ###
+    ###########################################################################
+    def _reload_payment_terms(self):
+        """
+        Re-parses the payment terms config into the controller's payment_terms list
+        """
+        self.payment_terms = self.file_io_controller.parse_payment_terms_config()
+
+    ###########################################################################
+    ###            InvoiceAppController -> _reload_sales_reps()             ###
+    ###########################################################################
+    def _reload_sales_reps(self):
+        """
+        Re-parses the sales reps config into the controller's sales_reps dictionary
+        """
+        self.sales_reps = self.file_io_controller.parse_sales_reps_config()

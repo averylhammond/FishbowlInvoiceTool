@@ -69,11 +69,15 @@ def display():
         ),
     ):
 
-        # The callback the controller would normally supply; a mock is sufficient
+        # The callbacks the controller would normally supply; mocks are sufficient
         callback = MagicMock()
+        read_file_callback = MagicMock()
+        save_config_callback = MagicMock()
 
         built_display = InvoiceAppDisplay(
             process_callback=callback,
+            read_file_callback=read_file_callback,
+            save_config_callback=save_config_callback,
             title="Invoice Processor",
             window_resolution="750x750",
         )
@@ -87,6 +91,8 @@ def display():
             config=mock_config,
             arg_provider=mock_arg_cls.return_value,
             process_callback=callback,
+            read_file_callback=read_file_callback,
+            save_config_callback=save_config_callback,
         )
 
 
@@ -122,8 +128,10 @@ def test_init_sets_default_state(display):
     assert display.display.current_font_family == DEFAULT_FONT_FAMILY
     assert display.display.current_font_size == DEFAULT_FONT_SIZE
 
-    # The process callback and argument provider are stored for later use
+    # The callbacks and argument provider are stored for later use
     assert display.display.process_callback is display.process_callback
+    assert display.display.read_file_callback is display.read_file_callback
+    assert display.display.save_config_callback is display.save_config_callback
     assert display.display.argument_provider is display.arg_provider
 
 
@@ -468,62 +476,92 @@ def test_handle_clear_no_output_box(display):
 ###############################################################################
 ###      Tests InvoiceAppDisplay -> handle_*  (open config/log files)       ###
 ###############################################################################
-@patch("source.InvoiceAppDisplay.open_in_system_editor")
-def test_handle_cost_criteria_opens_config(mock_open_editor, display):
+def _assert_editable_window_opened(mock_window_cls, display, config_path):
     """
-    Verifies that handle_cost_criteria opens the cost criteria config file in the
-    system editor.
+    Asserts that an editable FileEditorWindow was opened for the given config
+    path, prefilled with the read callback's contents and wired to the save
+    callback.
 
     Args:
-        mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
+        mock_window_cls (unittest.mock.MagicMock): The patched FileEditorWindow class
+        display (pytest.fixture): Provides the display and its mocks
+        config_path (Path): The config path the handler should have opened
+    """
+
+    # The config contents are read through the injected read callback
+    display.read_file_callback.assert_called_once_with(config_path)
+
+    # An editable window is opened, prefilled and wired to the save callback
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title=mock_window_cls.call_args.kwargs["title"],
+        file_path=config_path,
+        initial_text=display.read_file_callback.return_value,
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
+        editable=True,
+        save_callback=display.save_config_callback,
+    )
+
+
+@patch("source.InvoiceAppDisplay.FileEditorWindow")
+def test_handle_cost_criteria_opens_editor(mock_window_cls, display):
+    """
+    Verifies that handle_cost_criteria opens an editable editor window for the
+    cost criteria config file.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
     display.display.handle_cost_criteria()
-    mock_open_editor.assert_called_once_with(COST_CRITERIA_PATH)
+    _assert_editable_window_opened(mock_window_cls, display, COST_CRITERIA_PATH)
 
 
-@patch("source.InvoiceAppDisplay.open_in_system_editor")
-def test_handle_payment_terms_opens_config(mock_open_editor, display):
+@patch("source.InvoiceAppDisplay.FileEditorWindow")
+def test_handle_payment_terms_opens_editor(mock_window_cls, display):
     """
-    Verifies that handle_payment_terms opens the payment terms config file in the
-    system editor.
+    Verifies that handle_payment_terms opens an editable editor window for the
+    payment terms config file.
 
     Args:
-        mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
     display.display.handle_payment_terms()
-    mock_open_editor.assert_called_once_with(PAYMENT_TERMS_PATH)
+    _assert_editable_window_opened(mock_window_cls, display, PAYMENT_TERMS_PATH)
 
 
-@patch("source.InvoiceAppDisplay.open_in_system_editor")
-def test_handle_sales_reps_opens_config(mock_open_editor, display):
+@patch("source.InvoiceAppDisplay.FileEditorWindow")
+def test_handle_sales_reps_opens_editor(mock_window_cls, display):
     """
-    Verifies that handle_sales_reps opens the sales reps config file in the
-    system editor.
+    Verifies that handle_sales_reps opens an editable editor window for the sales
+    reps config file.
 
     Args:
-        mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
     display.display.handle_sales_reps()
-    mock_open_editor.assert_called_once_with(SALES_REPS_PATH)
+    _assert_editable_window_opened(mock_window_cls, display, SALES_REPS_PATH)
 
 
-@patch("source.InvoiceAppDisplay.open_in_system_editor")
+@patch("source.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.InvoiceAppDisplay.RESULTS_LOG_PATH")
 def test_handle_results_log_opens_when_present(
-    mock_results_path, mock_open_editor, display
+    mock_results_path, mock_window_cls, display
 ):
     """
-    Verifies that handle_results_log opens the results log when the file exists.
+    Verifies that handle_results_log opens a read-only viewer window when the
+    results log file exists.
 
     Args:
         mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
-        mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -532,15 +570,17 @@ def test_handle_results_log_opens_when_present(
 
     display.display.handle_results_log()
 
-    # The existing results log is opened in the system editor
-    mock_open_editor.assert_called_once_with(mock_results_path)
+    # The existing results log is read and opened in a read-only viewer window
+    display.read_file_callback.assert_called_once_with(mock_results_path)
+    assert mock_window_cls.call_args.kwargs["file_path"] is mock_results_path
+    assert mock_window_cls.call_args.kwargs["editable"] is False
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
-@patch("source.InvoiceAppDisplay.open_in_system_editor")
+@patch("source.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.InvoiceAppDisplay.RESULTS_LOG_PATH")
 def test_handle_results_log_missing_shows_error(
-    mock_results_path, mock_open_editor, mock_show_error, display
+    mock_results_path, mock_window_cls, mock_show_error, display
 ):
     """
     Verifies that handle_results_log shows an error popup (and opens nothing) when
@@ -548,7 +588,7 @@ def test_handle_results_log_missing_shows_error(
 
     Args:
         mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
-        mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
         mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
         display (pytest.fixture): Provides the display and its mocks
     """
@@ -558,22 +598,23 @@ def test_handle_results_log_missing_shows_error(
 
     display.display.handle_results_log()
 
-    # An error popup is shown and nothing is opened
+    # An error popup is shown and no window is opened
     mock_show_error.assert_called_once()
-    mock_open_editor.assert_not_called()
+    mock_window_cls.assert_not_called()
 
 
-@patch("source.InvoiceAppDisplay.open_in_system_editor")
+@patch("source.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.InvoiceAppDisplay.DEBUG_LOG_PATH")
 def test_handle_debug_log_opens_when_present(
-    mock_debug_path, mock_open_editor, display
+    mock_debug_path, mock_window_cls, display
 ):
     """
-    Verifies that handle_debug_log opens the debug log when the file exists.
+    Verifies that handle_debug_log opens a read-only viewer window when the debug
+    log file exists.
 
     Args:
         mock_debug_path (unittest.mock.MagicMock): Mocks the DEBUG_LOG_PATH constant
-        mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -582,15 +623,17 @@ def test_handle_debug_log_opens_when_present(
 
     display.display.handle_debug_log()
 
-    # The existing debug log is opened in the system editor
-    mock_open_editor.assert_called_once_with(mock_debug_path)
+    # The existing debug log is read and opened in a read-only viewer window
+    display.read_file_callback.assert_called_once_with(mock_debug_path)
+    assert mock_window_cls.call_args.kwargs["file_path"] is mock_debug_path
+    assert mock_window_cls.call_args.kwargs["editable"] is False
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
-@patch("source.InvoiceAppDisplay.open_in_system_editor")
+@patch("source.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.InvoiceAppDisplay.DEBUG_LOG_PATH")
 def test_handle_debug_log_missing_shows_error(
-    mock_debug_path, mock_open_editor, mock_show_error, display
+    mock_debug_path, mock_window_cls, mock_show_error, display
 ):
     """
     Verifies that handle_debug_log shows an error popup (and opens nothing) when
@@ -598,7 +641,7 @@ def test_handle_debug_log_missing_shows_error(
 
     Args:
         mock_debug_path (unittest.mock.MagicMock): Mocks the DEBUG_LOG_PATH constant
-        mock_open_editor (unittest.mock.MagicMock): Mocks open_in_system_editor
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
         mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
         display (pytest.fixture): Provides the display and its mocks
     """
@@ -608,9 +651,9 @@ def test_handle_debug_log_missing_shows_error(
 
     display.display.handle_debug_log()
 
-    # An error popup is shown and nothing is opened
+    # An error popup is shown and no window is opened
     mock_show_error.assert_called_once()
-    mock_open_editor.assert_not_called()
+    mock_window_cls.assert_not_called()
 
 
 ###############################################################################

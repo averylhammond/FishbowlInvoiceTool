@@ -606,3 +606,131 @@ def test_parse_cost_criteria_file_reports_on_error(_mock_file, file_io):
     # No exception is raised, and the failure is reported to the user
     file_io.parse_cost_criteria_file()
     file_io.report_error.assert_called_once()
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data="""LABOR CRITERIA:
+Labor criterion A
+
+LABOR EXCLUSIONS:
+Exclude this labor
+
+SHIPPING CRITERIA:
+Ship criterion X
+""",
+)
+def test_parse_cost_criteria_file_is_idempotent(_mock_file, file_io):
+    """
+    Tests that parse_cost_criteria_file() clears the criteria lists in place
+    before parsing, so re-parsing (e.g. after the user saves an edited config)
+    replaces the previous contents rather than appending duplicates.
+
+    Args:
+        _mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
+    """
+
+    # Hold a reference to the original list objects to prove they are cleared in
+    # place (kept), not reassigned to new lists
+    labor_criteria_ref = file_io.labor_criteria
+    labor_exclusions_ref = file_io.labor_exclusions
+    shipping_criteria_ref = file_io.shipping_criteria
+
+    # Parse twice; the second parse must not accumulate duplicate entries
+    file_io.parse_cost_criteria_file()
+    file_io.parse_cost_criteria_file()
+
+    assert file_io.labor_criteria == ["Labor criterion A"]
+    assert file_io.labor_exclusions == ["Exclude this labor"]
+    assert file_io.shipping_criteria == ["Ship criterion X"]
+
+    # The same list objects are reused, so the InvoiceProcessor's references stay valid
+    assert file_io.labor_criteria is labor_criteria_ref
+    assert file_io.labor_exclusions is labor_exclusions_ref
+    assert file_io.shipping_criteria is shipping_criteria_ref
+
+
+###############################################################################
+###                Tests InvoiceAppFileIO -> read_text_file()               ###
+###############################################################################
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data="line one\nline two\n",
+)
+def test_read_text_file_returns_contents(mock_file, file_io):
+    """
+    Tests that read_text_file() returns the full contents of the file.
+
+    Args:
+        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
+    """
+
+    file_path = Path("Configs/Sales_Reps.txt")
+    contents = file_io.read_text_file(file_path)
+
+    # The whole file is returned and it was opened for reading
+    assert contents == "line one\nline two\n"
+    mock_file.assert_called_once_with(file=file_path, mode="r")
+
+
+@patch("builtins.open", side_effect=OSError("file not found"))
+def test_read_text_file_reports_on_error(_mock_file, file_io):
+    """
+    Tests that read_text_file() fails gracefully, surfacing the failure through
+    the error reporter and returning an empty string when the file cannot be read.
+
+    Args:
+        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
+        file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
+    """
+
+    contents = file_io.read_text_file(Path("Configs/Sales_Reps.txt"))
+
+    # An empty string is returned and the failure is reported to the user
+    assert contents == ""
+    file_io.report_error.assert_called_once()
+
+
+###############################################################################
+###               Tests InvoiceAppFileIO -> write_text_file()               ###
+###############################################################################
+@patch("builtins.open", new_callable=mock_open)
+def test_write_text_file_writes_contents(mock_file, file_io):
+    """
+    Tests that write_text_file() ensures the parent directory exists and writes
+    the given contents to the file.
+
+    Args:
+        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
+    """
+
+    # A mock path so the parent.mkdir call can be asserted on
+    mock_path = MagicMock()
+    file_io.write_text_file(mock_path, "new contents")
+
+    # The parent directory is ensured, then the file is opened for writing and written
+    mock_path.parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
+    mock_file.assert_called_once_with(file=mock_path, mode="w")
+    mock_file().write.assert_called_once_with("new contents")
+
+
+@patch("builtins.open", side_effect=OSError("permission denied"))
+def test_write_text_file_reports_on_error(_mock_file, file_io):
+    """
+    Tests that write_text_file() fails gracefully, surfacing the failure through
+    the error reporter instead of raising when the file cannot be written.
+
+    Args:
+        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
+        file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
+    """
+
+    file_io.write_text_file(MagicMock(), "new contents")
+
+    # The failure is reported to the user instead of raising
+    file_io.report_error.assert_called_once()

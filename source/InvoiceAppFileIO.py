@@ -144,6 +144,58 @@ class InvoiceAppFileIO:
             )
 
     ###########################################################################
+    ###                InvoiceAppFileIO -> read_text_file()                 ###
+    ###########################################################################
+    def read_text_file(self, file_path: Path) -> str:
+        """
+        Reads the full contents of a text file into a single string
+
+        Args:
+            file_path (Path): The file path of the text file to read in
+
+        Returns:
+            str: The full contents of the file, or an empty string if the file
+                could not be read
+        """
+
+        try:
+            # Open the file for reading and return its full contents
+            with open(file=file_path, mode="r") as f:
+                return f.read()
+
+        except OSError as error:
+            self.report_error(
+                "File Error",
+                f"Could not read the file at {file_path}: {error}",
+            )
+            return ""
+
+    ###########################################################################
+    ###                InvoiceAppFileIO -> write_text_file()                ###
+    ###########################################################################
+    def write_text_file(self, file_path: Path, contents: str):
+        """
+        Writes the given string contents to a text file, overwriting any existing
+        contents
+
+        Args:
+            file_path (Path): The file path of the text file to write to
+            contents (str): The contents to write to the file
+        """
+
+        try:
+            # Ensure the parent directory exists, then overwrite the file contents
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(file=file_path, mode="w") as f:
+                f.write(contents)
+
+        except OSError as error:
+            self.report_error(
+                "File Error",
+                f"Could not write to the file at {file_path}: {error}",
+            )
+
+    ###########################################################################
     ###               InvoiceAppFileIO -> read_invoice_file()               ###
     ###########################################################################
     def read_invoice_file(self, invoice_filepath: Path) -> list:
@@ -299,6 +351,14 @@ class InvoiceAppFileIO:
         Reads all cost criteria/exclusions from the provided config file and stores them
         in member variables
         """
+
+        # Clear the criteria lists in place so re-parsing (e.g. after the user
+        # saves an edited config) replaces the previous contents rather than
+        # appending to them. Clearing in place rather than reassigning keeps the
+        # references held by the InvoiceProcessor pointed at the same lists.
+        self.labor_criteria.clear()
+        self.labor_exclusions.clear()
+        self.shipping_criteria.clear()
 
         try:
             # Open cost criteria config file for reading
