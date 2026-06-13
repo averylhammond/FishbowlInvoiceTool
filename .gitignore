@@ -25,3 +25,6 @@ Invoices/*
 
 # Ignore config files
 Configs/*
+
+# Ignore the per-machine user settings database
+data/

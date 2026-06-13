@@ -134,3 +134,8 @@ FOREST = Theme(
 
 # Provide a list of all themes that are available for use
 ALL_THEMES = [DARK, LIGHT, OCEAN, FOREST]
+
+# Map each theme's name to its Theme so a persisted theme name can be resolved
+# back to a Theme on startup. Built from ALL_THEMES so new themes are included
+# automatically without touching the lookup.
+THEME_BY_NAME = {theme.name: theme for theme in ALL_THEMES}

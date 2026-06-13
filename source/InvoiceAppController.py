@@ -5,6 +5,7 @@ from source.InvoiceAppDisplay import InvoiceAppDisplay
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 from source.ArgumentProvider import ArgumentProvider
+from source.SettingsRepository import SettingsRepository
 from source.Invoice import Invoice
 from source.constants import (
     COST_CRITERIA_PATH,
@@ -45,21 +46,31 @@ class InvoiceAppController:
             shipping_criteria=self.file_io_controller.shipping_criteria,
         )
 
+        # Create the Settings Repository and load the user's persisted settings so
+        # they can be handed to the display and restored on startup.
+        self.settings_repository = SettingsRepository()
+        saved_settings = self.settings_repository.get_all_settings()
+
         # Create the InvoiceAppDisplay GUI, providing it with the callbacks it
         # needs: processing invoices, reading a file's contents for the native
-        # editor/viewer windows, and saving edited config files.
+        # editor/viewer windows, saving edited config files, and persisting user
+        # settings. The saved settings restore the user's last theme/font choices.
         self.display = InvoiceAppDisplay(
             title="Invoice Processor",
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
             read_file_callback=self.file_io_controller.read_text_file,
             save_config_callback=self.handle_save_config,
+            save_settings_callback=self.handle_save_setting,
+            settings=saved_settings,
         )
 
-        # Wire the GUI's error popup into the File IO Controller so file I/O failures
-        # surface to the user without coupling file I/O to the GUI. This must happen
-        # before the config files are parsed below so parse failures can be reported.
+        # Wire the GUI's error popup into the File IO Controller and Settings
+        # Repository so file/database failures surface to the user without coupling
+        # those components to the GUI. This must happen before the config files are
+        # parsed below so parse failures can be reported.
         self.file_io_controller.report_error = self.display.show_error_popup
+        self.settings_repository.report_error = self.display.show_error_popup
 
         # Use the File IO Controller to read in the criteria/exclusions for each cost section
         self.file_io_controller.parse_cost_criteria_file()
@@ -193,6 +204,20 @@ class InvoiceAppController:
         reloader = reloaders.get(config_path)
         if reloader:
             reloader()
+
+    ###########################################################################
+    ###            InvoiceAppController -> handle_save_setting()            ###
+    ###########################################################################
+    def handle_save_setting(self, key: str, value: str):
+        """
+        Persists a single user setting so it is restored on the next launch.
+
+        Args:
+            key (str): The setting's identifier (e.g. "theme", "font_family")
+            value (str): The setting's value to store
+        """
+
+        self.settings_repository.save_setting(key=key, value=value)
 
     ###########################################################################
     ###           InvoiceAppController -> _reload_cost_criteria()           ###

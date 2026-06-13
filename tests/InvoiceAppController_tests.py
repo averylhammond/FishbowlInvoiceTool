@@ -34,6 +34,7 @@ def controller():
         patch("source.InvoiceAppController.InvoiceAppFileIO") as mock_file_io_cls,
         patch("source.InvoiceAppController.InvoiceProcessor") as mock_processor_cls,
         patch("source.InvoiceAppController.InvoiceAppDisplay") as mock_display_cls,
+        patch("source.InvoiceAppController.SettingsRepository") as mock_settings_repo_cls,
         patch("source.InvoiceAppController.Invoice") as mock_invoice_cls,
     ):
 
@@ -42,6 +43,7 @@ def controller():
         mock_file_io = mock_file_io_cls.return_value
         mock_processor = mock_processor_cls.return_value
         mock_display = mock_display_cls.return_value
+        mock_settings_repo = mock_settings_repo_cls.return_value
 
         # Provide the criteria attributes the controller reads off file_io while
         # wiring up the InvoiceProcessor during construction
@@ -52,6 +54,9 @@ def controller():
         # Config parsing return values the controller stores during construction
         mock_file_io.parse_payment_terms_config.return_value = ["Net 30"]
         mock_file_io.parse_sales_reps_config.return_value = {"REP1": "Rep Name"}
+
+        # Persisted settings the controller loads and hands to the display
+        mock_settings_repo.get_all_settings.return_value = {"theme": "Ocean"}
 
         # Default to GUI (non integration-test) mode
         mock_arg_provider.integration_test_mode = False
@@ -68,6 +73,8 @@ def controller():
             processor=mock_processor,
             display_cls=mock_display_cls,
             display=mock_display,
+            settings_repo_cls=mock_settings_repo_cls,
+            settings_repo=mock_settings_repo,
             invoice_cls=mock_invoice_cls,
             invoice=mock_invoice_cls.return_value,
         )
@@ -99,13 +106,16 @@ def test_init_constructs_and_wires_collaborators(controller):
     )
 
     # The display is wired with the controller's process callback, the file IO
-    # controller's text-file reader, and the controller's config save handler
+    # controller's text-file reader, the controller's config save handler, the
+    # controller's settings save handler, and the persisted settings to restore
     controller.display_cls.assert_called_once_with(
         title="Invoice Processor",
         window_resolution="750x750",
         process_callback=controller.controller.handle_process_invoice,
         read_file_callback=controller.file_io.read_text_file,
         save_config_callback=controller.controller.handle_save_config,
+        save_settings_callback=controller.controller.handle_save_setting,
+        settings={"theme": "Ocean"},
     )
 
 
@@ -131,14 +141,30 @@ def test_init_loads_config_files(controller):
 def test_init_wires_error_reporter(controller):
     """
     Verifies that __init__ wires the display's error popup into the file IO
-    controller as its error reporter, so file I/O failures surface to the user.
+    controller and settings repository as their error reporter, so file/database
+    failures surface to the user.
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
     """
 
-    # The file IO controller reports errors through the display's popup
+    # The file IO controller and settings repository report errors through the popup
     assert controller.file_io.report_error is controller.display.show_error_popup
+    assert controller.settings_repo.report_error is controller.display.show_error_popup
+
+
+def test_init_loads_persisted_settings(controller):
+    """
+    Verifies that __init__ reads the persisted settings from the settings
+    repository so they can be handed to the display for restoration.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # The settings repository is constructed and queried for the saved settings
+    controller.settings_repo_cls.assert_called_once_with()
+    controller.settings_repo.get_all_settings.assert_called_once_with()
 
 
 ###############################################################################
@@ -389,3 +415,23 @@ def test_handle_save_config_unknown_path_writes_without_reparsing(controller):
     controller.file_io.parse_cost_criteria_file.assert_not_called()
     controller.file_io.parse_payment_terms_config.assert_not_called()
     controller.file_io.parse_sales_reps_config.assert_not_called()
+
+
+###############################################################################
+###            Tests InvoiceAppController -> handle_save_setting()          ###
+###############################################################################
+def test_handle_save_setting_delegates_to_repository(controller):
+    """
+    Verifies that handle_save_setting forwards the key/value to the settings
+    repository to be persisted.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.controller.handle_save_setting("theme", "Forest")
+
+    # The setting is persisted through the settings repository
+    controller.settings_repo.save_setting.assert_called_once_with(
+        key="theme", value="Forest"
+    )

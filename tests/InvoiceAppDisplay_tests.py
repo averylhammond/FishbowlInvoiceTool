@@ -33,7 +33,7 @@ def _distinct_widget(*_args, **_kwargs):
 ###                   InvoiceAppDisplay -> Test Fixture                     ###
 ###############################################################################
 @pytest.fixture
-def display():
+def display(request):
     """
     Builds an InvoiceAppDisplay in complete isolation from tkinter: the real
     Tk.__init__ is neutralized, the inherited Tk methods the constructor calls
@@ -42,12 +42,22 @@ def display():
     active for the duration of each test so methods that reconfigure widgets
     (apply_theme/_apply_font) also run without a real display.
 
+    The persisted settings handed to the constructor can be customized per test by
+    parametrizing the fixture indirectly (e.g.
+    @pytest.mark.parametrize("display", [{"theme": "Light"}], indirect=True)); when
+    not parametrized, no settings are supplied and the display falls back to its
+    defaults.
+
     Returns:
         types.SimpleNamespace: Holds the constructed display (`display`), the
             mocked Tk methods (`title`, `geometry`, `resizable`, `configure`,
             `config`), the mocked ArgumentProvider instance (`arg_provider`), and
-            the process callback passed at construction (`process_callback`).
+            the callbacks passed at construction (`process_callback`,
+            `read_file_callback`, `save_config_callback`, `save_settings_callback`).
     """
+
+    # Settings supplied indirectly by a test, or None when not parametrized
+    settings = getattr(request, "param", None)
 
     with (
         patch.object(tk.Tk, "__init__", return_value=None),
@@ -73,13 +83,16 @@ def display():
         callback = MagicMock()
         read_file_callback = MagicMock()
         save_config_callback = MagicMock()
+        save_settings_callback = MagicMock()
 
         built_display = InvoiceAppDisplay(
             process_callback=callback,
             read_file_callback=read_file_callback,
             save_config_callback=save_config_callback,
+            save_settings_callback=save_settings_callback,
             title="Invoice Processor",
             window_resolution="750x750",
+            settings=settings,
         )
 
         yield SimpleNamespace(
@@ -93,6 +106,7 @@ def display():
             process_callback=callback,
             read_file_callback=read_file_callback,
             save_config_callback=save_config_callback,
+            save_settings_callback=save_settings_callback,
         )
 
 
@@ -132,7 +146,54 @@ def test_init_sets_default_state(display):
     assert display.display.process_callback is display.process_callback
     assert display.display.read_file_callback is display.read_file_callback
     assert display.display.save_config_callback is display.save_config_callback
+    assert display.display.save_settings_callback is display.save_settings_callback
     assert display.display.argument_provider is display.arg_provider
+
+
+@pytest.mark.parametrize(
+    "display",
+    [{"theme": "Light", "font_family": "Arial", "font_size": "18"}],
+    indirect=True,
+)
+def test_init_restores_persisted_settings(display):
+    """
+    Verifies that __init__ restores the theme, font family, and font size from the
+    persisted settings, resolving the saved theme name back to its Theme and
+    converting the stored font size string to an int.
+
+    Args:
+        display (pytest.fixture): Provides the display built with persisted settings
+    """
+
+    assert display.display.current_theme == LIGHT
+    assert display.display.current_font_family == "Arial"
+    assert display.display.current_font_size == 18
+
+
+@pytest.mark.parametrize("display", [{"theme": "Nonexistent"}], indirect=True)
+def test_init_unknown_theme_falls_back_to_default(display):
+    """
+    Verifies that __init__ falls back to the default theme when the persisted
+    theme name does not match any known theme.
+
+    Args:
+        display (pytest.fixture): Provides the display built with an unknown theme
+    """
+
+    assert display.display.current_theme == DARK
+
+
+@pytest.mark.parametrize("display", [{"font_size": "not-a-number"}], indirect=True)
+def test_init_non_numeric_font_size_falls_back_to_default(display):
+    """
+    Verifies that __init__ falls back to the default font size when the persisted
+    font size cannot be parsed as an integer.
+
+    Args:
+        display (pytest.fixture): Provides the display built with a bad font size
+    """
+
+    assert display.display.current_font_size == DEFAULT_FONT_SIZE
 
 
 ###############################################################################
@@ -679,6 +740,9 @@ def test_apply_theme_updates_state_and_widgets(display):
         bg=LIGHT.bg_entry, fg=LIGHT.fg_text, insertbackground=LIGHT.fg_text
     )
 
+    # The chosen theme is persisted by name so it can be restored on next launch
+    display.save_settings_callback.assert_called_once_with("theme", LIGHT.name)
+
 
 ###############################################################################
 ###             Tests InvoiceAppDisplay -> apply_font_family()              ###
@@ -700,6 +764,9 @@ def test_apply_font_family_updates_state_and_widgets(display):
         font=("Arial", DEFAULT_FONT_SIZE, "bold")
     )
 
+    # The chosen font family is persisted so it can be restored on next launch
+    display.save_settings_callback.assert_called_once_with("font_family", "Arial")
+
 
 ###############################################################################
 ###              Tests InvoiceAppDisplay -> apply_font_size()               ###
@@ -720,3 +787,6 @@ def test_apply_font_size_updates_state_and_widgets(display):
     display.display.output_box.configure.assert_called_once_with(
         font=(DEFAULT_FONT_FAMILY, 20, "bold")
     )
+
+    # The chosen size is persisted as a string so it can be restored on next launch
+    display.save_settings_callback.assert_called_once_with("font_size", "20")
