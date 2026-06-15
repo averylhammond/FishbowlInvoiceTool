@@ -46,6 +46,7 @@ def _build_window(editable: bool, save_callback=None, initial_text: str = "file 
         patch.object(tk.Toplevel, "__init__", return_value=None),
         patch.object(FileEditorWindow, "title"),
         patch.object(FileEditorWindow, "configure"),
+        patch.object(FileEditorWindow, "_center_over_parent"),
         patch("source.gui.FileEditorWindow.tk.Frame", side_effect=_distinct_widget),
         patch("source.gui.FileEditorWindow.tk.Button", side_effect=_distinct_widget),
         patch(
@@ -123,6 +124,7 @@ def test_close_button_is_wired_to_destroy():
         patch.object(tk.Toplevel, "__init__", return_value=None),
         patch.object(FileEditorWindow, "title"),
         patch.object(FileEditorWindow, "configure"),
+        patch.object(FileEditorWindow, "_center_over_parent"),
         patch("source.gui.FileEditorWindow.tk.Frame", side_effect=_distinct_widget),
         patch("source.gui.FileEditorWindow.tk.Button", side_effect=_distinct_widget) as mock_button,
         patch(

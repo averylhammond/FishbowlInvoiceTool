@@ -5,6 +5,7 @@ from typing import Callable
 
 from source.Invoice import Invoice
 from source.ArgumentProvider import ArgumentProvider
+from source.gui.AboutWindow import AboutWindow
 from source.gui.FileEditorWindow import FileEditorWindow
 from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
 from source.gui.Tooltip import Tooltip
@@ -22,6 +23,7 @@ from source.gui.font_settings import (
     FONT_SIZES,
 )
 from source.constants import (
+    VERSION,
     INVOICES_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
@@ -131,6 +133,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.edit_menu:                   tk.Menu                    | None = None
         self.view_menu:                   tk.Menu                    | None = None
         self.preferences_menu:            tk.Menu                    | None = None
+        self.help_menu:                   tk.Menu                    | None = None
         self.title_label:                 tk.Label                   | None = None
         self.file_frame:                  tk.Frame                   | None = None
         self.file_entry:                  tk.Entry                   | None = None
@@ -227,9 +230,13 @@ class InvoiceAppDisplay(tk.Tk):
             )
         self.preferences_menu.add_cascade(label="Font Size", menu=font_size_menu)
 
-        self.preferences_menu.add_separator()
-        self.preferences_menu.add_command(label="Settings")
         self.menu_bar.add_cascade(label="Preferences", menu=self.preferences_menu)
+
+        # Help dropdown
+        #  -> About option to show the current application version
+        self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.help_menu.add_command(label="About", command=self.handle_about)
+        self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
 
         # Configure the menu bar
         self.config(menu=self.menu_bar)
@@ -528,6 +535,23 @@ class InvoiceAppDisplay(tk.Tk):
             font_family=self.current_font_family,
             font_size=self.current_font_size,
             copy_callback=self.copy_invoice_callback,
+        )
+
+    ###########################################################################
+    ###                 InvoiceAppDisplay -> handle_about()                 ###
+    ###########################################################################
+    def handle_about(self):
+        """
+        On "About" menu press, opens the About window showing the current
+        application version, themed to match the rest of the application.
+        """
+        AboutWindow(
+            parent=self,
+            title="About",
+            version=VERSION,
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
         )
 
     ###########################################################################

@@ -5,13 +5,15 @@ from typing import Callable
 
 from source.gui.color_theme import Theme
 from source.gui.font_settings import MONOSPACE_FONT_FAMILY
+from source.gui.ThemedSubwindow import ThemedSubwindow
 
 
 # FileEditorWindow class to view or edit a single text file natively within the
 # application. The same window serves both editable config files (with a Save
 # button) and read-only log files (no Save button, editing disabled) via the
-# editable flag.
-class FileEditorWindow(tk.Toplevel):
+# editable flag. Theme/font snapshotting and centering over the parent are
+# handled by ThemedSubwindow.
+class FileEditorWindow(ThemedSubwindow):
 
     ###########################################################################
     ###                   FileEditorWindow -> __init__()                    ###
@@ -49,7 +51,7 @@ class FileEditorWindow(tk.Toplevel):
                 when editable is True; ignored when editable is False
         """
 
-        super().__init__(parent)
+        super().__init__(parent, title, theme, font_family, font_size)
 
         # File this window is bound to; passed back to the save callback on save
         self.file_path = file_path
@@ -60,12 +62,6 @@ class FileEditorWindow(tk.Toplevel):
         # Callback used to persist edits when the user saves
         self.save_callback = save_callback
 
-        # Snapshot the active theme/font at open time so the window is styled
-        # consistently with the rest of the application
-        self.theme = theme
-        self.font_family = font_family
-        self.font_size = font_size
-
         # Tkinter Widgets
         # fmt:off
         self.text_box:     scrolledtext.ScrolledText | None = None
@@ -74,10 +70,11 @@ class FileEditorWindow(tk.Toplevel):
         self.close_button: tk.Button                 | None = None
         # fmt:on
 
-        self.title(title)
-        self.configure(bg=theme.bg_main)
-
         self.build_widgets(initial_text)
+
+        # Position the window over the main application window rather than letting
+        # it default to the top-left corner of the screen
+        self._center_over_parent()
 
     ###########################################################################
     ###                 FileEditorWindow -> build_widgets()                 ###

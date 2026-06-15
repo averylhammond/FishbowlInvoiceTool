@@ -9,6 +9,7 @@ from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
 from source.gui.color_theme import DARK, LIGHT
 from source.gui.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 from source.constants import (
+    VERSION,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     COST_CRITERIA_PATH,
@@ -222,6 +223,7 @@ def test_build_widgets_creates_all_widgets(display):
     assert display.display.edit_menu is not None
     assert display.display.view_menu is not None
     assert display.display.preferences_menu is not None
+    assert display.display.help_menu is not None
     assert display.display.title_label is not None
     assert display.display.file_frame is not None
     assert display.display.file_entry is not None
@@ -673,6 +675,33 @@ def test_handle_discover_invoices_opens_window(mock_window_cls, display):
         font_family=display.display.current_font_family,
         font_size=display.display.current_font_size,
         copy_callback=display.copy_invoice_callback,
+    )
+
+
+###############################################################################
+###                Tests InvoiceAppDisplay -> handle_about()                ###
+###############################################################################
+@patch("source.gui.InvoiceAppDisplay.AboutWindow")
+def test_handle_about_opens_window(mock_window_cls, display):
+    """
+    Verifies that handle_about opens an AboutWindow showing the current
+    application version, styled with the active theme/font.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the AboutWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_about()
+
+    # The about window is opened with the current version and active theme/font
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="About",
+        version=VERSION,
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
     )
 
 
