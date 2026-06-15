@@ -60,6 +60,7 @@ class InvoiceAppController:
             read_file_callback=self.file_io_controller.read_text_file,
             save_config_callback=self.handle_save_config,
             save_settings_callback=self.handle_save_setting,
+            copy_invoice_callback=self.file_io_controller.copy_invoice_file,
             settings=saved_settings,
         )
 

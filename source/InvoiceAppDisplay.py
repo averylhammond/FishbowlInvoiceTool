@@ -6,6 +6,7 @@ from typing import Callable
 from source.Invoice import Invoice
 from source.ArgumentProvider import ArgumentProvider
 from source.FileEditorWindow import FileEditorWindow
+from source.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
 from source.color_theme import (
     ALL_THEMES,
     DARK,  # Default theme used by GUI
@@ -48,6 +49,7 @@ class InvoiceAppDisplay(tk.Tk):
         read_file_callback: Callable[[Path], str],
         save_config_callback: Callable[[Path, str], None],
         save_settings_callback: Callable[[str, str], None],
+        copy_invoice_callback: Callable[[Path, bool], str],
         title: str,
         window_resolution: str,
         settings: dict | None = None,
@@ -64,6 +66,10 @@ class InvoiceAppDisplay(tk.Tk):
             save_settings_callback (Callable[[str, str], None]): Callback that persists
                 a single user setting (key, value), invoked when the user changes a
                 theme/font/font-size preference
+            copy_invoice_callback (Callable[[Path, bool], str]): Callback that copies
+                a selected invoice PDF (source path, overwrite flag) into the
+                Invoices/ folder, used by the Invoice Discovery window. Returns
+                "copied", "exists", or "error"
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
             settings (dict | None): Previously persisted settings (theme/font/font-size)
@@ -101,6 +107,10 @@ class InvoiceAppDisplay(tk.Tk):
         # Callback to persist a single changed user setting (theme/font/size)
         self.save_settings_callback = save_settings_callback
 
+        # Callback to copy a selected invoice into the Invoices/ folder, used by
+        # the Invoice Discovery window
+        self.copy_invoice_callback = copy_invoice_callback
+
         # Restore the user's last-chosen settings, falling back to the defaults
         # for anything missing or unrecognized. These are set before build_widgets()
         # so every widget is created already using the restored theme and font.
@@ -128,6 +138,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.process_invoice_button:      tk.Button                  | None = None
         self.exit_button:                 tk.Button                  | None = None
         self.process_all_invoices_button: tk.Button                  | None = None
+        self.discover_invoices_button:    tk.Button                  | None = None
         self.output_label:                tk.Label                   | None = None
         self.output_box:                  scrolledtext.ScrolledText  | None = None
         # fmt:on
@@ -304,6 +315,21 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.process_all_invoices_button.grid(row=0, column=2, padx=10)
 
+        # Create button for discovering invoices: copying downloaded invoice PDFs
+        # into the Invoices/ folder from within the app
+        self.discover_invoices_button = tk.Button(
+            self.button_frame,
+            text="Discover Invoices",
+            command=self.handle_discover_invoices,
+            bg=self.current_theme.button_bg,
+            fg=self.current_theme.button_fg,
+            activebackground=self.current_theme.accent,
+            activeforeground=self.current_theme.fg_text,
+            relief="flat",
+            font=(self.current_font_family, self.current_font_size, "bold"),
+        )
+        self.discover_invoices_button.grid(row=0, column=3, padx=10)
+
         # Output Label before text results
         self.output_label = tk.Label(
             self,
@@ -422,6 +448,24 @@ class InvoiceAppDisplay(tk.Tk):
                 error_title="Processing Error",
                 error_message=f"An error occurred while processing invoices: {e}",
             )
+
+    ###########################################################################
+    ###          InvoiceAppDisplay -> handle_discover_invoices()            ###
+    ###########################################################################
+    def handle_discover_invoices(self):
+        """
+        On "Discover Invoices" button press, opens the Invoice Discovery window so
+        the user can copy downloaded invoice PDFs into the Invoices/ folder
+        without leaving the application.
+        """
+        InvoiceDiscoveryWindow(
+            parent=self,
+            title="Discover Invoices",
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
+            copy_callback=self.copy_invoice_callback,
+        )
 
     ###########################################################################
     ###               InvoiceAppDisplay -> show_error_popup()               ###
@@ -595,6 +639,12 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=theme.accent,
             activeforeground=theme.fg_text,
         )
+        self.discover_invoices_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
         self.output_label.configure(bg=theme.bg_main, fg=theme.label_fg)
         self.output_box.configure(
             bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
@@ -670,5 +720,6 @@ class InvoiceAppDisplay(tk.Tk):
         self.process_invoice_button.configure(font=font)
         self.exit_button.configure(font=font)
         self.process_all_invoices_button.configure(font=font)
+        self.discover_invoices_button.configure(font=font)
         self.output_label.configure(font=font)
         self.output_box.configure(font=font)

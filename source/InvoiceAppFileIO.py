@@ -1,3 +1,4 @@
+import shutil
 import pypdf
 from pathlib import Path
 from typing import Callable
@@ -9,6 +10,7 @@ from source.constants import (
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     COST_CRITERIA_PATH,
+    INVOICES_PATH,
 )
 
 
@@ -229,6 +231,52 @@ class InvoiceAppFileIO:
                 f"Could not read the invoice PDF at {invoice_filepath}: {error}",
             )
             return []
+
+    ###########################################################################
+    ###               InvoiceAppFileIO -> copy_invoice_file()               ###
+    ###########################################################################
+    def copy_invoice_file(self, source_path: Path, overwrite: bool = False) -> str:
+        """
+        Copies an invoice PDF into the Invoices/ directory so it is ready for
+        processing, without the user having to leave the application.
+
+        The overwrite decision is left to the caller: when a file of the same
+        name already exists and overwrite is False, no copy is made and "exists"
+        is returned so the UI can confirm with the user before overwriting.
+
+        Args:
+            source_path (Path): The path of the invoice PDF to copy in
+            overwrite (bool): Whether to replace an existing same-named file in
+                the Invoices/ directory. Defaults to False, in which case an
+                existing file is left untouched and "exists" is returned
+
+        Returns:
+            str: "copied" if the file was copied, "exists" if a same-named file
+                already exists and overwrite was False, or "error" if the copy
+                failed (the failure is also surfaced via report_error)
+        """
+
+        destination_path = INVOICES_PATH / source_path.name
+
+        try:
+            # Ensure the Invoices/ directory exists before copying into it
+            INVOICES_PATH.mkdir(parents=True, exist_ok=True)
+
+            # Leave an existing file untouched unless the caller confirmed an
+            # overwrite, so the user is never silently overwritten
+            if destination_path.exists() and not overwrite:
+                return "exists"
+
+            # copy2 preserves metadata (timestamps) and works across platforms
+            shutil.copy2(source_path, destination_path)
+            return "copied"
+
+        except (OSError, shutil.SameFileError) as error:
+            self.report_error(
+                "File Error",
+                f"Could not copy the invoice from {source_path} to {destination_path}: {error}",
+            )
+            return "error"
 
     ###########################################################################
     ###            InvoiceAppFileIO -> parse_sales_reps_config()            ###

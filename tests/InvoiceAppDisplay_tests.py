@@ -84,12 +84,14 @@ def display(request):
         read_file_callback = MagicMock()
         save_config_callback = MagicMock()
         save_settings_callback = MagicMock()
+        copy_invoice_callback = MagicMock()
 
         built_display = InvoiceAppDisplay(
             process_callback=callback,
             read_file_callback=read_file_callback,
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
+            copy_invoice_callback=copy_invoice_callback,
             title="Invoice Processor",
             window_resolution="750x750",
             settings=settings,
@@ -107,6 +109,7 @@ def display(request):
             read_file_callback=read_file_callback,
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
+            copy_invoice_callback=copy_invoice_callback,
         )
 
 
@@ -147,6 +150,7 @@ def test_init_sets_default_state(display):
     assert display.display.read_file_callback is display.read_file_callback
     assert display.display.save_config_callback is display.save_config_callback
     assert display.display.save_settings_callback is display.save_settings_callback
+    assert display.display.copy_invoice_callback is display.copy_invoice_callback
     assert display.display.argument_provider is display.arg_provider
 
 
@@ -222,6 +226,7 @@ def test_build_widgets_creates_all_widgets(display):
     assert display.display.process_invoice_button is not None
     assert display.display.exit_button is not None
     assert display.display.process_all_invoices_button is not None
+    assert display.display.discover_invoices_button is not None
     assert display.display.output_label is not None
     assert display.display.output_box is not None
 
@@ -609,6 +614,33 @@ def test_handle_sales_reps_opens_editor(mock_window_cls, display):
 
     display.display.handle_sales_reps()
     _assert_editable_window_opened(mock_window_cls, display, SALES_REPS_PATH)
+
+
+###############################################################################
+###          Tests InvoiceAppDisplay -> handle_discover_invoices()          ###
+###############################################################################
+@patch("source.InvoiceAppDisplay.InvoiceDiscoveryWindow")
+def test_handle_discover_invoices_opens_window(mock_window_cls, display):
+    """
+    Verifies that handle_discover_invoices opens an InvoiceDiscoveryWindow,
+    styled with the active theme/font and wired to the copy invoice callback.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the InvoiceDiscoveryWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_discover_invoices()
+
+    # The discovery window is opened with the active theme/font and copy callback
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="Discover Invoices",
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
+        copy_callback=display.copy_invoice_callback,
+    )
 
 
 @patch("source.InvoiceAppDisplay.FileEditorWindow")
