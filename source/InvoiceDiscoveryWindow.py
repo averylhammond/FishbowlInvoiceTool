@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 from source.color_theme import Theme
+from source.Tooltip import Tooltip
 
 
 # InvoiceDiscoveryWindow class to let the user copy downloaded invoice PDFs into
@@ -166,6 +167,30 @@ class InvoiceDiscoveryWindow(tk.Toplevel):
         )
         self.status_box.configure(state="disabled")
         self.status_box.pack(padx=20, pady=(0, 20), fill="both", expand=True)
+
+        # Hover tooltips describing what each button does. The window is transient
+        # (theme is snapshotted at open time), so these never need restyling.
+        Tooltip(
+            self.browse_button,
+            "Select one or more downloaded invoice PDFs to copy in",
+            self.theme,
+            self.font_family,
+            self.font_size,
+        )
+        Tooltip(
+            self.copy_button,
+            "Copy the selected invoices into the Invoices/ folder",
+            self.theme,
+            self.font_family,
+            self.font_size,
+        )
+        Tooltip(
+            self.close_button,
+            "Close this window and return to the main app",
+            self.theme,
+            self.font_family,
+            self.font_size,
+        )
 
     ###########################################################################
     ###             InvoiceDiscoveryWindow -> _default_browse_dir()         ###

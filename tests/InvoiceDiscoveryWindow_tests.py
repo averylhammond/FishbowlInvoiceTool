@@ -57,6 +57,7 @@ def _build_window(copy_callback=None):
             "source.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
+        patch("source.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
     ):
 
         window = InvoiceDiscoveryWindow(
@@ -115,6 +116,7 @@ def test_close_button_is_wired_to_destroy():
             "source.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
+        patch("source.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
     ):
 
         window = InvoiceDiscoveryWindow(

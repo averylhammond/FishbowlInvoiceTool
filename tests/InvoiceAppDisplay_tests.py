@@ -77,6 +77,9 @@ def display(request):
             "source.InvoiceAppDisplay.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
+        patch(
+            "source.InvoiceAppDisplay.Tooltip", side_effect=_distinct_widget
+        ) as mock_tooltip_cls,
     ):
 
         # The callbacks the controller would normally supply; mocks are sufficient
@@ -110,6 +113,7 @@ def display(request):
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
             copy_invoice_callback=copy_invoice_callback,
+            tooltip_cls=mock_tooltip_cls,
         )
 
 
@@ -241,6 +245,35 @@ def test_build_widgets_attaches_menu_bar(display):
 
     # The menu bar is attached to the window exactly once
     display.config.assert_called_once_with(menu=display.display.menu_bar)
+
+
+def test_build_widgets_attaches_button_tooltips(display):
+    """
+    Verifies that build_widgets attaches a hover tooltip with descriptive text to
+    each action button and tracks them for later restyling.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Map each widget a tooltip was attached to -> the tip text it was given
+    tooltip_targets = {
+        call.kwargs["widget"]: call.kwargs["text"]
+        for call in display.tooltip_cls.call_args_list
+    }
+
+    # Every action button receives a non-empty tooltip
+    for button in (
+        display.display.browse_button,
+        display.display.process_invoice_button,
+        display.display.process_all_invoices_button,
+        display.display.discover_invoices_button,
+        display.display.exit_button,
+    ):
+        assert tooltip_targets.get(button)
+
+    # The tooltips are tracked so they can be restyled on theme/font changes
+    assert len(display.display.tooltips) == 5
 
 
 ###############################################################################
@@ -775,6 +808,14 @@ def test_apply_theme_updates_state_and_widgets(display):
     # The chosen theme is persisted by name so it can be restored on next launch
     display.save_settings_callback.assert_called_once_with("theme", LIGHT.name)
 
+    # The hover tooltips are restyled to the new theme
+    for tooltip in display.display.tooltips:
+        tooltip.update_style.assert_called_with(
+            LIGHT,
+            display.display.current_font_family,
+            display.display.current_font_size,
+        )
+
 
 ###############################################################################
 ###             Tests InvoiceAppDisplay -> apply_font_family()              ###
@@ -822,3 +863,7 @@ def test_apply_font_size_updates_state_and_widgets(display):
 
     # The chosen size is persisted as a string so it can be restored on next launch
     display.save_settings_callback.assert_called_once_with("font_size", "20")
+
+    # The hover tooltips are restyled to the new font
+    for tooltip in display.display.tooltips:
+        tooltip.update_style.assert_called_with(DARK, DEFAULT_FONT_FAMILY, 20)
