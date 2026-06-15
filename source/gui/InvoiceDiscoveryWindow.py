@@ -3,8 +3,8 @@ from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
 from typing import Callable
 
-from source.color_theme import Theme
-from source.Tooltip import Tooltip
+from source.gui.color_theme import Theme
+from source.gui.Tooltip import Tooltip
 
 
 # InvoiceDiscoveryWindow class to let the user copy downloaded invoice PDFs into

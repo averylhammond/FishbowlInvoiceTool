@@ -3,8 +3,8 @@ from tkinter import scrolledtext
 from pathlib import Path
 from typing import Callable
 
-from source.color_theme import Theme
-from source.font_settings import MONOSPACE_FONT_FAMILY
+from source.gui.color_theme import Theme
+from source.gui.font_settings import MONOSPACE_FONT_FAMILY
 
 
 # FileEditorWindow class to view or edit a single text file natively within the

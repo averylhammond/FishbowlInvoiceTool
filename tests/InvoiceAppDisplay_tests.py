@@ -5,9 +5,9 @@ from types import SimpleNamespace
 from unittest.mock import patch, call, MagicMock
 
 from source.Invoice import Invoice
-from source.InvoiceAppDisplay import InvoiceAppDisplay
-from source.color_theme import DARK, LIGHT
-from source.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
+from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
+from source.gui.color_theme import DARK, LIGHT
+from source.gui.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 from source.constants import (
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
@@ -66,19 +66,19 @@ def display(request):
         patch.object(InvoiceAppDisplay, "resizable") as mock_resizable,
         patch.object(InvoiceAppDisplay, "configure") as mock_configure,
         patch.object(InvoiceAppDisplay, "config") as mock_config,
-        patch("source.InvoiceAppDisplay.ArgumentProvider") as mock_arg_cls,
-        patch("source.InvoiceAppDisplay.tk.StringVar"),
-        patch("source.InvoiceAppDisplay.tk.Menu", side_effect=_distinct_widget),
-        patch("source.InvoiceAppDisplay.tk.Label", side_effect=_distinct_widget),
-        patch("source.InvoiceAppDisplay.tk.Frame", side_effect=_distinct_widget),
-        patch("source.InvoiceAppDisplay.tk.Entry", side_effect=_distinct_widget),
-        patch("source.InvoiceAppDisplay.tk.Button", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceAppDisplay.ArgumentProvider") as mock_arg_cls,
+        patch("source.gui.InvoiceAppDisplay.tk.StringVar"),
+        patch("source.gui.InvoiceAppDisplay.tk.Menu", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceAppDisplay.tk.Label", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceAppDisplay.tk.Frame", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceAppDisplay.tk.Entry", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceAppDisplay.tk.Button", side_effect=_distinct_widget),
         patch(
-            "source.InvoiceAppDisplay.scrolledtext.ScrolledText",
+            "source.gui.InvoiceAppDisplay.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
         patch(
-            "source.InvoiceAppDisplay.Tooltip", side_effect=_distinct_widget
+            "source.gui.InvoiceAppDisplay.Tooltip", side_effect=_distinct_widget
         ) as mock_tooltip_cls,
     ):
 
@@ -279,7 +279,7 @@ def test_build_widgets_attaches_button_tooltips(display):
 ###############################################################################
 ###            Tests InvoiceAppDisplay -> handle_browse_button()            ###
 ###############################################################################
-@patch("source.InvoiceAppDisplay.filedialog.askopenfilename")
+@patch("source.gui.InvoiceAppDisplay.filedialog.askopenfilename")
 def test_handle_browse_button_sets_selected_file(mock_askopenfilename, display):
     """
     Verifies that handle_browse_button stores the chosen file path on the
@@ -299,7 +299,7 @@ def test_handle_browse_button_sets_selected_file(mock_askopenfilename, display):
     display.display.selected_file.set.assert_called_once_with("C:/invoices/order.pdf")
 
 
-@patch("source.InvoiceAppDisplay.filedialog.askopenfilename")
+@patch("source.gui.InvoiceAppDisplay.filedialog.askopenfilename")
 def test_handle_browse_button_no_selection(mock_askopenfilename, display):
     """
     Verifies that handle_browse_button leaves the selected_file variable
@@ -432,7 +432,7 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_error, display):
 ###############################################################################
 ###         Tests InvoiceAppDisplay -> handle_process_all_invoices()        ###
 ###############################################################################
-@patch("source.InvoiceAppDisplay.INVOICES_PATH")
+@patch("source.gui.InvoiceAppDisplay.INVOICES_PATH")
 def test_handle_process_all_invoices_processes_each(mock_invoices_path, display):
     """
     Verifies that handle_process_all_invoices iterates the invoices directory and
@@ -464,7 +464,7 @@ def test_handle_process_all_invoices_processes_each(mock_invoices_path, display)
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
-@patch("source.InvoiceAppDisplay.INVOICES_PATH")
+@patch("source.gui.InvoiceAppDisplay.INVOICES_PATH")
 def test_handle_process_all_invoices_error_shows_popup(
     mock_invoices_path, mock_show_error, display
 ):
@@ -492,7 +492,7 @@ def test_handle_process_all_invoices_error_shows_popup(
 ###############################################################################
 ###              Tests InvoiceAppDisplay -> show_error_popup()              ###
 ###############################################################################
-@patch("source.InvoiceAppDisplay.messagebox.showerror")
+@patch("source.gui.InvoiceAppDisplay.messagebox.showerror")
 def test_show_error_popup_displays_message(mock_showerror, display):
     """
     Verifies that show_error_popup shows a messagebox error when not running in
@@ -514,7 +514,7 @@ def test_show_error_popup_displays_message(mock_showerror, display):
     mock_showerror.assert_called_once_with("Some Title", "Some Message")
 
 
-@patch("source.InvoiceAppDisplay.messagebox.showerror")
+@patch("source.gui.InvoiceAppDisplay.messagebox.showerror")
 def test_show_error_popup_suppressed_in_integration_mode(mock_showerror, display):
     """
     Verifies that show_error_popup suppresses the messagebox when running in
@@ -604,7 +604,7 @@ def _assert_editable_window_opened(mock_window_cls, display, config_path):
     )
 
 
-@patch("source.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 def test_handle_cost_criteria_opens_editor(mock_window_cls, display):
     """
     Verifies that handle_cost_criteria opens an editable editor window for the
@@ -619,7 +619,7 @@ def test_handle_cost_criteria_opens_editor(mock_window_cls, display):
     _assert_editable_window_opened(mock_window_cls, display, COST_CRITERIA_PATH)
 
 
-@patch("source.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 def test_handle_payment_terms_opens_editor(mock_window_cls, display):
     """
     Verifies that handle_payment_terms opens an editable editor window for the
@@ -634,7 +634,7 @@ def test_handle_payment_terms_opens_editor(mock_window_cls, display):
     _assert_editable_window_opened(mock_window_cls, display, PAYMENT_TERMS_PATH)
 
 
-@patch("source.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 def test_handle_sales_reps_opens_editor(mock_window_cls, display):
     """
     Verifies that handle_sales_reps opens an editable editor window for the sales
@@ -652,7 +652,7 @@ def test_handle_sales_reps_opens_editor(mock_window_cls, display):
 ###############################################################################
 ###          Tests InvoiceAppDisplay -> handle_discover_invoices()          ###
 ###############################################################################
-@patch("source.InvoiceAppDisplay.InvoiceDiscoveryWindow")
+@patch("source.gui.InvoiceAppDisplay.InvoiceDiscoveryWindow")
 def test_handle_discover_invoices_opens_window(mock_window_cls, display):
     """
     Verifies that handle_discover_invoices opens an InvoiceDiscoveryWindow,
@@ -676,8 +676,8 @@ def test_handle_discover_invoices_opens_window(mock_window_cls, display):
     )
 
 
-@patch("source.InvoiceAppDisplay.FileEditorWindow")
-@patch("source.InvoiceAppDisplay.RESULTS_LOG_PATH")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.RESULTS_LOG_PATH")
 def test_handle_results_log_opens_when_present(
     mock_results_path, mock_window_cls, display
 ):
@@ -703,8 +703,8 @@ def test_handle_results_log_opens_when_present(
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
-@patch("source.InvoiceAppDisplay.FileEditorWindow")
-@patch("source.InvoiceAppDisplay.RESULTS_LOG_PATH")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.RESULTS_LOG_PATH")
 def test_handle_results_log_missing_shows_error(
     mock_results_path, mock_window_cls, mock_show_error, display
 ):
@@ -729,8 +729,8 @@ def test_handle_results_log_missing_shows_error(
     mock_window_cls.assert_not_called()
 
 
-@patch("source.InvoiceAppDisplay.FileEditorWindow")
-@patch("source.InvoiceAppDisplay.DEBUG_LOG_PATH")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.DEBUG_LOG_PATH")
 def test_handle_debug_log_opens_when_present(
     mock_debug_path, mock_window_cls, display
 ):
@@ -756,8 +756,8 @@ def test_handle_debug_log_opens_when_present(
 
 
 @patch.object(InvoiceAppDisplay, "show_error_popup")
-@patch("source.InvoiceAppDisplay.FileEditorWindow")
-@patch("source.InvoiceAppDisplay.DEBUG_LOG_PATH")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.DEBUG_LOG_PATH")
 def test_handle_debug_log_missing_shows_error(
     mock_debug_path, mock_window_cls, mock_show_error, display
 ):

@@ -1,7 +1,7 @@
 # Import necessary classes from modules
 from pathlib import Path
 
-from source.InvoiceAppDisplay import InvoiceAppDisplay
+from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 from source.ArgumentProvider import ArgumentProvider

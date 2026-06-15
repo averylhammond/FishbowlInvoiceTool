@@ -5,17 +5,17 @@ from typing import Callable
 
 from source.Invoice import Invoice
 from source.ArgumentProvider import ArgumentProvider
-from source.FileEditorWindow import FileEditorWindow
-from source.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
-from source.Tooltip import Tooltip
-from source.color_theme import (
+from source.gui.FileEditorWindow import FileEditorWindow
+from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+from source.gui.Tooltip import Tooltip
+from source.gui.color_theme import (
     ALL_THEMES,
     DARK,  # Default theme used by GUI
     RED,  # Used for the EXIT button
     THEME_BY_NAME,
     Theme,
 )
-from source.font_settings import (
+from source.gui.font_settings import (
     DEFAULT_FONT_FAMILY,
     DEFAULT_FONT_SIZE,
     FONT_FAMILIES,

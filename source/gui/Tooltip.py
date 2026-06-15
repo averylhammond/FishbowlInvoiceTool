@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from source.color_theme import Theme
+from source.gui.color_theme import Theme
 
 
 # Tooltip class to display informational text when the user hovers over a widget.
