@@ -142,10 +142,15 @@ if [[ "$POPULATE_INVOICES" == "true" ]]; then
     cp -a "$RESOURCES_DIR/Invoices/." "$INVOICES_DIR/"
 fi
 
-# Zip up the release folder for distribution
+# Zip up the release folder for distribution. Use Python's shutil.make_archive (the
+# build venv is active here, so python is guaranteed available) to produce a real,
+# DEFLATE-compressed .zip that standard tools can open. This is portable across the
+# Windows/Linux cases above and avoids tar, which only produces gzip tarballs. The
+# base_dir "FishbowlInvoiceTool" makes the archive store that relative folder rather
+# than absolute paths.
 echo "Creating zip archive of the release..."
 cd "$ROOT_DIR/release"
-tar -czvf "FishbowlInvoiceTool.zip" "$RELEASE_DIR"
+python -c "import shutil; shutil.make_archive('FishbowlInvoiceTool', 'zip', '.', 'FishbowlInvoiceTool')"
 
 # Exit virtual environment on script exit
 echo "Deactivating virtual environment: $VIRTUAL_ENV"
