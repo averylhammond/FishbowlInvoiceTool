@@ -36,15 +36,10 @@ fi
 # Save the argument specifying whether to populate the Invoices/ folder
 POPULATE_INVOICES="$1"
 
-# Check virtual environment, exit if already in one to create a fresh one
-if [[ -n "${VIRTUAL_ENV:-}" ]]; then
-    echo "Exiting current virtual environment to create a fresh one: $VIRTUAL_ENV"
-    deactivate
-fi
-
-# Run a git clean to clean up the project tree before packaging, including removing
-# the old virtual environment if necessary
-git clean -fdxf
+# Detect whether we are running in a CI environment (GitHub Actions sets CI=true).
+# In CI the workspace is already a clean, freshly-checked-out tree with the submodule
+# fetched via a token, so the local-developer-only environment prep below is skipped.
+IS_CI="${CI:-false}"
 
 # Get the location of this script, and use it to derive the project directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -56,13 +51,30 @@ RESOURCES_DIR="$ROOT_DIR/automated-invoice-testing/resources"
 echo "Derived project root: $ROOT_DIR"
 echo "Resources location: $RESOURCES_DIR"
 
-# Check if the submodule directory is empty or missing
-if [ ! -f "$ROOT_DIR/automated-invoice-testing/" ]; then
-    echo "Testing resources not found. Attempting to initialize submodules..."
-    git submodule update --init --recursive
+# Local-developer-only environment prep. These steps prepare a developer's working tree
+# for a clean build; in CI they are unnecessary and the git clean would delete the
+# freshly checked-out submodule, so guard them behind the CI check.
+if [[ "$IS_CI" == "true" ]]; then
+    echo "CI detected; skipping local env prep (venv deactivate, git clean, submodule init)."
+else
+    # Exit any active virtual environment so a fresh one can be created below
+    if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+        echo "Exiting current virtual environment to create a fresh one: $VIRTUAL_ENV"
+        deactivate
+    fi
+
+    # Run a git clean to clean up the project tree before packaging, including removing
+    # the old virtual environment if necessary
+    git clean -fdxf
+
+    # Initialize the submodule if its resources are missing
+    if [[ ! -d "$RESOURCES_DIR" ]]; then
+        echo "Testing resources not found. Attempting to initialize submodules..."
+        git submodule update --init --recursive
+    fi
 fi
 
-# Ensure that the source and destination directories exist
+# Ensure that the submodule resources exist before continuing
 if [[ ! -d "$RESOURCES_DIR" ]]; then
   echo "Error: Submodule resources not found at: $RESOURCES_DIR"
   echo "Did you forget to run 'git submodule update --init'?"
