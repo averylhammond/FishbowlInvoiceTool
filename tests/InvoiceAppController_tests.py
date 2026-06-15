@@ -107,7 +107,8 @@ def test_init_constructs_and_wires_collaborators(controller):
 
     # The display is wired with the controller's process callback, the file IO
     # controller's text-file reader, the controller's config save handler, the
-    # controller's settings save handler, and the persisted settings to restore
+    # controller's settings save handler, the file IO controller's invoice copier,
+    # and the persisted settings to restore
     controller.display_cls.assert_called_once_with(
         title="Invoice Processor",
         window_resolution="750x750",
@@ -115,6 +116,7 @@ def test_init_constructs_and_wires_collaborators(controller):
         read_file_callback=controller.file_io.read_text_file,
         save_config_callback=controller.controller.handle_save_config,
         save_settings_callback=controller.controller.handle_save_setting,
+        copy_invoice_callback=controller.file_io.copy_invoice_file,
         settings={"theme": "Ocean"},
     )
 

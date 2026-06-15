@@ -6,6 +6,8 @@ from typing import Callable
 from source.Invoice import Invoice
 from source.ArgumentProvider import ArgumentProvider
 from source.FileEditorWindow import FileEditorWindow
+from source.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+from source.Tooltip import Tooltip
 from source.color_theme import (
     ALL_THEMES,
     DARK,  # Default theme used by GUI
@@ -48,6 +50,7 @@ class InvoiceAppDisplay(tk.Tk):
         read_file_callback: Callable[[Path], str],
         save_config_callback: Callable[[Path, str], None],
         save_settings_callback: Callable[[str, str], None],
+        copy_invoice_callback: Callable[[Path, bool], str],
         title: str,
         window_resolution: str,
         settings: dict | None = None,
@@ -64,6 +67,10 @@ class InvoiceAppDisplay(tk.Tk):
             save_settings_callback (Callable[[str, str], None]): Callback that persists
                 a single user setting (key, value), invoked when the user changes a
                 theme/font/font-size preference
+            copy_invoice_callback (Callable[[Path, bool], str]): Callback that copies
+                a selected invoice PDF (source path, overwrite flag) into the
+                Invoices/ folder, used by the Invoice Discovery window. Returns
+                "copied", "exists", or "error"
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
             settings (dict | None): Previously persisted settings (theme/font/font-size)
@@ -101,6 +108,10 @@ class InvoiceAppDisplay(tk.Tk):
         # Callback to persist a single changed user setting (theme/font/size)
         self.save_settings_callback = save_settings_callback
 
+        # Callback to copy a selected invoice into the Invoices/ folder, used by
+        # the Invoice Discovery window
+        self.copy_invoice_callback = copy_invoice_callback
+
         # Restore the user's last-chosen settings, falling back to the defaults
         # for anything missing or unrecognized. These are set before build_widgets()
         # so every widget is created already using the restored theme and font.
@@ -128,9 +139,14 @@ class InvoiceAppDisplay(tk.Tk):
         self.process_invoice_button:      tk.Button                  | None = None
         self.exit_button:                 tk.Button                  | None = None
         self.process_all_invoices_button: tk.Button                  | None = None
+        self.discover_invoices_button:    tk.Button                  | None = None
         self.output_label:                tk.Label                   | None = None
         self.output_box:                  scrolledtext.ScrolledText  | None = None
         # fmt:on
+
+        # Hover tooltips attached to the buttons, kept so they can be restyled
+        # when the user changes the theme or font at runtime
+        self.tooltips: list[Tooltip] = []
 
         # Build the GUI
         self.build_widgets()
@@ -276,7 +292,9 @@ class InvoiceAppDisplay(tk.Tk):
         )
         self.process_invoice_button.grid(row=0, column=0, padx=10)
 
-        # Create button for exiting the application
+        # Create button for exiting the application. Placed on its own row below
+        # the three action buttons and spanning all three columns so it stays
+        # centered beneath them.
         self.exit_button = tk.Button(
             self.button_frame,
             text="Exit",
@@ -288,7 +306,7 @@ class InvoiceAppDisplay(tk.Tk):
             relief="flat",
             font=(self.current_font_family, self.current_font_size, "bold"),
         )
-        self.exit_button.grid(row=0, column=1, padx=10)
+        self.exit_button.grid(row=1, column=0, columnspan=3, pady=(10, 0))
 
         # Create button for processing all invoices in the Invoices folder at once
         self.process_all_invoices_button = tk.Button(
@@ -302,7 +320,22 @@ class InvoiceAppDisplay(tk.Tk):
             relief="flat",
             font=(self.current_font_family, self.current_font_size, "bold"),
         )
-        self.process_all_invoices_button.grid(row=0, column=2, padx=10)
+        self.process_all_invoices_button.grid(row=0, column=1, padx=10)
+
+        # Create button for discovering invoices: copying downloaded invoice PDFs
+        # into the Invoices/ folder from within the app
+        self.discover_invoices_button = tk.Button(
+            self.button_frame,
+            text="Discover Invoices",
+            command=self.handle_discover_invoices,
+            bg=self.current_theme.button_bg,
+            fg=self.current_theme.button_fg,
+            activebackground=self.current_theme.accent,
+            activeforeground=self.current_theme.fg_text,
+            relief="flat",
+            font=(self.current_font_family, self.current_font_size, "bold"),
+        )
+        self.discover_invoices_button.grid(row=0, column=2, padx=10)
 
         # Output Label before text results
         self.output_label = tk.Label(
@@ -326,6 +359,62 @@ class InvoiceAppDisplay(tk.Tk):
             relief="flat",
         )
         self.output_box.pack(padx=20, pady=(0, 10), fill="both", expand=True)
+
+        # Attach hover tooltips describing what each button does
+        self._attach_tooltip(
+            self.browse_button,
+            "Open a file dialog to choose an invoice PDF to process",
+        )
+        self._attach_tooltip(
+            self.process_invoice_button,
+            "Process the selected invoice and show its cost breakdown",
+        )
+        self._attach_tooltip(
+            self.process_all_invoices_button,
+            "Process every invoice PDF in the Invoices/ folder",
+        )
+        self._attach_tooltip(
+            self.discover_invoices_button,
+            "Copy downloaded invoice PDFs into the Invoices/ folder",
+        )
+        self._attach_tooltip(self.exit_button, "Close the application")
+
+    ###########################################################################
+    ###               InvoiceAppDisplay -> _attach_tooltip()               ###
+    ###########################################################################
+    def _attach_tooltip(self, widget, text: str):
+        """
+        Attaches a hover tooltip to a widget, styled with the active theme/font,
+        and tracks it so it can be restyled when the theme or font changes.
+
+        Args:
+            widget (tk.Widget): The widget that shows the tooltip when hovered
+            text (str): The informational text to display on hover
+        """
+        self.tooltips.append(
+            Tooltip(
+                widget=widget,
+                text=text,
+                theme=self.current_theme,
+                font_family=self.current_font_family,
+                font_size=self.current_font_size,
+            )
+        )
+
+    ###########################################################################
+    ###               InvoiceAppDisplay -> _refresh_tooltips()             ###
+    ###########################################################################
+    def _refresh_tooltips(self):
+        """
+        Restyles every attached tooltip with the current theme and font so the
+        tooltips stay consistent after a theme or font change.
+        """
+        for tooltip in self.tooltips:
+            tooltip.update_style(
+                self.current_theme,
+                self.current_font_family,
+                self.current_font_size,
+            )
 
     ###########################################################################
     ###             InvoiceAppDisplay -> handle_browse_button()             ###
@@ -422,6 +511,24 @@ class InvoiceAppDisplay(tk.Tk):
                 error_title="Processing Error",
                 error_message=f"An error occurred while processing invoices: {e}",
             )
+
+    ###########################################################################
+    ###          InvoiceAppDisplay -> handle_discover_invoices()            ###
+    ###########################################################################
+    def handle_discover_invoices(self):
+        """
+        On "Discover Invoices" button press, opens the Invoice Discovery window so
+        the user can copy downloaded invoice PDFs into the Invoices/ folder
+        without leaving the application.
+        """
+        InvoiceDiscoveryWindow(
+            parent=self,
+            title="Discover Invoices",
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
+            copy_callback=self.copy_invoice_callback,
+        )
 
     ###########################################################################
     ###               InvoiceAppDisplay -> show_error_popup()               ###
@@ -595,10 +702,19 @@ class InvoiceAppDisplay(tk.Tk):
             activebackground=theme.accent,
             activeforeground=theme.fg_text,
         )
+        self.discover_invoices_button.configure(
+            bg=theme.button_bg,
+            fg=theme.button_fg,
+            activebackground=theme.accent,
+            activeforeground=theme.fg_text,
+        )
         self.output_label.configure(bg=theme.bg_main, fg=theme.label_fg)
         self.output_box.configure(
             bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
         )
+
+        # Keep the hover tooltips consistent with the new theme
+        self._refresh_tooltips()
 
         # Persist the choice so it is restored on the next launch
         self.save_settings_callback(SETTING_KEY_THEME, theme.name)
@@ -670,5 +786,9 @@ class InvoiceAppDisplay(tk.Tk):
         self.process_invoice_button.configure(font=font)
         self.exit_button.configure(font=font)
         self.process_all_invoices_button.configure(font=font)
+        self.discover_invoices_button.configure(font=font)
         self.output_label.configure(font=font)
         self.output_box.configure(font=font)
+
+        # Keep the hover tooltips consistent with the new font
+        self._refresh_tooltips()

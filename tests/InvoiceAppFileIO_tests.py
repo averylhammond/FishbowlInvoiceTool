@@ -325,6 +325,115 @@ def test_read_invoice_file_reports_and_returns_empty_on_error(mock_reader, file_
 
 
 ###############################################################################
+###              Tests InvoiceAppFileIO -> copy_invoice_file()              ###
+###############################################################################
+@patch("source.InvoiceAppFileIO.shutil.copy2")
+@patch("source.InvoiceAppFileIO.INVOICES_PATH")
+def test_copy_invoice_file_copies_new_file(
+    mock_invoices_path, mock_copy2, file_io
+):
+    """
+    Tests that copy_invoice_file() ensures the Invoices/ directory exists and
+    copies the file when no same-named file is already present, returning
+    "copied".
+
+    Args:
+        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
+        mock_copy2 (unittest.mock.MagicMock): Mocks shutil.copy2
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # No same-named file exists in the destination yet
+    destination = mock_invoices_path.__truediv__.return_value
+    destination.exists.return_value = False
+
+    result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"))
+
+    # The directory is ensured, the file is copied, and "copied" is returned
+    mock_invoices_path.mkdir.assert_called_once_with(parents=True, exist_ok=True)
+    mock_copy2.assert_called_once_with(Path("Downloads/invoice.pdf"), destination)
+    assert result == "copied"
+
+
+@patch("source.InvoiceAppFileIO.shutil.copy2")
+@patch("source.InvoiceAppFileIO.INVOICES_PATH")
+def test_copy_invoice_file_exists_without_overwrite(
+    mock_invoices_path, mock_copy2, file_io
+):
+    """
+    Tests that copy_invoice_file() does not overwrite an existing same-named file
+    when overwrite is False, returning "exists" without copying.
+
+    Args:
+        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
+        mock_copy2 (unittest.mock.MagicMock): Mocks shutil.copy2
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # A same-named file already exists in the destination
+    destination = mock_invoices_path.__truediv__.return_value
+    destination.exists.return_value = True
+
+    result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"))
+
+    # No copy is made and "exists" is returned so the caller can confirm
+    mock_copy2.assert_not_called()
+    assert result == "exists"
+
+
+@patch("source.InvoiceAppFileIO.shutil.copy2")
+@patch("source.InvoiceAppFileIO.INVOICES_PATH")
+def test_copy_invoice_file_overwrites_when_confirmed(
+    mock_invoices_path, mock_copy2, file_io
+):
+    """
+    Tests that copy_invoice_file() overwrites an existing same-named file when
+    overwrite is True, copying the file and returning "copied".
+
+    Args:
+        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
+        mock_copy2 (unittest.mock.MagicMock): Mocks shutil.copy2
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # A same-named file exists, but the caller has confirmed an overwrite
+    destination = mock_invoices_path.__truediv__.return_value
+    destination.exists.return_value = True
+
+    result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"), overwrite=True)
+
+    # The file is copied over the existing one and "copied" is returned
+    mock_copy2.assert_called_once_with(Path("Downloads/invoice.pdf"), destination)
+    assert result == "copied"
+
+
+@patch("source.InvoiceAppFileIO.shutil.copy2", side_effect=OSError("disk full"))
+@patch("source.InvoiceAppFileIO.INVOICES_PATH")
+def test_copy_invoice_file_reports_and_returns_error_on_failure(
+    mock_invoices_path, _mock_copy2, file_io
+):
+    """
+    Tests that copy_invoice_file() fails gracefully, surfacing the failure through
+    the error reporter and returning "error" when the copy cannot be completed.
+
+    Args:
+        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
+        _mock_copy2 (unittest.mock.MagicMock): Mocks shutil.copy2 to raise
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    # The destination is clear, but the copy itself fails
+    destination = mock_invoices_path.__truediv__.return_value
+    destination.exists.return_value = False
+
+    result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"))
+
+    # No exception is raised, "error" is returned, and the failure is reported
+    assert result == "error"
+    file_io.report_error.assert_called_once()
+
+
+###############################################################################
 ###          Tests InvoiceAppFileIO -> parse_sales_reps_config()            ###
 ###############################################################################
 @patch(
