@@ -4,9 +4,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
-from source.FileEditorWindow import FileEditorWindow
-from source.color_theme import DARK
-from source.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
+from source.gui.FileEditorWindow import FileEditorWindow
+from source.gui.color_theme import DARK
+from source.gui.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 
 
 ###############################################################################
@@ -46,10 +46,10 @@ def _build_window(editable: bool, save_callback=None, initial_text: str = "file 
         patch.object(tk.Toplevel, "__init__", return_value=None),
         patch.object(FileEditorWindow, "title"),
         patch.object(FileEditorWindow, "configure"),
-        patch("source.FileEditorWindow.tk.Frame", side_effect=_distinct_widget),
-        patch("source.FileEditorWindow.tk.Button", side_effect=_distinct_widget),
+        patch("source.gui.FileEditorWindow.tk.Frame", side_effect=_distinct_widget),
+        patch("source.gui.FileEditorWindow.tk.Button", side_effect=_distinct_widget),
         patch(
-            "source.FileEditorWindow.scrolledtext.ScrolledText",
+            "source.gui.FileEditorWindow.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
     ):
@@ -123,10 +123,10 @@ def test_close_button_is_wired_to_destroy():
         patch.object(tk.Toplevel, "__init__", return_value=None),
         patch.object(FileEditorWindow, "title"),
         patch.object(FileEditorWindow, "configure"),
-        patch("source.FileEditorWindow.tk.Frame", side_effect=_distinct_widget),
-        patch("source.FileEditorWindow.tk.Button", side_effect=_distinct_widget) as mock_button,
+        patch("source.gui.FileEditorWindow.tk.Frame", side_effect=_distinct_widget),
+        patch("source.gui.FileEditorWindow.tk.Button", side_effect=_distinct_widget) as mock_button,
         patch(
-            "source.FileEditorWindow.scrolledtext.ScrolledText",
+            "source.gui.FileEditorWindow.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
     ):

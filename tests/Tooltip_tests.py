@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from source.Tooltip import Tooltip
-from source.color_theme import DARK, LIGHT
-from source.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
+from source.gui.Tooltip import Tooltip
+from source.gui.color_theme import DARK, LIGHT
+from source.gui.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 
 
 ###############################################################################
@@ -96,8 +96,8 @@ def test_schedule_show_cancels_existing_schedule(tooltip):
 ###############################################################################
 ###                        Tests Tooltip -> _show()                         ###
 ###############################################################################
-@patch("source.Tooltip.tk.Label")
-@patch("source.Tooltip.tk.Toplevel")
+@patch("source.gui.Tooltip.tk.Label")
+@patch("source.gui.Tooltip.tk.Toplevel")
 def test_show_creates_positioned_popup(mock_toplevel, mock_label, tooltip):
     """
     Verifies that _show creates a borderless popup near the widget and fills it
@@ -122,7 +122,7 @@ def test_show_creates_positioned_popup(mock_toplevel, mock_label, tooltip):
     mock_label.return_value.pack.assert_called_once()
 
 
-@patch("source.Tooltip.tk.Toplevel")
+@patch("source.gui.Tooltip.tk.Toplevel")
 def test_show_does_nothing_when_already_shown(mock_toplevel, tooltip):
     """
     Verifies that _show does not create a second popup when one is already shown.
@@ -139,7 +139,7 @@ def test_show_does_nothing_when_already_shown(mock_toplevel, tooltip):
     mock_toplevel.assert_not_called()
 
 
-@patch("source.Tooltip.tk.Toplevel")
+@patch("source.gui.Tooltip.tk.Toplevel")
 def test_show_does_nothing_without_text(mock_toplevel, tooltip):
     """
     Verifies that _show does not create a popup when there is no tip text.

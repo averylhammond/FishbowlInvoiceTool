@@ -4,9 +4,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
-from source.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
-from source.color_theme import DARK
-from source.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
+from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+from source.gui.color_theme import DARK
+from source.gui.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 
 
 ###############################################################################
@@ -47,17 +47,17 @@ def _build_window(copy_callback=None):
         patch.object(InvoiceDiscoveryWindow, "title"),
         patch.object(InvoiceDiscoveryWindow, "configure"),
         patch(
-            "source.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget
+            "source.gui.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget
         ),
-        patch("source.InvoiceDiscoveryWindow.tk.Label", side_effect=_distinct_widget),
-        patch("source.InvoiceDiscoveryWindow.tk.Frame", side_effect=_distinct_widget),
-        patch("source.InvoiceDiscoveryWindow.tk.Entry", side_effect=_distinct_widget),
-        patch("source.InvoiceDiscoveryWindow.tk.Button", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Label", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Frame", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Entry", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Button", side_effect=_distinct_widget),
         patch(
-            "source.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
+            "source.gui.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
-        patch("source.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
     ):
 
         window = InvoiceDiscoveryWindow(
@@ -104,19 +104,19 @@ def test_close_button_is_wired_to_destroy():
         patch.object(InvoiceDiscoveryWindow, "title"),
         patch.object(InvoiceDiscoveryWindow, "configure"),
         patch(
-            "source.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget
+            "source.gui.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget
         ),
-        patch("source.InvoiceDiscoveryWindow.tk.Label", side_effect=_distinct_widget),
-        patch("source.InvoiceDiscoveryWindow.tk.Frame", side_effect=_distinct_widget),
-        patch("source.InvoiceDiscoveryWindow.tk.Entry", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Label", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Frame", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Entry", side_effect=_distinct_widget),
         patch(
-            "source.InvoiceDiscoveryWindow.tk.Button", side_effect=_distinct_widget
+            "source.gui.InvoiceDiscoveryWindow.tk.Button", side_effect=_distinct_widget
         ) as mock_button,
         patch(
-            "source.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
+            "source.gui.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
-        patch("source.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
+        patch("source.gui.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
     ):
 
         window = InvoiceDiscoveryWindow(
@@ -139,7 +139,7 @@ def test_close_button_is_wired_to_destroy():
 ###               Tests InvoiceDiscoveryWindow -> handle_browse()           ###
 ###############################################################################
 @patch.object(InvoiceDiscoveryWindow, "_default_browse_dir", return_value="/downloads")
-@patch("source.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
+@patch("source.gui.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
 def test_handle_browse_adds_selected_files(mock_ask, _mock_default_dir):
     """
     Verifies that handle_browse appends the user's selected PDFs to the pending
@@ -166,7 +166,7 @@ def test_handle_browse_adds_selected_files(mock_ask, _mock_default_dir):
 
 
 @patch.object(InvoiceDiscoveryWindow, "_default_browse_dir", return_value="/downloads")
-@patch("source.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
+@patch("source.gui.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
 def test_handle_browse_cancel_leaves_selection_untouched(mock_ask, _mock_default_dir):
     """
     Verifies that cancelling the file dialog (empty selection) does not change the
@@ -244,7 +244,7 @@ def test_handle_copy_reports_copy_failure():
     assert built.window.pending_files == []
 
 
-@patch("source.InvoiceDiscoveryWindow.messagebox.askyesno", return_value=True)
+@patch("source.gui.InvoiceDiscoveryWindow.messagebox.askyesno", return_value=True)
 def test_handle_copy_overwrites_when_confirmed(mock_askyesno):
     """
     Verifies that when a file already exists and the user confirms, handle_copy
@@ -267,7 +267,7 @@ def test_handle_copy_overwrites_when_confirmed(mock_askyesno):
     copy_callback.assert_any_call(Path("a.pdf"), True)
 
 
-@patch("source.InvoiceDiscoveryWindow.messagebox.askyesno", return_value=False)
+@patch("source.gui.InvoiceDiscoveryWindow.messagebox.askyesno", return_value=False)
 def test_handle_copy_skips_when_overwrite_declined(mock_askyesno):
     """
     Verifies that when a file already exists and the user declines, handle_copy
@@ -291,7 +291,7 @@ def test_handle_copy_skips_when_overwrite_declined(mock_askyesno):
 ###############################################################################
 ###            Tests InvoiceDiscoveryWindow -> _default_browse_dir()        ###
 ###############################################################################
-@patch("source.InvoiceDiscoveryWindow.Path")
+@patch("source.gui.InvoiceDiscoveryWindow.Path")
 def test_default_browse_dir_prefers_downloads(mock_path):
     """
     Verifies that _default_browse_dir returns the Downloads folder when it exists.
@@ -309,7 +309,7 @@ def test_default_browse_dir_prefers_downloads(mock_path):
     assert built.window._default_browse_dir() == str(downloads)
 
 
-@patch("source.InvoiceDiscoveryWindow.Path")
+@patch("source.gui.InvoiceDiscoveryWindow.Path")
 def test_default_browse_dir_falls_back_to_home(mock_path):
     """
     Verifies that _default_browse_dir falls back to the home folder when the
