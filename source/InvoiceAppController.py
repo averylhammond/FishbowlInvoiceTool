@@ -13,8 +13,6 @@ from source.constants import (
     SALES_REPS_PATH,
 )
 
-# TODO: The GUI title and window resolution below are still hardcoded; move these
-#       into named constants (e.g. alongside the font/theme settings) as well
 # TODO: See if there is a good logging method to add for debugging
 
 
