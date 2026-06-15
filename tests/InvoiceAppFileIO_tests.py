@@ -278,14 +278,14 @@ def test_print_invoice_to_output_file_reports_on_error(
 ###############################################################################
 ###              Tests InvoiceAppFileIO -> read_invoice_file()              ###
 ###############################################################################
-@patch("source.InvoiceAppFileIO.PyPDF2.PdfReader")
+@patch("source.InvoiceAppFileIO.pypdf.PdfReader")
 def test_read_invoice_file_extracts_each_page(mock_reader, file_io):
     """
     Tests that read_invoice_file() returns the extracted text of each page in the
     PDF, in order.
 
     Args:
-        mock_reader (unittest.mock.MagicMock): Mocks PyPDF2.PdfReader
+        mock_reader (unittest.mock.MagicMock): Mocks pypdf.PdfReader
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
 
@@ -304,7 +304,7 @@ def test_read_invoice_file_extracts_each_page(mock_reader, file_io):
 
 
 @patch(
-    "source.InvoiceAppFileIO.PyPDF2.PdfReader",
+    "source.InvoiceAppFileIO.pypdf.PdfReader",
     side_effect=OSError("file not found"),
 )
 def test_read_invoice_file_reports_and_returns_empty_on_error(mock_reader, file_io):
@@ -313,7 +313,7 @@ def test_read_invoice_file_reports_and_returns_empty_on_error(mock_reader, file_
     the error reporter and returning an empty list when the PDF cannot be read.
 
     Args:
-        mock_reader (unittest.mock.MagicMock): Mocks PyPDF2.PdfReader to raise
+        mock_reader (unittest.mock.MagicMock): Mocks pypdf.PdfReader to raise
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
 

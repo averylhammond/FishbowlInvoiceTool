@@ -1,4 +1,4 @@
-import PyPDF2
+import pypdf
 from pathlib import Path
 from typing import Callable
 
@@ -213,7 +213,7 @@ class InvoiceAppFileIO:
 
         try:
             # Read text from input PDF
-            pdf = PyPDF2.PdfReader(stream=invoice_filepath)
+            pdf = pypdf.PdfReader(stream=invoice_filepath)
 
             # Extract text from each page and append to list
             pages = []
@@ -223,7 +223,7 @@ class InvoiceAppFileIO:
 
             return pages
 
-        except (OSError, PyPDF2.errors.PdfReadError) as error:
+        except (OSError, pypdf.errors.PdfReadError) as error:
             self.report_error(
                 "File Error",
                 f"Could not read the invoice PDF at {invoice_filepath}: {error}",
