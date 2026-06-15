@@ -46,6 +46,7 @@ def _build_window(copy_callback=None):
         patch.object(tk.Toplevel, "__init__", return_value=None),
         patch.object(InvoiceDiscoveryWindow, "title"),
         patch.object(InvoiceDiscoveryWindow, "configure"),
+        patch.object(InvoiceDiscoveryWindow, "_center_over_parent"),
         patch(
             "source.gui.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget
         ),
@@ -103,6 +104,7 @@ def test_close_button_is_wired_to_destroy():
         patch.object(tk.Toplevel, "__init__", return_value=None),
         patch.object(InvoiceDiscoveryWindow, "title"),
         patch.object(InvoiceDiscoveryWindow, "configure"),
+        patch.object(InvoiceDiscoveryWindow, "_center_over_parent"),
         patch(
             "source.gui.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget
         ),

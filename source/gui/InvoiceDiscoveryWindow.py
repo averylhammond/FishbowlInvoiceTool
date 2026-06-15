@@ -5,6 +5,7 @@ from typing import Callable
 
 from source.gui.color_theme import Theme
 from source.gui.Tooltip import Tooltip
+from source.gui.ThemedSubwindow import ThemedSubwindow
 
 
 # InvoiceDiscoveryWindow class to let the user copy downloaded invoice PDFs into
@@ -12,7 +13,9 @@ from source.gui.Tooltip import Tooltip
 # wherever invoices were downloaded, selects one or more PDFs, copies them in, and
 # can repeat as many times as needed before closing. A running status area shows
 # the outcome of each copy so the workflow needs no other window than ours.
-class InvoiceDiscoveryWindow(tk.Toplevel):
+# Theme/font snapshotting and centering over the parent are handled by
+# ThemedSubwindow.
+class InvoiceDiscoveryWindow(ThemedSubwindow):
 
     ###########################################################################
     ###                 InvoiceDiscoveryWindow -> __init__()                ###
@@ -42,16 +45,10 @@ class InvoiceDiscoveryWindow(tk.Toplevel):
                 confirm overwrites and report each outcome to the user
         """
 
-        super().__init__(parent)
+        super().__init__(parent, title, theme, font_family, font_size)
 
         # Callback used to copy a selected invoice into the Invoices/ folder
         self.copy_callback = copy_callback
-
-        # Snapshot the active theme/font at open time so the window is styled
-        # consistently with the rest of the application
-        self.theme = theme
-        self.font_family = font_family
-        self.font_size = font_size
 
         # Source paths the user has selected and not yet copied. Browsing again
         # adds to this list so the user can gather invoices from several folders
@@ -70,10 +67,11 @@ class InvoiceDiscoveryWindow(tk.Toplevel):
         self.status_box:        scrolledtext.ScrolledText  | None = None
         # fmt:on
 
-        self.title(title)
-        self.configure(bg=theme.bg_main)
-
         self.build_widgets()
+
+        # Position the window over the main application window rather than letting
+        # it default to the top-left corner of the screen
+        self._center_over_parent()
 
     ###########################################################################
     ###              InvoiceDiscoveryWindow -> build_widgets()              ###
