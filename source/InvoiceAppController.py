@@ -1,4 +1,5 @@
 # Import necessary classes from modules
+import threading
 from pathlib import Path
 
 from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
@@ -6,6 +7,7 @@ from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 from source.ArgumentProvider import ArgumentProvider
 from source.SettingsRepository import SettingsRepository
+from source.UpdateChecker import UpdateChecker
 from source.Invoice import Invoice
 from source.constants import (
     COST_CRITERIA_PATH,
@@ -101,8 +103,61 @@ class InvoiceAppController:
             # If in integration test mode, process all invoices directly without starting the GUI
             self.display.handle_process_all_invoices()
         else:
+            # Kick off a background check for a newer release before entering the
+            # GUI loop. Confined to this branch so integration-test mode performs no
+            # network I/O.
+            self._start_update_check()
+
             # Else, normally start the GUI application
             self.display.mainloop()
+
+    ###########################################################################
+    ###            InvoiceAppController -> _start_update_check()            ###
+    ###########################################################################
+    def _start_update_check(self):
+        """
+        Spawns a daemon thread that checks for a newer release on startup.
+
+        Running on a background thread keeps the GUI from blocking while waiting on
+        the GitHub API, and the daemon flag ensures a slow or stalled request can
+        never delay application shutdown.
+        """
+
+        threading.Thread(target=self._run_update_check, daemon=True).start()
+
+    ###########################################################################
+    ###             InvoiceAppController -> _run_update_check()             ###
+    ###########################################################################
+    def _run_update_check(self):
+        """
+        Worker-thread body for the startup update check.
+
+        Performs the (blocking, but silent-on-failure) update check off the GUI
+        thread, then hands the result back to the tkinter main thread via
+        display.after() so the GUI is only ever touched from the GUI thread.
+        """
+
+        result = UpdateChecker().check_for_update()
+        self.display.after(0, self._handle_update_result, result)
+
+    ###########################################################################
+    ###            InvoiceAppController -> _handle_update_result()          ###
+    ###########################################################################
+    def _handle_update_result(self, result):
+        """
+        Handles the outcome of the startup update check on the GUI thread.
+
+        Triggers the GUI response only when a strictly newer release exists. Does
+        nothing when the check failed silently (result is None) or the running
+        build is already up to date, so the user is never interrupted.
+
+        Args:
+            result (UpdateCheckResult | None): The comparison outcome from
+                UpdateChecker.check_for_update(), or None if the check failed.
+        """
+
+        if result and result.update_available:
+            self.display.show_update_available(result)
 
     ###########################################################################
     ###          InvoiceAppController -> handle_process_invoice()           ###

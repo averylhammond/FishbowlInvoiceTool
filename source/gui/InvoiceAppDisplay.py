@@ -574,6 +574,23 @@ class InvoiceAppDisplay(tk.Tk):
         messagebox.showerror(error_title, error_message)
 
     ###########################################################################
+    ###            InvoiceAppDisplay -> show_update_available()             ###
+    ###########################################################################
+    def show_update_available(self, result):
+        """
+        Notifies the user that a newer release is available.
+
+        Placeholder seam: the controller calls this on the GUI thread when its
+        startup update check finds a strictly newer release.
+
+        Args:
+            result (UpdateCheckResult): The outcome of the update check, exposing
+                the newer release's `latest_version` and `release_url`.
+        """
+
+        pass
+
+    ###########################################################################
     ###                 InvoiceAppDisplay -> handle_clear()                 ###
     ###########################################################################
     def handle_clear(self):
