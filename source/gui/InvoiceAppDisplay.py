@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, scrolledtext
+from tkinter import filedialog, scrolledtext
 from pathlib import Path
 from typing import Callable
 
@@ -8,6 +8,8 @@ from source.ArgumentProvider import ArgumentProvider
 from source.gui.AboutWindow import AboutWindow
 from source.gui.FileEditorWindow import FileEditorWindow
 from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+from source.gui.MessageWindow import MessageWindow
+from source.gui.UpdateWindow import UpdateWindow
 from source.gui.Tooltip import Tooltip
 from source.gui.color_theme import (
     ALL_THEMES,
@@ -53,6 +55,7 @@ class InvoiceAppDisplay(tk.Tk):
         save_config_callback: Callable[[Path, str], None],
         save_settings_callback: Callable[[str, str], None],
         copy_invoice_callback: Callable[[Path, bool], str],
+        check_for_updates_callback: Callable[[], None],
         title: str,
         window_resolution: str,
         settings: dict | None = None,
@@ -73,6 +76,9 @@ class InvoiceAppDisplay(tk.Tk):
                 a selected invoice PDF (source path, overwrite flag) into the
                 Invoices/ folder, used by the Invoice Discovery window. Returns
                 "copied", "exists", or "error"
+            check_for_updates_callback (Callable[[], None]): Callback that triggers
+                an on-demand update check, invoked when the user selects
+                "Check for Updates" from the Help menu
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
             settings (dict | None): Previously persisted settings (theme/font/font-size)
@@ -113,6 +119,9 @@ class InvoiceAppDisplay(tk.Tk):
         # Callback to copy a selected invoice into the Invoices/ folder, used by
         # the Invoice Discovery window
         self.copy_invoice_callback = copy_invoice_callback
+
+        # Callback to trigger an on-demand update check from the Help menu
+        self.check_for_updates_callback = check_for_updates_callback
 
         # Restore the user's last-chosen settings, falling back to the defaults
         # for anything missing or unrecognized. These are set before build_widgets()
@@ -234,8 +243,12 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Help dropdown
         #  -> About option to show the current application version
+        #  -> Check for Updates option to manually check for a newer release
         self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.help_menu.add_command(label="About", command=self.handle_about)
+        self.help_menu.add_command(
+            label="Check for Updates", command=self.handle_check_for_updates
+        )
         self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
 
         # Configure the menu bar
@@ -485,9 +498,9 @@ class InvoiceAppDisplay(tk.Tk):
 
         # If no file is selected, show an error popup and do nothing
         if not file_path:
-            self.show_error_popup(
-                error_title="No file selected",
-                error_message="Please select a PDF file first.",
+            self.show_popup(
+                title="No file selected",
+                message="Please select a PDF file first.",
             )
             return
 
@@ -514,9 +527,9 @@ class InvoiceAppDisplay(tk.Tk):
                 self.process_callback(file_path, append_output=True)
 
         except Exception as e:
-            self.show_error_popup(
-                error_title="Processing Error",
-                error_message=f"An error occurred while processing invoices: {e}",
+            self.show_popup(
+                title="Processing Error",
+                message=f"An error occurred while processing invoices: {e}",
             )
 
     ###########################################################################
@@ -555,15 +568,26 @@ class InvoiceAppDisplay(tk.Tk):
         )
 
     ###########################################################################
-    ###               InvoiceAppDisplay -> show_error_popup()               ###
+    ###          InvoiceAppDisplay -> handle_check_for_updates()            ###
     ###########################################################################
-    def show_error_popup(self, error_title: str, error_message: str):
+    def handle_check_for_updates(self):
         """
-        Displays an error message in a popup window
+        On "Check for Updates" menu press, asks the controller to run an on-demand
+        update check. The controller surfaces the outcome back through
+        show_update_available() / show_popup().
+        """
+        self.check_for_updates_callback()
+
+    ###########################################################################
+    ###                  InvoiceAppDisplay -> show_popup()                  ###
+    ###########################################################################
+    def show_popup(self, title: str, message: str):
+        """
+        Displays a message (informational or error) in a popup window
 
         Args:
-            error_title (str): The title of the error popup
-            error_message (str): The error message to display
+            title (str): The title of the popup
+            message (str): The message to display
         """
 
         # If in integration test mode, do not show popups since this will be running
@@ -571,24 +595,50 @@ class InvoiceAppDisplay(tk.Tk):
         if self.argument_provider.integration_test_mode:
             return
 
-        messagebox.showerror(error_title, error_message)
+        # Use a themed window (rather than tkinter's native messagebox) so the
+        # popup matches the application's styling and centers over the application
+        # window instead of the screen
+        MessageWindow(
+            parent=self,
+            title=title,
+            message=message,
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
+        )
 
     ###########################################################################
     ###            InvoiceAppDisplay -> show_update_available()             ###
     ###########################################################################
     def show_update_available(self, result):
         """
-        Notifies the user that a newer release is available.
+        Notifies the user that a newer release is available by opening a themed
+        popup showing the available version, with a Download button linking to the
+        release page and a Close button.
 
-        Placeholder seam: the controller calls this on the GUI thread when its
-        startup update check finds a strictly newer release.
+        The controller calls this on the GUI thread when an update check (on
+        startup or triggered manually from the Help menu) finds a strictly newer
+        release.
 
         Args:
             result (UpdateCheckResult): The outcome of the update check, exposing
                 the newer release's `latest_version` and `release_url`.
         """
 
-        pass
+        # If in integration test mode, do not show popups since this will be running
+        # in a headless environment, and will halt testing
+        if self.argument_provider.integration_test_mode:
+            return
+
+        UpdateWindow(
+            parent=self,
+            title="Update Available",
+            latest_version=result.latest_version,
+            release_url=result.release_url,
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
+        )
 
     ###########################################################################
     ###                 InvoiceAppDisplay -> handle_clear()                 ###
@@ -649,9 +699,9 @@ class InvoiceAppDisplay(tk.Tk):
                 editable=False,
             )
         else:
-            self.show_error_popup(
-                error_title="File Not Found",
-                error_message=f"Log not found at: {log_path}. Process an invoice to generate the log.",
+            self.show_popup(
+                title="File Not Found",
+                message=f"Log not found at: {log_path}. Process an invoice to generate the log.",
             )
 
     ###########################################################################

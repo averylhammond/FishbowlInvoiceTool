@@ -89,6 +89,7 @@ def display(request):
         save_config_callback = MagicMock()
         save_settings_callback = MagicMock()
         copy_invoice_callback = MagicMock()
+        check_for_updates_callback = MagicMock()
 
         built_display = InvoiceAppDisplay(
             process_callback=callback,
@@ -96,6 +97,7 @@ def display(request):
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
             copy_invoice_callback=copy_invoice_callback,
+            check_for_updates_callback=check_for_updates_callback,
             title="Invoice Processor",
             window_resolution="750x750",
             settings=settings,
@@ -114,6 +116,7 @@ def display(request):
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
             copy_invoice_callback=copy_invoice_callback,
+            check_for_updates_callback=check_for_updates_callback,
             tooltip_cls=mock_tooltip_cls,
         )
 
@@ -387,14 +390,14 @@ def test_display_invoice_output_no_output_box(display):
 ###############################################################################
 ###           Tests InvoiceAppDisplay -> handle_process_invoice()           ###
 ###############################################################################
-@patch.object(InvoiceAppDisplay, "show_error_popup")
-def test_handle_process_invoice_no_file_shows_error(mock_show_error, display):
+@patch.object(InvoiceAppDisplay, "show_popup")
+def test_handle_process_invoice_no_file_shows_error(mock_show_popup, display):
     """
     Verifies that handle_process_invoice shows an error popup and does not invoke
     the process callback when no file has been selected.
 
     Args:
-        mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -404,18 +407,18 @@ def test_handle_process_invoice_no_file_shows_error(mock_show_error, display):
     display.display.handle_process_invoice()
 
     # An error popup is shown and the callback is never called
-    mock_show_error.assert_called_once()
+    mock_show_popup.assert_called_once()
     display.process_callback.assert_not_called()
 
 
-@patch.object(InvoiceAppDisplay, "show_error_popup")
-def test_handle_process_invoice_forwards_to_callback(mock_show_error, display):
+@patch.object(InvoiceAppDisplay, "show_popup")
+def test_handle_process_invoice_forwards_to_callback(mock_show_popup, display):
     """
     Verifies that handle_process_invoice forwards the selected file to the
     process callback (with append_output False) when a file is selected.
 
     Args:
-        mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -428,7 +431,7 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_error, display):
     display.process_callback.assert_called_once_with(
         Path("C:/invoices/order.pdf"), append_output=False
     )
-    mock_show_error.assert_not_called()
+    mock_show_popup.assert_not_called()
 
 
 ###############################################################################
@@ -465,10 +468,10 @@ def test_handle_process_all_invoices_processes_each(mock_invoices_path, display)
     assert display.process_callback.call_count == 2
 
 
-@patch.object(InvoiceAppDisplay, "show_error_popup")
+@patch.object(InvoiceAppDisplay, "show_popup")
 @patch("source.gui.InvoiceAppDisplay.INVOICES_PATH")
 def test_handle_process_all_invoices_error_shows_popup(
-    mock_invoices_path, mock_show_error, display
+    mock_invoices_path, mock_show_popup, display
 ):
     """
     Verifies that handle_process_all_invoices shows an error popup when iterating
@@ -476,7 +479,7 @@ def test_handle_process_all_invoices_error_shows_popup(
 
     Args:
         mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
-        mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -488,54 +491,57 @@ def test_handle_process_all_invoices_error_shows_popup(
     display.display.handle_process_all_invoices()
 
     # The failure is surfaced to the user via an error popup
-    mock_show_error.assert_called_once()
+    mock_show_popup.assert_called_once()
 
 
 ###############################################################################
-###              Tests InvoiceAppDisplay -> show_error_popup()              ###
+###                 Tests InvoiceAppDisplay -> show_popup()                 ###
 ###############################################################################
-@patch("source.gui.InvoiceAppDisplay.messagebox.showerror")
-def test_show_error_popup_displays_message(mock_showerror, display):
+@patch("source.gui.InvoiceAppDisplay.MessageWindow")
+def test_show_popup_displays_message(mock_window_cls, display):
     """
-    Verifies that show_error_popup shows a messagebox error when not running in
-    integration test mode.
+    Verifies that show_popup opens a themed MessageWindow (centered over the
+    application window) when not running in integration test mode.
 
     Args:
-        mock_showerror (unittest.mock.MagicMock): Mocks messagebox.showerror
+        mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # Running with a visible GUI (not headless)
     display.arg_provider.integration_test_mode = False
 
-    display.display.show_error_popup(
-        error_title="Some Title", error_message="Some Message"
+    display.display.show_popup(title="Some Title", message="Some Message")
+
+    # The message is shown in a themed window styled with the active theme/font
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="Some Title",
+        message="Some Message",
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
     )
 
-    # The error is shown to the user
-    mock_showerror.assert_called_once_with("Some Title", "Some Message")
 
-
-@patch("source.gui.InvoiceAppDisplay.messagebox.showerror")
-def test_show_error_popup_suppressed_in_integration_mode(mock_showerror, display):
+@patch("source.gui.InvoiceAppDisplay.MessageWindow")
+def test_show_popup_suppressed_in_integration_mode(mock_window_cls, display):
     """
-    Verifies that show_error_popup suppresses the messagebox when running in
-    integration test (headless) mode so automated runs do not block on a popup.
+    Verifies that show_popup opens no window when running in integration test
+    (headless) mode so automated runs do not block on a popup.
 
     Args:
-        mock_showerror (unittest.mock.MagicMock): Mocks messagebox.showerror
+        mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # Running headless for integration testing
     display.arg_provider.integration_test_mode = True
 
-    display.display.show_error_popup(
-        error_title="Some Title", error_message="Some Message"
-    )
+    display.display.show_popup(title="Some Title", message="Some Message")
 
     # No popup is shown in headless mode
-    mock_showerror.assert_not_called()
+    mock_window_cls.assert_not_called()
 
 
 ###############################################################################
@@ -705,6 +711,84 @@ def test_handle_about_opens_window(mock_window_cls, display):
     )
 
 
+###############################################################################
+###          Tests InvoiceAppDisplay -> handle_check_for_updates()          ###
+###############################################################################
+def test_handle_check_for_updates_invokes_callback(display):
+    """
+    Verifies that the Help menu's "Check for Updates" handler invokes the
+    check_for_updates_callback supplied by the controller.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_check_for_updates()
+
+    display.check_for_updates_callback.assert_called_once_with()
+
+
+###############################################################################
+###           Tests InvoiceAppDisplay -> show_update_available()            ###
+###############################################################################
+@patch("source.gui.InvoiceAppDisplay.UpdateWindow")
+def test_show_update_available_opens_window(mock_window_cls, display):
+    """
+    Verifies that show_update_available opens an UpdateWindow with the available
+    version and release URL, styled with the active theme/font.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the UpdateWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Running with a visible GUI (not headless)
+    display.arg_provider.integration_test_mode = False
+    result = SimpleNamespace(
+        update_available=True,
+        latest_version="9.9.9",
+        release_url="https://example.com/release",
+    )
+
+    display.display.show_update_available(result)
+
+    # The update window is opened with the result's details and active theme/font
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="Update Available",
+        latest_version="9.9.9",
+        release_url="https://example.com/release",
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
+    )
+
+
+@patch("source.gui.InvoiceAppDisplay.UpdateWindow")
+def test_show_update_available_suppressed_in_integration_mode(mock_window_cls, display):
+    """
+    Verifies that show_update_available opens no window when running in integration
+    test (headless) mode so automated runs do not block on a popup.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the UpdateWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Running headless for integration testing
+    display.arg_provider.integration_test_mode = True
+    result = SimpleNamespace(
+        update_available=True,
+        latest_version="9.9.9",
+        release_url="https://example.com/release",
+    )
+
+    display.display.show_update_available(result)
+
+    # No window is opened in headless mode
+    mock_window_cls.assert_not_called()
+
+
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.RESULTS_LOG_PATH")
 def test_handle_results_log_opens_when_present(
@@ -731,11 +815,11 @@ def test_handle_results_log_opens_when_present(
     assert mock_window_cls.call_args.kwargs["editable"] is False
 
 
-@patch.object(InvoiceAppDisplay, "show_error_popup")
+@patch.object(InvoiceAppDisplay, "show_popup")
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.RESULTS_LOG_PATH")
 def test_handle_results_log_missing_shows_error(
-    mock_results_path, mock_window_cls, mock_show_error, display
+    mock_results_path, mock_window_cls, mock_show_popup, display
 ):
     """
     Verifies that handle_results_log shows an error popup (and opens nothing) when
@@ -744,7 +828,7 @@ def test_handle_results_log_missing_shows_error(
     Args:
         mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
         mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
-        mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -754,7 +838,7 @@ def test_handle_results_log_missing_shows_error(
     display.display.handle_results_log()
 
     # An error popup is shown and no window is opened
-    mock_show_error.assert_called_once()
+    mock_show_popup.assert_called_once()
     mock_window_cls.assert_not_called()
 
 
@@ -784,11 +868,11 @@ def test_handle_debug_log_opens_when_present(
     assert mock_window_cls.call_args.kwargs["editable"] is False
 
 
-@patch.object(InvoiceAppDisplay, "show_error_popup")
+@patch.object(InvoiceAppDisplay, "show_popup")
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.DEBUG_LOG_PATH")
 def test_handle_debug_log_missing_shows_error(
-    mock_debug_path, mock_window_cls, mock_show_error, display
+    mock_debug_path, mock_window_cls, mock_show_popup, display
 ):
     """
     Verifies that handle_debug_log shows an error popup (and opens nothing) when
@@ -797,7 +881,7 @@ def test_handle_debug_log_missing_shows_error(
     Args:
         mock_debug_path (unittest.mock.MagicMock): Mocks the DEBUG_LOG_PATH constant
         mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
-        mock_show_error (unittest.mock.MagicMock): Mocks show_error_popup
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -807,7 +891,7 @@ def test_handle_debug_log_missing_shows_error(
     display.display.handle_debug_log()
 
     # An error popup is shown and no window is opened
-    mock_show_error.assert_called_once()
+    mock_show_popup.assert_called_once()
     mock_window_cls.assert_not_called()
 
 
