@@ -896,6 +896,63 @@ def test_handle_debug_log_missing_shows_error(
 
 
 ###############################################################################
+###           Tests InvoiceAppDisplay -> handle_open_user_guide()           ###
+###############################################################################
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.USER_GUIDE_PATH")
+def test_handle_open_user_guide_opens_when_present(
+    mock_guide_path, mock_window_cls, display
+):
+    """
+    Verifies that handle_open_user_guide opens a read-only viewer window titled
+    "User Guide" showing the bundled guide file when it exists.
+
+    Args:
+        mock_guide_path (unittest.mock.MagicMock): Mocks the USER_GUIDE_PATH constant
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # The user guide file exists on disk
+    mock_guide_path.exists.return_value = True
+
+    display.display.handle_open_user_guide()
+
+    # The guide is read and opened in a read-only viewer window titled "User Guide"
+    display.read_file_callback.assert_called_once_with(mock_guide_path)
+    assert mock_window_cls.call_args.kwargs["file_path"] is mock_guide_path
+    assert mock_window_cls.call_args.kwargs["title"] == "User Guide"
+    assert mock_window_cls.call_args.kwargs["editable"] is False
+
+
+@patch.object(InvoiceAppDisplay, "show_popup")
+@patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
+@patch("source.gui.InvoiceAppDisplay.USER_GUIDE_PATH")
+def test_handle_open_user_guide_missing_shows_error(
+    mock_guide_path, mock_window_cls, mock_show_popup, display
+):
+    """
+    Verifies that handle_open_user_guide shows an error popup (and opens nothing)
+    when the bundled user guide file is not present.
+
+    Args:
+        mock_guide_path (unittest.mock.MagicMock): Mocks the USER_GUIDE_PATH constant
+        mock_window_cls (unittest.mock.MagicMock): Mocks the FileEditorWindow class
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # The user guide file is missing
+    mock_guide_path.exists.return_value = False
+
+    display.display.handle_open_user_guide()
+
+    # An error popup is shown and no window is opened
+    mock_show_popup.assert_called_once()
+    mock_window_cls.assert_not_called()
+
+
+###############################################################################
 ###                Tests InvoiceAppDisplay -> apply_theme()                 ###
 ###############################################################################
 def test_apply_theme_updates_state_and_widgets(display):
