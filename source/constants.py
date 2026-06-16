@@ -5,7 +5,7 @@ DECIMAL_ZERO = Decimal("0.00")
 
 # Current application version. Single source of truth for the version, kept
 # consistent with application releases and surfaced to the user via Help -> About.
-VERSION = "3.1.2"
+VERSION = "4.0.0"
 
 # Application file paths, relative to the executable's current working directory.
 
