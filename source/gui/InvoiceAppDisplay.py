@@ -591,10 +591,14 @@ class InvoiceAppDisplay(tk.Tk):
         On "Open User Guide" menu press, opens the bundled user guide in a native
         read-only viewer window, themed to match the rest of the application.
         """
+        # The user guide is longer than the config/log files, so open it in a
+        # larger window so more of the text is visible without scrolling
         self._open_readonly_file_viewer(
             USER_GUIDE_PATH,
             "User Guide",
             f"User guide not found at: {USER_GUIDE_PATH}.",
+            text_width=100,
+            text_height=35,
         )
 
     ###########################################################################
@@ -698,7 +702,12 @@ class InvoiceAppDisplay(tk.Tk):
     ###           InvoiceAppDisplay -> _open_readonly_file_viewer()         ###
     ###########################################################################
     def _open_readonly_file_viewer(
-        self, file_path: Path, title: str, missing_message: str
+        self,
+        file_path: Path,
+        title: str,
+        missing_message: str,
+        text_width: int | None = None,
+        text_height: int | None = None,
     ):
         """
         Opens a native, read-only window showing the given text file if it exists.
@@ -709,6 +718,11 @@ class InvoiceAppDisplay(tk.Tk):
             title (str): The title to display on the viewer window
             missing_message (str): The popup message shown when the file does not
                 exist
+            text_width (int | None): Width of the text box in character cells, or
+                None to use the default size (used to enlarge the viewer for
+                longer files such as the user guide)
+            text_height (int | None): Height of the text box in character cells, or
+                None to use the default size
         """
         if file_path.exists():
             FileEditorWindow(
@@ -720,6 +734,8 @@ class InvoiceAppDisplay(tk.Tk):
                 font_family=self.current_font_family,
                 font_size=self.current_font_size,
                 editable=False,
+                text_width=text_width,
+                text_height=text_height,
             )
         else:
             self.show_popup(
