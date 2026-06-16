@@ -32,6 +32,7 @@ from source.constants import (
     COST_CRITERIA_PATH,
     RESULTS_LOG_PATH,
     DEBUG_LOG_PATH,
+    USER_GUIDE_PATH,
     SETTING_KEY_THEME,
     SETTING_KEY_FONT_FAMILY,
     SETTING_KEY_FONT_SIZE,
@@ -244,10 +245,14 @@ class InvoiceAppDisplay(tk.Tk):
         # Help dropdown
         #  -> About option to show the current application version
         #  -> Check for Updates option to manually check for a newer release
+        #  -> Open User Guide option to view the bundled USER_GUIDE.txt in-app
         self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.help_menu.add_command(label="About", command=self.handle_about)
         self.help_menu.add_command(
             label="Check for Updates", command=self.handle_check_for_updates
+        )
+        self.help_menu.add_command(
+            label="Open User Guide", command=self.handle_open_user_guide
         )
         self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
 
@@ -579,6 +584,20 @@ class InvoiceAppDisplay(tk.Tk):
         self.check_for_updates_callback()
 
     ###########################################################################
+    ###            InvoiceAppDisplay -> handle_open_user_guide()            ###
+    ###########################################################################
+    def handle_open_user_guide(self):
+        """
+        On "Open User Guide" menu press, opens the bundled user guide in a native
+        read-only viewer window, themed to match the rest of the application.
+        """
+        self._open_readonly_file_viewer(
+            USER_GUIDE_PATH,
+            "User Guide",
+            f"User guide not found at: {USER_GUIDE_PATH}.",
+        )
+
+    ###########################################################################
     ###                  InvoiceAppDisplay -> show_popup()                  ###
     ###########################################################################
     def show_popup(self, title: str, message: str):
@@ -676,23 +695,27 @@ class InvoiceAppDisplay(tk.Tk):
         )
 
     ###########################################################################
-    ###               InvoiceAppDisplay -> _open_log_viewer()               ###
+    ###           InvoiceAppDisplay -> _open_readonly_file_viewer()         ###
     ###########################################################################
-    def _open_log_viewer(self, log_path: Path, title: str):
+    def _open_readonly_file_viewer(
+        self, file_path: Path, title: str, missing_message: str
+    ):
         """
-        Opens a native, read-only window showing the given log file if it exists.
-        Shows an error popup if the file has not been created yet.
+        Opens a native, read-only window showing the given text file if it exists.
+        Shows an error popup with the provided message if the file is not present.
 
         Args:
-            log_path (Path): The log file to open for viewing
+            file_path (Path): The text file to open for viewing
             title (str): The title to display on the viewer window
+            missing_message (str): The popup message shown when the file does not
+                exist
         """
-        if log_path.exists():
+        if file_path.exists():
             FileEditorWindow(
                 parent=self,
                 title=title,
-                file_path=log_path,
-                initial_text=self.read_file_callback(log_path),
+                file_path=file_path,
+                initial_text=self.read_file_callback(file_path),
                 theme=self.current_theme,
                 font_family=self.current_font_family,
                 font_size=self.current_font_size,
@@ -701,7 +724,7 @@ class InvoiceAppDisplay(tk.Tk):
         else:
             self.show_popup(
                 title="File Not Found",
-                message=f"Log not found at: {log_path}. Process an invoice to generate the log.",
+                message=missing_message,
             )
 
     ###########################################################################
@@ -739,7 +762,11 @@ class InvoiceAppDisplay(tk.Tk):
         Opens the results log file in a native read-only viewer window if it
         exists. Shows an error popup if the file has not been created yet.
         """
-        self._open_log_viewer(RESULTS_LOG_PATH, "Results Log")
+        self._open_readonly_file_viewer(
+            RESULTS_LOG_PATH,
+            "Results Log",
+            f"Log not found at: {RESULTS_LOG_PATH}. Process an invoice to generate the log.",
+        )
 
     ###########################################################################
     ###               InvoiceAppDisplay -> handle_debug_log()               ###
@@ -749,7 +776,11 @@ class InvoiceAppDisplay(tk.Tk):
         Opens the debug log file in a native read-only viewer window if it exists.
         Shows an error popup if the file has not been created yet.
         """
-        self._open_log_viewer(DEBUG_LOG_PATH, "Debug Log")
+        self._open_readonly_file_viewer(
+            DEBUG_LOG_PATH,
+            "Debug Log",
+            f"Log not found at: {DEBUG_LOG_PATH}. Process an invoice to generate the log.",
+        )
 
     ###########################################################################
     ###                 InvoiceAppDisplay -> apply_theme()                  ###

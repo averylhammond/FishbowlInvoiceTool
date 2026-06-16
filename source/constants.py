@@ -27,6 +27,9 @@ COST_CRITERIA_PATH = CONFIGS_DIR / "Cost_Criteria.txt"
 # Database file holding persisted user settings (theme, font, etc.)
 SETTINGS_DB_PATH = DATA_DIR / "settings.db"
 
+# User guide shipped next to the executable; surfaced in-app via Help -> Open User Guide.
+USER_GUIDE_PATH = Path("USER_GUIDE.txt")
+
 # Keys under which user settings are persisted in the settings database. Shared
 # between the display (which reads/writes them) and any other consumer so the
 # two never drift apart.
