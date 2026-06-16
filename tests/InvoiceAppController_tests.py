@@ -183,11 +183,16 @@ def test_start_application_resets_files_and_starts_gui(controller):
 
     controller.arg_provider.integration_test_mode = False
 
-    controller.controller.start_application()
+    # Patch the update check so this test does not spawn a real background thread
+    with patch.object(controller.controller, "_start_update_check") as mock_start_update:
+        controller.controller.start_application()
 
     # Log files are reset before the application starts
     controller.file_io.reset_debug_file.assert_called_once_with()
     controller.file_io.reset_results_file.assert_called_once_with()
+
+    # The startup update check is kicked off before entering the GUI loop
+    mock_start_update.assert_called_once_with()
 
     # The GUI main loop is started, and invoices are not processed directly
     controller.display.mainloop.assert_called_once_with()
@@ -197,7 +202,8 @@ def test_start_application_resets_files_and_starts_gui(controller):
 def test_start_application_integration_test_mode_processes_all(controller):
     """
     Verifies that start_application processes all invoices directly (without the
-    GUI loop) when running in integration test mode.
+    GUI loop) when running in integration test mode, and never starts the update
+    check so no network I/O occurs in the headless CI run.
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
@@ -205,11 +211,113 @@ def test_start_application_integration_test_mode_processes_all(controller):
 
     controller.arg_provider.integration_test_mode = True
 
-    controller.controller.start_application()
+    with patch.object(controller.controller, "_start_update_check") as mock_start_update:
+        controller.controller.start_application()
 
     # All invoices are processed directly, and the GUI loop is never entered
     controller.display.handle_process_all_invoices.assert_called_once_with()
     controller.display.mainloop.assert_not_called()
+
+    # The update check is never started in integration test mode
+    mock_start_update.assert_not_called()
+
+
+###############################################################################
+###          Tests InvoiceAppController -> _start_update_check()            ###
+###############################################################################
+def test_start_update_check_spawns_daemon_worker_thread(controller):
+    """
+    Verifies that _start_update_check launches the update worker on a started
+    daemon thread, so the check never blocks GUI startup or app shutdown.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    with patch("source.InvoiceAppController.threading.Thread") as mock_thread_cls:
+        controller.controller._start_update_check()
+
+    # The worker is wired as the thread target, marked daemon, and started
+    mock_thread_cls.assert_called_once_with(
+        target=controller.controller._run_update_check, daemon=True
+    )
+    mock_thread_cls.return_value.start.assert_called_once_with()
+
+
+###############################################################################
+###           Tests InvoiceAppController -> _run_update_check()             ###
+###############################################################################
+def test_run_update_check_schedules_result_on_gui_thread(controller):
+    """
+    Verifies that _run_update_check runs the UpdateChecker and marshals its result
+    back onto the tkinter thread via display.after().
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    with patch("source.InvoiceAppController.UpdateChecker") as mock_update_checker_cls:
+        mock_result = mock_update_checker_cls.return_value.check_for_update.return_value
+
+        controller.controller._run_update_check()
+
+    # The update check is performed off the GUI thread
+    mock_update_checker_cls.assert_called_once_with()
+    mock_update_checker_cls.return_value.check_for_update.assert_called_once_with()
+
+    # The result is handed back to the GUI thread for handling
+    controller.display.after.assert_called_once_with(
+        0, controller.controller._handle_update_result, mock_result
+    )
+
+
+###############################################################################
+###          Tests InvoiceAppController -> _handle_update_result()          ###
+###############################################################################
+def test_handle_update_result_update_available_notifies_display(controller):
+    """
+    Verifies that _handle_update_result triggers the GUI response when a strictly
+    newer release is available.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    result = SimpleNamespace(update_available=True)
+
+    controller.controller._handle_update_result(result)
+
+    controller.display.show_update_available.assert_called_once_with(result)
+
+
+def test_handle_update_result_none_does_nothing(controller):
+    """
+    Verifies that _handle_update_result does nothing when the check failed silently
+    (result is None), so the user is never interrupted.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.controller._handle_update_result(None)
+
+    controller.display.show_update_available.assert_not_called()
+
+
+def test_handle_update_result_up_to_date_does_nothing(controller):
+    """
+    Verifies that _handle_update_result does nothing when the running build is
+    already up to date (no newer release available).
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    result = SimpleNamespace(update_available=False)
+
+    controller.controller._handle_update_result(result)
+
+    controller.display.show_update_available.assert_not_called()
 
 
 ###############################################################################
