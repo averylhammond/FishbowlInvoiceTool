@@ -515,8 +515,10 @@ def test_show_error_popup_displays_message(mock_showerror, display):
         error_title="Some Title", error_message="Some Message"
     )
 
-    # The error is shown to the user
-    mock_showerror.assert_called_once_with("Some Title", "Some Message")
+    # The error is shown to the user, centered over the application window
+    mock_showerror.assert_called_once_with(
+        "Some Title", "Some Message", parent=display.display
+    )
 
 
 @patch("source.gui.InvoiceAppDisplay.messagebox.showerror")

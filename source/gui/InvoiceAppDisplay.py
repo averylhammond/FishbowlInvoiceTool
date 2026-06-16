@@ -594,7 +594,9 @@ class InvoiceAppDisplay(tk.Tk):
         if self.argument_provider.integration_test_mode:
             return
 
-        messagebox.showerror(error_title, error_message)
+        # parent=self centers the dialog over the application window rather than
+        # letting it default to the center of the screen
+        messagebox.showerror(error_title, error_message, parent=self)
 
     ###########################################################################
     ###                InvoiceAppDisplay -> show_info_popup()               ###
