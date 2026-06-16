@@ -89,6 +89,7 @@ def display(request):
         save_config_callback = MagicMock()
         save_settings_callback = MagicMock()
         copy_invoice_callback = MagicMock()
+        check_for_updates_callback = MagicMock()
 
         built_display = InvoiceAppDisplay(
             process_callback=callback,
@@ -96,6 +97,7 @@ def display(request):
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
             copy_invoice_callback=copy_invoice_callback,
+            check_for_updates_callback=check_for_updates_callback,
             title="Invoice Processor",
             window_resolution="750x750",
             settings=settings,
@@ -114,6 +116,7 @@ def display(request):
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
             copy_invoice_callback=copy_invoice_callback,
+            check_for_updates_callback=check_for_updates_callback,
             tooltip_cls=mock_tooltip_cls,
         )
 
@@ -539,6 +542,53 @@ def test_show_error_popup_suppressed_in_integration_mode(mock_showerror, display
 
 
 ###############################################################################
+###               Tests InvoiceAppDisplay -> show_info_popup()              ###
+###############################################################################
+@patch("source.gui.InvoiceAppDisplay.messagebox.showinfo")
+def test_show_info_popup_displays_message(mock_showinfo, display):
+    """
+    Verifies that show_info_popup shows a messagebox info dialog when not running
+    in integration test mode.
+
+    Args:
+        mock_showinfo (unittest.mock.MagicMock): Mocks messagebox.showinfo
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Running with a visible GUI (not headless)
+    display.arg_provider.integration_test_mode = False
+
+    display.display.show_info_popup(
+        info_title="Some Title", info_message="Some Message"
+    )
+
+    # The info dialog is shown to the user
+    mock_showinfo.assert_called_once_with("Some Title", "Some Message")
+
+
+@patch("source.gui.InvoiceAppDisplay.messagebox.showinfo")
+def test_show_info_popup_suppressed_in_integration_mode(mock_showinfo, display):
+    """
+    Verifies that show_info_popup suppresses the messagebox when running in
+    integration test (headless) mode so automated runs do not block on a popup.
+
+    Args:
+        mock_showinfo (unittest.mock.MagicMock): Mocks messagebox.showinfo
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Running headless for integration testing
+    display.arg_provider.integration_test_mode = True
+
+    display.display.show_info_popup(
+        info_title="Some Title", info_message="Some Message"
+    )
+
+    # No popup is shown in headless mode
+    mock_showinfo.assert_not_called()
+
+
+###############################################################################
 ###                Tests InvoiceAppDisplay -> handle_clear()                ###
 ###############################################################################
 def test_handle_clear_resets_state(display):
@@ -703,6 +753,84 @@ def test_handle_about_opens_window(mock_window_cls, display):
         font_family=display.display.current_font_family,
         font_size=display.display.current_font_size,
     )
+
+
+###############################################################################
+###          Tests InvoiceAppDisplay -> handle_check_for_updates()          ###
+###############################################################################
+def test_handle_check_for_updates_invokes_callback(display):
+    """
+    Verifies that the Help menu's "Check for Updates" handler invokes the
+    check_for_updates_callback supplied by the controller.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_check_for_updates()
+
+    display.check_for_updates_callback.assert_called_once_with()
+
+
+###############################################################################
+###           Tests InvoiceAppDisplay -> show_update_available()            ###
+###############################################################################
+@patch("source.gui.InvoiceAppDisplay.UpdateWindow")
+def test_show_update_available_opens_window(mock_window_cls, display):
+    """
+    Verifies that show_update_available opens an UpdateWindow with the available
+    version and release URL, styled with the active theme/font.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the UpdateWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Running with a visible GUI (not headless)
+    display.arg_provider.integration_test_mode = False
+    result = SimpleNamespace(
+        update_available=True,
+        latest_version="9.9.9",
+        release_url="https://example.com/release",
+    )
+
+    display.display.show_update_available(result)
+
+    # The update window is opened with the result's details and active theme/font
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="Update Available",
+        latest_version="9.9.9",
+        release_url="https://example.com/release",
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
+    )
+
+
+@patch("source.gui.InvoiceAppDisplay.UpdateWindow")
+def test_show_update_available_suppressed_in_integration_mode(mock_window_cls, display):
+    """
+    Verifies that show_update_available opens no window when running in integration
+    test (headless) mode so automated runs do not block on a popup.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the UpdateWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Running headless for integration testing
+    display.arg_provider.integration_test_mode = True
+    result = SimpleNamespace(
+        update_available=True,
+        latest_version="9.9.9",
+        release_url="https://example.com/release",
+    )
+
+    display.display.show_update_available(result)
+
+    # No window is opened in headless mode
+    mock_window_cls.assert_not_called()
 
 
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")

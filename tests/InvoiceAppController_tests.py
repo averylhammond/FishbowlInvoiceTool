@@ -117,6 +117,7 @@ def test_init_constructs_and_wires_collaborators(controller):
         save_config_callback=controller.controller.handle_save_config,
         save_settings_callback=controller.controller.handle_save_setting,
         copy_invoice_callback=controller.file_io.copy_invoice_file,
+        check_for_updates_callback=controller.controller.handle_check_for_updates,
         settings={"theme": "Ocean"},
     )
 
@@ -228,7 +229,8 @@ def test_start_application_integration_test_mode_processes_all(controller):
 def test_start_update_check_spawns_daemon_worker_thread(controller):
     """
     Verifies that _start_update_check launches the update worker on a started
-    daemon thread, so the check never blocks GUI startup or app shutdown.
+    daemon thread (defaulting to a non-manual check), so the check never blocks
+    GUI startup or app shutdown.
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
@@ -239,7 +241,25 @@ def test_start_update_check_spawns_daemon_worker_thread(controller):
 
     # The worker is wired as the thread target, marked daemon, and started
     mock_thread_cls.assert_called_once_with(
-        target=controller.controller._run_update_check, daemon=True
+        target=controller.controller._run_update_check, args=(False,), daemon=True
+    )
+    mock_thread_cls.return_value.start.assert_called_once_with()
+
+
+def test_start_update_check_manual_passes_manual_flag_to_worker(controller):
+    """
+    Verifies that a manual _start_update_check forwards the manual flag to the
+    worker thread, so the manual feedback path is taken.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    with patch("source.InvoiceAppController.threading.Thread") as mock_thread_cls:
+        controller.controller._start_update_check(manual=True)
+
+    mock_thread_cls.assert_called_once_with(
+        target=controller.controller._run_update_check, args=(True,), daemon=True
     )
     mock_thread_cls.return_value.start.assert_called_once_with()
 
@@ -259,15 +279,15 @@ def test_run_update_check_schedules_result_on_gui_thread(controller):
     with patch("source.InvoiceAppController.UpdateChecker") as mock_update_checker_cls:
         mock_result = mock_update_checker_cls.return_value.check_for_update.return_value
 
-        controller.controller._run_update_check()
+        controller.controller._run_update_check(manual=True)
 
     # The update check is performed off the GUI thread
     mock_update_checker_cls.assert_called_once_with()
     mock_update_checker_cls.return_value.check_for_update.assert_called_once_with()
 
-    # The result is handed back to the GUI thread for handling
+    # The result, along with the manual flag, is handed back to the GUI thread
     controller.display.after.assert_called_once_with(
-        0, controller.controller._handle_update_result, mock_result
+        0, controller.controller._handle_update_result, mock_result, True
     )
 
 
@@ -292,8 +312,9 @@ def test_handle_update_result_update_available_notifies_display(controller):
 
 def test_handle_update_result_none_does_nothing(controller):
     """
-    Verifies that _handle_update_result does nothing when the check failed silently
-    (result is None), so the user is never interrupted.
+    Verifies that _handle_update_result does nothing on a non-manual (startup)
+    check when the check failed silently (result is None), so the user is never
+    interrupted on launch.
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
@@ -302,12 +323,14 @@ def test_handle_update_result_none_does_nothing(controller):
     controller.controller._handle_update_result(None)
 
     controller.display.show_update_available.assert_not_called()
+    controller.display.show_error_popup.assert_not_called()
+    controller.display.show_info_popup.assert_not_called()
 
 
 def test_handle_update_result_up_to_date_does_nothing(controller):
     """
-    Verifies that _handle_update_result does nothing when the running build is
-    already up to date (no newer release available).
+    Verifies that _handle_update_result does nothing on a non-manual (startup)
+    check when the running build is already up to date (no newer release).
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
@@ -318,6 +341,77 @@ def test_handle_update_result_up_to_date_does_nothing(controller):
     controller.controller._handle_update_result(result)
 
     controller.display.show_update_available.assert_not_called()
+    controller.display.show_info_popup.assert_not_called()
+
+
+def test_handle_update_result_manual_update_available_notifies_display(controller):
+    """
+    Verifies that a manual check still shows the update popup (and no feedback
+    popup) when a strictly newer release is available.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    result = SimpleNamespace(update_available=True)
+
+    controller.controller._handle_update_result(result, manual=True)
+
+    controller.display.show_update_available.assert_called_once_with(result)
+    controller.display.show_info_popup.assert_not_called()
+    controller.display.show_error_popup.assert_not_called()
+
+
+def test_handle_update_result_manual_up_to_date_shows_info_popup(controller):
+    """
+    Verifies that a manual check shows an info popup when the running build is
+    already up to date, so the deliberate action confirms an outcome.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    result = SimpleNamespace(update_available=False)
+
+    controller.controller._handle_update_result(result, manual=True)
+
+    controller.display.show_info_popup.assert_called_once()
+    controller.display.show_update_available.assert_not_called()
+    controller.display.show_error_popup.assert_not_called()
+
+
+def test_handle_update_result_manual_failure_shows_error_popup(controller):
+    """
+    Verifies that a manual check shows an error popup when the check failed
+    (result is None), so the user knows the check could not be completed.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.controller._handle_update_result(None, manual=True)
+
+    controller.display.show_error_popup.assert_called_once()
+    controller.display.show_update_available.assert_not_called()
+    controller.display.show_info_popup.assert_not_called()
+
+
+###############################################################################
+###        Tests InvoiceAppController -> handle_check_for_updates()         ###
+###############################################################################
+def test_handle_check_for_updates_starts_manual_check(controller):
+    """
+    Verifies that the Help menu's on-demand handler starts an update check flagged
+    as manual, so the user always gets feedback about the outcome.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    with patch.object(controller.controller, "_start_update_check") as mock_start:
+        controller.controller.handle_check_for_updates()
+
+    mock_start.assert_called_once_with(manual=True)
 
 
 ###############################################################################

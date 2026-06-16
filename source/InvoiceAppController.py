@@ -13,6 +13,7 @@ from source.constants import (
     COST_CRITERIA_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
+    VERSION,
 )
 
 # TODO: See if there is a good logging method to add for debugging
@@ -63,6 +64,7 @@ class InvoiceAppController:
             save_config_callback=self.handle_save_config,
             save_settings_callback=self.handle_save_setting,
             copy_invoice_callback=self.file_io_controller.copy_invoice_file,
+            check_for_updates_callback=self.handle_check_for_updates,
             settings=saved_settings,
         )
 
@@ -114,50 +116,90 @@ class InvoiceAppController:
     ###########################################################################
     ###            InvoiceAppController -> _start_update_check()            ###
     ###########################################################################
-    def _start_update_check(self):
+    def _start_update_check(self, manual: bool = False):
         """
-        Spawns a daemon thread that checks for a newer release on startup.
+        Spawns a daemon thread that checks for a newer release.
 
         Running on a background thread keeps the GUI from blocking while waiting on
         the GitHub API, and the daemon flag ensures a slow or stalled request can
         never delay application shutdown.
+
+        Args:
+            manual (bool): True when the check was triggered manually from the Help
+                menu (the user should always get feedback), False for the silent
+                startup check.
         """
 
-        threading.Thread(target=self._run_update_check, daemon=True).start()
+        threading.Thread(
+            target=self._run_update_check, args=(manual,), daemon=True
+        ).start()
 
     ###########################################################################
     ###             InvoiceAppController -> _run_update_check()             ###
     ###########################################################################
-    def _run_update_check(self):
+    def _run_update_check(self, manual: bool = False):
         """
-        Worker-thread body for the startup update check.
+        Worker-thread body for an update check.
 
         Performs the (blocking, but silent-on-failure) update check off the GUI
         thread, then hands the result back to the tkinter main thread via
         display.after() so the GUI is only ever touched from the GUI thread.
+
+        Args:
+            manual (bool): Passed through to _handle_update_result so it knows
+                whether to surface "up to date"/failure feedback.
         """
 
         result = UpdateChecker().check_for_update()
-        self.display.after(0, self._handle_update_result, result)
+        self.display.after(0, self._handle_update_result, result, manual)
 
     ###########################################################################
     ###            InvoiceAppController -> _handle_update_result()          ###
     ###########################################################################
-    def _handle_update_result(self, result):
+    def _handle_update_result(self, result, manual: bool = False):
         """
-        Handles the outcome of the startup update check on the GUI thread.
+        Handles the outcome of an update check on the GUI thread.
 
-        Triggers the GUI response only when a strictly newer release exists. Does
-        nothing when the check failed silently (result is None) or the running
-        build is already up to date, so the user is never interrupted.
+        Always shows the update popup when a strictly newer release exists. For a
+        manual check the user also gets feedback when no update is available
+        (an info popup) or the check failed (an error popup), so a deliberate
+        action always confirms an outcome. The startup check (manual=False) stays
+        silent in those cases so the user is never interrupted on launch.
 
         Args:
             result (UpdateCheckResult | None): The comparison outcome from
                 UpdateChecker.check_for_update(), or None if the check failed.
+            manual (bool): True when the check was triggered manually from the Help
+                menu, enabling the up-to-date/failure feedback.
         """
 
         if result and result.update_available:
             self.display.show_update_available(result)
+        elif manual:
+            if result is None:
+                self.display.show_error_popup(
+                    "Update Check Failed",
+                    "Could not check for updates. Please check your internet "
+                    "connection and try again.",
+                )
+            else:
+                self.display.show_info_popup(
+                    "No Updates Available",
+                    f"You're running the latest version ({VERSION}).",
+                )
+
+    ###########################################################################
+    ###          InvoiceAppController -> handle_check_for_updates()         ###
+    ###########################################################################
+    def handle_check_for_updates(self):
+        """
+        Runs an on-demand update check, triggered by the Help menu's
+        "Check for Updates" item. Reuses the background daemon-thread pipeline so
+        the GUI never blocks on the network, and flags the check as manual so the
+        user always gets feedback about the outcome.
+        """
+
+        self._start_update_check(manual=True)
 
     ###########################################################################
     ###          InvoiceAppController -> handle_process_invoice()           ###
