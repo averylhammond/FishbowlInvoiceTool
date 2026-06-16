@@ -75,7 +75,15 @@ jobs:
             exit 1
         fi
 
-    # Package the release executable + resources into release/FishbowlInvoiceTool.zip
+    # Install Inno Setup so package_release.sh can additionally build the Windows installer
+    # (FishbowlInvoiceTool_Setup.exe). Chocolatey is preinstalled on windows-latest and installs
+    # ISCC.exe to the default location the packaging script probes.
+    - name: Install Inno Setup
+      run: |
+        choco install innosetup --no-progress -y
+
+    # Package the release executable + resources into release/FishbowlInvoiceTool.zip, and (since
+    # Inno Setup is now installed) release/FishbowlInvoiceTool_Setup.exe
     - name: Package release
       run: |
         ./scripts/package_release.sh false
@@ -87,5 +95,6 @@ jobs:
       run: |
         gh release create "$GITHUB_REF_NAME" \
           release/FishbowlInvoiceTool.zip \
+          release/FishbowlInvoiceTool_Setup.exe \
           --title "$GITHUB_REF_NAME" \
           --generate-notes

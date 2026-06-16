@@ -22,7 +22,7 @@ A Python/tkinter desktop app that parses Fishbowl-generated invoice PDFs and com
 - Run a single test file: `pytest tests/Invoice_tests.py`
 - Run a single test: `pytest tests/processor_utilities_tests.py::test_search_text_by_re_order_number_correct_format`
 - Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/*`
-- Package a release executable: `./scripts/package_release.sh false` (pass `true` to also bundle sample invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it.
+- Package a release executable: `./scripts/package_release.sh false` (pass `true` to also bundle sample invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it. On Windows with Inno Setup installed, it additionally builds `release/FishbowlInvoiceTool_Setup.exe` (via `scripts/installer.iss`); this step is skipped on Linux or when Inno Setup is absent.
 
 ## Git Workflow (when working on a GitHub issue)
 
