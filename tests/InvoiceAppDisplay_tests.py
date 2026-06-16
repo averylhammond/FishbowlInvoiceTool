@@ -918,11 +918,14 @@ def test_handle_open_user_guide_opens_when_present(
 
     display.display.handle_open_user_guide()
 
-    # The guide is read and opened in a read-only viewer window titled "User Guide"
+    # The guide is read and opened in a read-only viewer window titled "User Guide",
+    # sized larger than the default since the guide is longer than the other files
     display.read_file_callback.assert_called_once_with(mock_guide_path)
     assert mock_window_cls.call_args.kwargs["file_path"] is mock_guide_path
     assert mock_window_cls.call_args.kwargs["title"] == "User Guide"
     assert mock_window_cls.call_args.kwargs["editable"] is False
+    assert mock_window_cls.call_args.kwargs["text_width"] == 100
+    assert mock_window_cls.call_args.kwargs["text_height"] == 35
 
 
 @patch.object(InvoiceAppDisplay, "show_popup")

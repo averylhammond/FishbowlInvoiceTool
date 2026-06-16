@@ -29,6 +29,8 @@ class FileEditorWindow(ThemedSubwindow):
         font_size: int,
         editable: bool = True,
         save_callback: Callable[[Path, str], None] | None = None,
+        text_width: int | None = None,
+        text_height: int | None = None,
     ):
         """
         Initializes the FileEditorWindow object
@@ -49,6 +51,12 @@ class FileEditorWindow(ThemedSubwindow):
             save_callback (Callable[[Path, str], None] | None): Called with the
                 file path and the edited contents when the user saves. Required
                 when editable is True; ignored when editable is False
+            text_width (int | None): Width of the text box in character cells.
+                When None, tkinter's default width is used (suitable for the
+                config/log files). Larger files (e.g. the user guide) can request
+                a wider box for easier reading
+            text_height (int | None): Height of the text box in character cells.
+                When None, tkinter's default height is used
         """
 
         super().__init__(parent, title, theme, font_family, font_size)
@@ -61,6 +69,10 @@ class FileEditorWindow(ThemedSubwindow):
 
         # Callback used to persist edits when the user saves
         self.save_callback = save_callback
+
+        # Text box dimensions in character cells; None uses tkinter's defaults
+        self.text_width = text_width
+        self.text_height = text_height
 
         # Tkinter Widgets
         # fmt:off
@@ -93,6 +105,14 @@ class FileEditorWindow(ThemedSubwindow):
         # in the config files stay aligned, the way they appear in a text editor.
         # TODO: Remove use of MONOSPACE once the format of the config files can be
         #       changed, and the commment header in the file does not cause alignment issues
+        # Only pass width/height when supplied so tkinter's defaults are kept for
+        # the config/log files; larger files (the user guide) can request a bigger box
+        size_kwargs = {}
+        if self.text_width is not None:
+            size_kwargs["width"] = self.text_width
+        if self.text_height is not None:
+            size_kwargs["height"] = self.text_height
+
         self.text_box = scrolledtext.ScrolledText(
             self,
             wrap="word",
@@ -101,6 +121,7 @@ class FileEditorWindow(ThemedSubwindow):
             fg=self.theme.fg_text,
             insertbackground=self.theme.fg_text,
             relief="flat",
+            **size_kwargs,
         )
         self.text_box.insert(tk.END, initial_text)
         self.text_box.pack(padx=20, pady=(20, 10), fill="both", expand=True)
