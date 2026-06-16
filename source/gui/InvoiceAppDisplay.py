@@ -498,9 +498,9 @@ class InvoiceAppDisplay(tk.Tk):
 
         # If no file is selected, show an error popup and do nothing
         if not file_path:
-            self.show_error_popup(
-                error_title="No file selected",
-                error_message="Please select a PDF file first.",
+            self.show_popup(
+                title="No file selected",
+                message="Please select a PDF file first.",
             )
             return
 
@@ -527,9 +527,9 @@ class InvoiceAppDisplay(tk.Tk):
                 self.process_callback(file_path, append_output=True)
 
         except Exception as e:
-            self.show_error_popup(
-                error_title="Processing Error",
-                error_message=f"An error occurred while processing invoices: {e}",
+            self.show_popup(
+                title="Processing Error",
+                message=f"An error occurred while processing invoices: {e}",
             )
 
     ###########################################################################
@@ -574,20 +574,20 @@ class InvoiceAppDisplay(tk.Tk):
         """
         On "Check for Updates" menu press, asks the controller to run an on-demand
         update check. The controller surfaces the outcome back through
-        show_update_available() / show_info_popup() / show_error_popup().
+        show_update_available() / show_popup().
         """
         self.check_for_updates_callback()
 
     ###########################################################################
-    ###               InvoiceAppDisplay -> show_error_popup()               ###
+    ###                  InvoiceAppDisplay -> show_popup()                  ###
     ###########################################################################
-    def show_error_popup(self, error_title: str, error_message: str):
+    def show_popup(self, title: str, message: str):
         """
-        Displays an error message in a popup window
+        Displays a message (informational or error) in a popup window
 
         Args:
-            error_title (str): The title of the error popup
-            error_message (str): The error message to display
+            title (str): The title of the popup
+            message (str): The message to display
         """
 
         # If in integration test mode, do not show popups since this will be running
@@ -600,37 +600,8 @@ class InvoiceAppDisplay(tk.Tk):
         # window instead of the screen
         MessageWindow(
             parent=self,
-            title=error_title,
-            message=error_message,
-            theme=self.current_theme,
-            font_family=self.current_font_family,
-            font_size=self.current_font_size,
-        )
-
-    ###########################################################################
-    ###                InvoiceAppDisplay -> show_info_popup()               ###
-    ###########################################################################
-    def show_info_popup(self, info_title: str, info_message: str):
-        """
-        Displays an informational message in a popup window
-
-        Args:
-            info_title (str): The title of the info popup
-            info_message (str): The message to display
-        """
-
-        # If in integration test mode, do not show popups since this will be running
-        # in a headless environment, and will halt testing
-        if self.argument_provider.integration_test_mode:
-            return
-
-        # Use a themed window (rather than tkinter's native messagebox) so the
-        # popup matches the application's styling and centers over the application
-        # window instead of the screen
-        MessageWindow(
-            parent=self,
-            title=info_title,
-            message=info_message,
+            title=title,
+            message=message,
             theme=self.current_theme,
             font_family=self.current_font_family,
             font_size=self.current_font_size,
@@ -728,9 +699,9 @@ class InvoiceAppDisplay(tk.Tk):
                 editable=False,
             )
         else:
-            self.show_error_popup(
-                error_title="File Not Found",
-                error_message=f"Log not found at: {log_path}. Process an invoice to generate the log.",
+            self.show_popup(
+                title="File Not Found",
+                message=f"Log not found at: {log_path}. Process an invoice to generate the log.",
             )
 
     ###########################################################################

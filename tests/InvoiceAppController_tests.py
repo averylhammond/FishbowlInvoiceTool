@@ -152,8 +152,8 @@ def test_init_wires_error_reporter(controller):
     """
 
     # The file IO controller and settings repository report errors through the popup
-    assert controller.file_io.report_error is controller.display.show_error_popup
-    assert controller.settings_repo.report_error is controller.display.show_error_popup
+    assert controller.file_io.report_error is controller.display.show_popup
+    assert controller.settings_repo.report_error is controller.display.show_popup
 
 
 def test_init_loads_persisted_settings(controller):
@@ -323,8 +323,7 @@ def test_handle_update_result_none_does_nothing(controller):
     controller.controller._handle_update_result(None)
 
     controller.display.show_update_available.assert_not_called()
-    controller.display.show_error_popup.assert_not_called()
-    controller.display.show_info_popup.assert_not_called()
+    controller.display.show_popup.assert_not_called()
 
 
 def test_handle_update_result_up_to_date_does_nothing(controller):
@@ -341,7 +340,7 @@ def test_handle_update_result_up_to_date_does_nothing(controller):
     controller.controller._handle_update_result(result)
 
     controller.display.show_update_available.assert_not_called()
-    controller.display.show_info_popup.assert_not_called()
+    controller.display.show_popup.assert_not_called()
 
 
 def test_handle_update_result_manual_update_available_notifies_display(controller):
@@ -358,14 +357,13 @@ def test_handle_update_result_manual_update_available_notifies_display(controlle
     controller.controller._handle_update_result(result, manual=True)
 
     controller.display.show_update_available.assert_called_once_with(result)
-    controller.display.show_info_popup.assert_not_called()
-    controller.display.show_error_popup.assert_not_called()
+    controller.display.show_popup.assert_not_called()
 
 
 def test_handle_update_result_manual_up_to_date_shows_info_popup(controller):
     """
-    Verifies that a manual check shows an info popup when the running build is
-    already up to date, so the deliberate action confirms an outcome.
+    Verifies that a manual check shows an "up to date" popup when the running
+    build is already up to date, so the deliberate action confirms an outcome.
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
@@ -375,14 +373,14 @@ def test_handle_update_result_manual_up_to_date_shows_info_popup(controller):
 
     controller.controller._handle_update_result(result, manual=True)
 
-    controller.display.show_info_popup.assert_called_once()
+    controller.display.show_popup.assert_called_once()
+    assert controller.display.show_popup.call_args.args[0] == "No Updates Available"
     controller.display.show_update_available.assert_not_called()
-    controller.display.show_error_popup.assert_not_called()
 
 
 def test_handle_update_result_manual_failure_shows_error_popup(controller):
     """
-    Verifies that a manual check shows an error popup when the check failed
+    Verifies that a manual check shows a failure popup when the check failed
     (result is None), so the user knows the check could not be completed.
 
     Args:
@@ -391,9 +389,9 @@ def test_handle_update_result_manual_failure_shows_error_popup(controller):
 
     controller.controller._handle_update_result(None, manual=True)
 
-    controller.display.show_error_popup.assert_called_once()
+    controller.display.show_popup.assert_called_once()
+    assert controller.display.show_popup.call_args.args[0] == "Update Check Failed"
     controller.display.show_update_available.assert_not_called()
-    controller.display.show_info_popup.assert_not_called()
 
 
 ###############################################################################
@@ -434,7 +432,7 @@ def test_handle_process_invoice_no_pages_shows_error_and_returns(controller):
     )
 
     # An error popup is shown and processing stops before populating the invoice
-    controller.display.show_error_popup.assert_called_once()
+    controller.display.show_popup.assert_called_once()
     controller.processor.populate_invoice.assert_not_called()
     controller.processor.process_invoice.assert_not_called()
 
@@ -456,7 +454,7 @@ def test_handle_process_invoice_first_page_none_shows_error_and_returns(controll
     )
 
     # An error popup is shown and processing stops before populating the invoice
-    controller.display.show_error_popup.assert_called_once()
+    controller.display.show_popup.assert_called_once()
     controller.processor.populate_invoice.assert_not_called()
 
 
@@ -498,7 +496,7 @@ def test_handle_process_invoice_full_flow_totals_match(controller):
     )
 
     # No mismatch popup is shown when the totals match
-    controller.display.show_error_popup.assert_not_called()
+    controller.display.show_popup.assert_not_called()
 
 
 def test_handle_process_invoice_total_mismatch_shows_popup(controller):
@@ -520,7 +518,7 @@ def test_handle_process_invoice_total_mismatch_shows_popup(controller):
     )
 
     # A mismatch popup is shown, and the output is still written
-    controller.display.show_error_popup.assert_called_once()
+    controller.display.show_popup.assert_called_once()
     controller.file_io.print_invoice_to_output_file.assert_called_once_with(
         invoice=controller.invoice, append_output=False
     )

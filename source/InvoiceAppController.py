@@ -68,12 +68,12 @@ class InvoiceAppController:
             settings=saved_settings,
         )
 
-        # Wire the GUI's error popup into the File IO Controller and Settings
-        # Repository so file/database failures surface to the user without coupling
-        # those components to the GUI. This must happen before the config files are
+        # Wire the GUI's popup into the File IO Controller and Settings Repository
+        # so file/database failures surface to the user without coupling those
+        # components to the GUI. This must happen before the config files are
         # parsed below so parse failures can be reported.
-        self.file_io_controller.report_error = self.display.show_error_popup
-        self.settings_repository.report_error = self.display.show_error_popup
+        self.file_io_controller.report_error = self.display.show_popup
+        self.settings_repository.report_error = self.display.show_popup
 
         # Use the File IO Controller to read in the criteria/exclusions for each cost section
         self.file_io_controller.parse_cost_criteria_file()
@@ -177,13 +177,13 @@ class InvoiceAppController:
             self.display.show_update_available(result)
         elif manual:
             if result is None:
-                self.display.show_error_popup(
+                self.display.show_popup(
                     "Update Check Failed",
                     "Could not check for updates. Please check your internet "
                     "connection and try again.",
                 )
             else:
-                self.display.show_info_popup(
+                self.display.show_popup(
                     "No Updates Available",
                     f"You're running the latest version ({VERSION}).",
                 )
@@ -224,9 +224,9 @@ class InvoiceAppController:
 
         # If there are no pages in the invoice, show an error and return early
         if not invoice.page_contents or invoice.page_contents[0] is None:
-            self.display.show_error_popup(
-                error_title="Error",
-                error_message=f"No pages were found in the invoice PDF located at {invoice_filepath}.",
+            self.display.show_popup(
+                title="Error",
+                message=f"No pages were found in the invoice PDF located at {invoice_filepath}.",
             )
             return
 
@@ -254,9 +254,9 @@ class InvoiceAppController:
         # we need to account for that and let the user know that the generated total may not match the listed total on the invoice.
         # This is done by displaying an error popup window
         if invoice.total != invoice.listed_total:
-            self.display.show_error_popup(
-                error_title="Calculated Total Mismatch",
-                error_message=f"The calculated total of ${invoice.total} does not match the listed total of ${invoice.listed_total} for invoice {invoice.order_number}.",
+            self.display.show_popup(
+                title="Calculated Total Mismatch",
+                message=f"The calculated total of ${invoice.total} does not match the listed total of ${invoice.listed_total} for invoice {invoice.order_number}.",
             )
 
         # Print calculated invoice output to results.txt
