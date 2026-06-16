@@ -562,8 +562,10 @@ def test_show_info_popup_displays_message(mock_showinfo, display):
         info_title="Some Title", info_message="Some Message"
     )
 
-    # The info dialog is shown to the user
-    mock_showinfo.assert_called_once_with("Some Title", "Some Message")
+    # The info dialog is shown to the user, centered over the application window
+    mock_showinfo.assert_called_once_with(
+        "Some Title", "Some Message", parent=display.display
+    )
 
 
 @patch("source.gui.InvoiceAppDisplay.messagebox.showinfo")

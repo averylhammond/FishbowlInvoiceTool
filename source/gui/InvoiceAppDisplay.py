@@ -613,7 +613,9 @@ class InvoiceAppDisplay(tk.Tk):
         if self.argument_provider.integration_test_mode:
             return
 
-        messagebox.showinfo(info_title, info_message)
+        # parent=self centers the dialog over the application window rather than
+        # letting it default to the center of the screen
+        messagebox.showinfo(info_title, info_message, parent=self)
 
     ###########################################################################
     ###            InvoiceAppDisplay -> show_update_available()             ###
