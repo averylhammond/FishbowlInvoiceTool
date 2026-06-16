@@ -581,8 +581,7 @@ class InvoiceAppDisplay(tk.Tk):
         Notifies the user that a newer release is available.
 
         Placeholder seam: the controller calls this on the GUI thread when its
-        startup update check finds a strictly newer release. The actual
-        notification UI is implemented in issue #61.
+        startup update check finds a strictly newer release.
 
         Args:
             result (UpdateCheckResult): The outcome of the update check, exposing
