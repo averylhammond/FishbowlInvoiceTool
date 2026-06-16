@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, scrolledtext
+from tkinter import filedialog, scrolledtext
 from pathlib import Path
 from typing import Callable
 
@@ -8,6 +8,7 @@ from source.ArgumentProvider import ArgumentProvider
 from source.gui.AboutWindow import AboutWindow
 from source.gui.FileEditorWindow import FileEditorWindow
 from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+from source.gui.MessageWindow import MessageWindow
 from source.gui.UpdateWindow import UpdateWindow
 from source.gui.Tooltip import Tooltip
 from source.gui.color_theme import (
@@ -594,9 +595,17 @@ class InvoiceAppDisplay(tk.Tk):
         if self.argument_provider.integration_test_mode:
             return
 
-        # parent=self centers the dialog over the application window rather than
-        # letting it default to the center of the screen
-        messagebox.showerror(error_title, error_message, parent=self)
+        # Use a themed window (rather than tkinter's native messagebox) so the
+        # popup matches the application's styling and centers over the application
+        # window instead of the screen
+        MessageWindow(
+            parent=self,
+            title=error_title,
+            message=error_message,
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
+        )
 
     ###########################################################################
     ###                InvoiceAppDisplay -> show_info_popup()               ###
@@ -615,9 +624,17 @@ class InvoiceAppDisplay(tk.Tk):
         if self.argument_provider.integration_test_mode:
             return
 
-        # parent=self centers the dialog over the application window rather than
-        # letting it default to the center of the screen
-        messagebox.showinfo(info_title, info_message, parent=self)
+        # Use a themed window (rather than tkinter's native messagebox) so the
+        # popup matches the application's styling and centers over the application
+        # window instead of the screen
+        MessageWindow(
+            parent=self,
+            title=info_title,
+            message=info_message,
+            theme=self.current_theme,
+            font_family=self.current_font_family,
+            font_size=self.current_font_size,
+        )
 
     ###########################################################################
     ###            InvoiceAppDisplay -> show_update_available()             ###

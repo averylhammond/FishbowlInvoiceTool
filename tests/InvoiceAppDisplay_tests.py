@@ -497,14 +497,14 @@ def test_handle_process_all_invoices_error_shows_popup(
 ###############################################################################
 ###              Tests InvoiceAppDisplay -> show_error_popup()              ###
 ###############################################################################
-@patch("source.gui.InvoiceAppDisplay.messagebox.showerror")
-def test_show_error_popup_displays_message(mock_showerror, display):
+@patch("source.gui.InvoiceAppDisplay.MessageWindow")
+def test_show_error_popup_displays_message(mock_window_cls, display):
     """
-    Verifies that show_error_popup shows a messagebox error when not running in
-    integration test mode.
+    Verifies that show_error_popup opens a themed MessageWindow (centered over the
+    application window) when not running in integration test mode.
 
     Args:
-        mock_showerror (unittest.mock.MagicMock): Mocks messagebox.showerror
+        mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -515,20 +515,25 @@ def test_show_error_popup_displays_message(mock_showerror, display):
         error_title="Some Title", error_message="Some Message"
     )
 
-    # The error is shown to the user, centered over the application window
-    mock_showerror.assert_called_once_with(
-        "Some Title", "Some Message", parent=display.display
+    # The error is shown in a themed window styled with the active theme/font
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="Some Title",
+        message="Some Message",
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
     )
 
 
-@patch("source.gui.InvoiceAppDisplay.messagebox.showerror")
-def test_show_error_popup_suppressed_in_integration_mode(mock_showerror, display):
+@patch("source.gui.InvoiceAppDisplay.MessageWindow")
+def test_show_error_popup_suppressed_in_integration_mode(mock_window_cls, display):
     """
-    Verifies that show_error_popup suppresses the messagebox when running in
-    integration test (headless) mode so automated runs do not block on a popup.
+    Verifies that show_error_popup opens no window when running in integration test
+    (headless) mode so automated runs do not block on a popup.
 
     Args:
-        mock_showerror (unittest.mock.MagicMock): Mocks messagebox.showerror
+        mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -540,20 +545,20 @@ def test_show_error_popup_suppressed_in_integration_mode(mock_showerror, display
     )
 
     # No popup is shown in headless mode
-    mock_showerror.assert_not_called()
+    mock_window_cls.assert_not_called()
 
 
 ###############################################################################
 ###               Tests InvoiceAppDisplay -> show_info_popup()              ###
 ###############################################################################
-@patch("source.gui.InvoiceAppDisplay.messagebox.showinfo")
-def test_show_info_popup_displays_message(mock_showinfo, display):
+@patch("source.gui.InvoiceAppDisplay.MessageWindow")
+def test_show_info_popup_displays_message(mock_window_cls, display):
     """
-    Verifies that show_info_popup shows a messagebox info dialog when not running
-    in integration test mode.
+    Verifies that show_info_popup opens a themed MessageWindow (centered over the
+    application window) when not running in integration test mode.
 
     Args:
-        mock_showinfo (unittest.mock.MagicMock): Mocks messagebox.showinfo
+        mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -564,20 +569,25 @@ def test_show_info_popup_displays_message(mock_showinfo, display):
         info_title="Some Title", info_message="Some Message"
     )
 
-    # The info dialog is shown to the user, centered over the application window
-    mock_showinfo.assert_called_once_with(
-        "Some Title", "Some Message", parent=display.display
+    # The info message is shown in a themed window styled with the active theme/font
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="Some Title",
+        message="Some Message",
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
     )
 
 
-@patch("source.gui.InvoiceAppDisplay.messagebox.showinfo")
-def test_show_info_popup_suppressed_in_integration_mode(mock_showinfo, display):
+@patch("source.gui.InvoiceAppDisplay.MessageWindow")
+def test_show_info_popup_suppressed_in_integration_mode(mock_window_cls, display):
     """
-    Verifies that show_info_popup suppresses the messagebox when running in
-    integration test (headless) mode so automated runs do not block on a popup.
+    Verifies that show_info_popup opens no window when running in integration test
+    (headless) mode so automated runs do not block on a popup.
 
     Args:
-        mock_showinfo (unittest.mock.MagicMock): Mocks messagebox.showinfo
+        mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
 
@@ -589,7 +599,7 @@ def test_show_info_popup_suppressed_in_integration_mode(mock_showinfo, display):
     )
 
     # No popup is shown in headless mode
-    mock_showinfo.assert_not_called()
+    mock_window_cls.assert_not_called()
 
 
 ###############################################################################
