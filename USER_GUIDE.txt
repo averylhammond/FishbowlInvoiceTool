@@ -2,12 +2,9 @@ Welcome to the Automated Invoice Processing Tool.
 
 To use the tool:
 
-1) Download any Fishbowl invoice you would like to process as a '.pdf' file, and place them
-into the 'Invoices' folder.
+1) Run 'AutoInvoiceProc.exe' to launch the application.
 
-2) Run 'AutoInvoiceProc.exe' to launch the application.
-
-3) Press "Edit" on the menu bar, and check each configuration file to make sure they are correct.
+2) Press "Edit" on the menu bar, and check each configuration file to make sure they are correct.
 
     - Ensure that Sales_Reps.txt contains a list of all possible sales reps that could
 	  be listed on an invoice. If a sales rep's name code shows up on an invoice and
@@ -28,6 +25,14 @@ into the 'Invoices' folder.
 	  different cost types. I.E: shipping costs vs material costs vs labor costs.
 
 	  Any entries must be input as it will appear on the invoice, one per line.
+
+3) Download any Fishbowl invoice you would like to process as a '.pdf' file, and place them into 
+   the 'Invoices' folder.
+
+     - Alternatively, press the "Discover Invoices" button to copy multiple invoices into the Invoices/
+	   folder at once. Select as many invoices as need to be processed, and then press "Copy Invoices"
+	   to copy them into the application. A text box will list out all PDFs that were successfully
+	   copied.
 
 4) To process invoices, follow one of the two actions:
 	
