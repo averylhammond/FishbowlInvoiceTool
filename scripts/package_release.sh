@@ -152,6 +152,38 @@ echo "Creating zip archive of the release..."
 cd "$ROOT_DIR/release"
 python -c "import shutil; shutil.make_archive('FishbowlInvoiceTool', 'zip', '.', 'FishbowlInvoiceTool')"
 
+# Additionally build a double-click Windows installer (FishbowlInvoiceTool_Setup.exe) from the
+# populated release/FishbowlInvoiceTool payload using Inno Setup (scripts/installer.iss). Inno's
+# ISCC.exe is Windows-only, so this is skipped on Linux and on Windows machines without Inno
+# installed -- the .zip above is the guaranteed artifact. CI installs Inno so the installer is
+# always produced there.
+if [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "CYGWIN"* || "$OS_TYPE" == "MSYS"* ]]; then
+    # Locate the Inno Setup compiler: explicit $ISCC override, then the default install
+    # location, then anything named iscc on PATH.
+    ISCC_EXE="${ISCC:-}"
+    if [[ -z "$ISCC_EXE" && -x "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ]]; then
+        ISCC_EXE="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+    fi
+    if [[ -z "$ISCC_EXE" ]] && command -v iscc >/dev/null 2>&1; then
+        ISCC_EXE="$(command -v iscc)"
+    fi
+
+    if [[ -z "$ISCC_EXE" ]]; then
+        echo "Inno Setup (ISCC.exe) not found; skipping installer build. The release zip is still available."
+        echo "Install Inno Setup 6 or set the ISCC environment variable to build FishbowlInvoiceTool_Setup.exe."
+    else
+        # Pass the in-app version (the single source of truth in source/constants.py) to the
+        # installer. Use //D (double slash) so Git Bash/MSYS does not path-mangle the
+        # /DAppVersion argument into a filesystem path.
+        VERSION="$(cd "$ROOT_DIR" && python -c 'from source import constants; print(constants.VERSION)')"
+        echo "Building installer with Inno Setup ($ISCC_EXE) for version $VERSION..."
+        "$ISCC_EXE" //DAppVersion="$VERSION" "$ROOT_DIR/scripts/installer.iss"
+        echo "Created installer: $ROOT_DIR/release/FishbowlInvoiceTool_Setup.exe"
+    fi
+else
+    echo "Non-Windows OS ($OS_TYPE); skipping Inno Setup installer build (ISCC.exe is Windows-only)."
+fi
+
 # Exit virtual environment on script exit
 echo "Deactivating virtual environment: $VIRTUAL_ENV"
 deactivate
