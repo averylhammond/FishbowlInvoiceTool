@@ -54,8 +54,8 @@ class UpdateChecker:
 
         Args:
             current_version (str): The running application's version. Defaults to
-                the VERSION constant (the single source of truth) and is accepted as
-                an argument so callers and tests can compare against a known value.
+                the VERSION constant and is accepted as an argument so callers and
+                tests can compare against a known value.
         """
 
         self.current_version = current_version
