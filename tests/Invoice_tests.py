@@ -38,6 +38,54 @@ def test_invoice_initialization():
     assert invoice.page_contents == []
 
 
+def test_invoice_initialization_with_arguments():
+    """
+    Tests that the Invoice() constructor accepts optional arguments and uses them
+    to populate the corresponding attributes, leaving unspecified fields at their
+    defaults
+    """
+
+    # Create an Invoice instance supplying a mix of string, Decimal, and list fields
+    invoice = Invoice(
+        customer_name="Alice",
+        order_number="S12345",
+        labor_cost=Decimal("100.00"),
+        total=Decimal("385.00"),
+        page_contents=["page one", "page two"],
+    )
+
+    # Check that the supplied arguments populated their attributes
+    assert invoice.customer_name == "Alice"
+    assert invoice.order_number == "S12345"
+    assert invoice.labor_cost == Decimal("100.00")
+    assert invoice.total == Decimal("385.00")
+    assert invoice.page_contents == ["page one", "page two"]
+
+    # Check that unspecified fields fall back to their defaults
+    assert invoice.date == ""
+    assert invoice.po_number == ""
+    assert invoice.sales_tax == DECIMAL_ZERO
+    assert invoice.listed_total == DECIMAL_ZERO
+
+
+def test_invoice_default_page_contents_not_shared():
+    """
+    Tests that two default-constructed Invoice() instances each get their own
+    page_contents list, guarding the field(default_factory=list) requirement
+    """
+
+    # Create two default instances of the Invoice class
+    invoice_one = Invoice()
+    invoice_two = Invoice()
+
+    # Mutating one instance's list must not affect the other
+    invoice_one.page_contents.append("page one")
+
+    assert invoice_one.page_contents == ["page one"]
+    assert invoice_two.page_contents == []
+    assert invoice_one.page_contents is not invoice_two.page_contents
+
+
 ###############################################################################
 ###                  Tests Invoice -> to_formatted_string()                 ###
 ###############################################################################
