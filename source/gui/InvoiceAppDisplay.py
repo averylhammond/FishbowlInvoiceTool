@@ -636,8 +636,8 @@ class InvoiceAppDisplay(tk.Tk):
     def show_update_available(self, result):
         """
         Notifies the user that a newer release is available by opening a themed
-        popup showing the available version, with a Download button linking to the
-        release page and a Close button.
+        popup showing the available version, with an "Exit and Update" button that
+        opens the release page and closes the app, and a Close button.
 
         The controller calls this on the GUI thread when an update check (on
         startup or triggered manually from the Help menu) finds a strictly newer
@@ -658,6 +658,9 @@ class InvoiceAppDisplay(tk.Tk):
             title="Update Available",
             latest_version=result.latest_version,
             release_url=result.release_url,
+            # self is the root tk.Tk, so destroy() exits the whole app, releasing
+            # the executable's file lock so the installer can replace it
+            close_app_callback=self.destroy,
             theme=self.current_theme,
             font_family=self.current_font_family,
             font_size=self.current_font_size,
