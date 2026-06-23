@@ -752,12 +752,15 @@ def test_show_update_available_opens_window(mock_window_cls, display):
 
     display.display.show_update_available(result)
 
-    # The update window is opened with the result's details and active theme/font
+    # The update window is opened with the result's details and active theme/font,
+    # and is given the root window's destroy as the app-close callback so the app
+    # exits (releasing the exe lock) after the user is sent to the download page
     mock_window_cls.assert_called_once_with(
         parent=display.display,
         title="Update Available",
         latest_version="9.9.9",
         release_url="https://example.com/release",
+        close_app_callback=display.display.destroy,
         theme=display.display.current_theme,
         font_family=display.display.current_font_family,
         font_size=display.display.current_font_size,
