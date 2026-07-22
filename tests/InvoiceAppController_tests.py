@@ -7,8 +7,11 @@ from decimal import Decimal
 from source.InvoiceAppController import InvoiceAppController
 from source.constants import (
     COST_CRITERIA_PATH,
+    GITHUB_REPO,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
+    SETTINGS_DB_PATH,
+    VERSION,
 )
 
 
@@ -165,8 +168,9 @@ def test_init_loads_persisted_settings(controller):
         controller (pytest.fixture): Provides the controller and its mocks
     """
 
-    # The settings repository is constructed and queried for the saved settings
-    controller.settings_repo_cls.assert_called_once_with()
+    # The settings repository is constructed with the injected database path and
+    # queried for the saved settings
+    controller.settings_repo_cls.assert_called_once_with(db_path=SETTINGS_DB_PATH)
     controller.settings_repo.get_all_settings.assert_called_once_with()
 
 
@@ -281,8 +285,10 @@ def test_run_update_check_schedules_result_on_gui_thread(controller):
 
         controller.controller._run_update_check(manual=True)
 
-    # The update check is performed off the GUI thread
-    mock_update_checker_cls.assert_called_once_with()
+    # The update check is performed off the GUI thread, targeting this app's repo
+    mock_update_checker_cls.assert_called_once_with(
+        current_version=VERSION, repo=GITHUB_REPO
+    )
     mock_update_checker_cls.return_value.check_for_update.assert_called_once_with()
 
     # The result, along with the manual flag, is handed back to the GUI thread

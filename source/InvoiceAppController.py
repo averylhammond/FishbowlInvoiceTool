@@ -5,14 +5,14 @@ from pathlib import Path
 from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
-from source.ArgumentProvider import ArgumentProvider
-from source.SettingsRepository import SettingsRepository
-from source.UpdateChecker import UpdateChecker
+from fishbowl_common import ArgumentProvider, SettingsRepository, UpdateChecker
 from source.Invoice import Invoice
 from source.constants import (
     COST_CRITERIA_PATH,
+    GITHUB_REPO,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
+    SETTINGS_DB_PATH,
     VERSION,
 )
 
@@ -49,7 +49,7 @@ class InvoiceAppController:
 
         # Create the Settings Repository and load the user's persisted settings so
         # they can be handed to the display and restored on startup.
-        self.settings_repository = SettingsRepository()
+        self.settings_repository = SettingsRepository(db_path=SETTINGS_DB_PATH)
         saved_settings = self.settings_repository.get_all_settings()
 
         # Create the InvoiceAppDisplay GUI, providing it with the callbacks it
@@ -150,7 +150,9 @@ class InvoiceAppController:
                 whether to surface "up to date"/failure feedback.
         """
 
-        result = UpdateChecker().check_for_update()
+        result = UpdateChecker(
+            current_version=VERSION, repo=GITHUB_REPO
+        ).check_for_update()
         self.display.after(0, self._handle_update_result, result, manual)
 
     ###########################################################################
