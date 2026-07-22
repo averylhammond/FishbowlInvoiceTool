@@ -7,6 +7,7 @@ from decimal import Decimal
 from source.InvoiceAppController import InvoiceAppController
 from source.constants import (
     COST_CRITERIA_PATH,
+    GITHUB_REPO,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     SETTINGS_DB_PATH,
@@ -286,7 +287,7 @@ def test_run_update_check_schedules_result_on_gui_thread(controller):
 
     # The update check is performed off the GUI thread, targeting this app's repo
     mock_update_checker_cls.assert_called_once_with(
-        current_version=VERSION, repo="averylhammond/FishbowlInvoiceTool"
+        current_version=VERSION, repo=GITHUB_REPO
     )
     mock_update_checker_cls.return_value.check_for_update.assert_called_once_with()
 

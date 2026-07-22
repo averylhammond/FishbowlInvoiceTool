@@ -9,6 +9,7 @@ from fishbowl_common import ArgumentProvider, SettingsRepository, UpdateChecker
 from source.Invoice import Invoice
 from source.constants import (
     COST_CRITERIA_PATH,
+    GITHUB_REPO,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     SETTINGS_DB_PATH,
@@ -150,7 +151,7 @@ class InvoiceAppController:
         """
 
         result = UpdateChecker(
-            current_version=VERSION, repo="averylhammond/FishbowlInvoiceTool"
+            current_version=VERSION, repo=GITHUB_REPO
         ).check_for_update()
         self.display.after(0, self._handle_update_result, result, manual)
 

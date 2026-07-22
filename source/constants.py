@@ -7,6 +7,10 @@ DECIMAL_ZERO = Decimal("0.00")
 # consistent with application releases and surfaced to the user via Help -> About.
 VERSION = "4.0.2"
 
+# GitHub repository ("owner/name") this app releases from. Passed to the shared
+# UpdateChecker so it knows which repo's releases to compare VERSION against.
+GITHUB_REPO = "averylhammond/FishbowlInvoiceTool"
+
 # Application file paths, relative to the executable's current working directory.
 
 # Base directories. The specific file paths below are composed from these.
