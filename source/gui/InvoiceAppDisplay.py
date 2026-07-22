@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 from source.Invoice import Invoice
-from source.ArgumentProvider import ArgumentProvider
+from fishbowl_common import ArgumentProvider
 from source.gui.AboutWindow import AboutWindow
 from source.gui.FileEditorWindow import FileEditorWindow
 from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
