@@ -1,64 +1,151 @@
-Unit Test Status: [![Python-CI](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/unit-tests.yml)
+# FishbowlInvoiceTool
 
-Code Coverage Status: [![codecov](https://codecov.io/gh/averylhammond/FishbowlInvoiceTool/branch/main/graph/badge.svg)](https://codecov.io/gh/averylhammond/FishbowlInvoiceTool)
+[![Unit Tests](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/unit-tests.yml)
+[![Integration Tests](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/integration-tests.yml/badge.svg?branch=main)](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/integration-tests.yml)
+[![Code Coverage](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/code-coverage.yml/badge.svg?branch=main)](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/code-coverage.yml)
+[![codecov](https://codecov.io/gh/averylhammond/FishbowlInvoiceTool/branch/main/graph/badge.svg)](https://codecov.io/gh/averylhammond/FishbowlInvoiceTool)
 
-Integration Test Status: ![Integration Tests](https://github.com/averylhammond/FishbowlInvoiceTool/actions/workflows/integration-tests.yml/badge.svg)
+A Python desktop app (tkinter) that parses Fishbowl-generated invoice PDFs and computes
+labor, material, and shipping cost breakdowns and totals, comparing the calculated total
+against the listed total to catch Fishbowl's floating-point rounding errors. The
+configuration files in `Configs/` determine which sales representative generated each
+invoice, which payment method was agreed upon, and how each itemized line is broken into
+cost categories.
 
-**************************************
-INSTRUCTIONS TO SET UP FOR DEVELOPMENT
-**************************************
+## Setup
 
-1) Clone this repo into a project folder.
+**1. Clone the repo** into a project folder.
 
-2) In order to test with example resources (payment info files and example invoices, located here
-   <https://github.com/averylhammond/automated-invoice-testing>), the automated-invoice-testing repo
-   has been added as a submodule to this project.
+**2. Initialize the test-data submodule.** Sample invoices and config files live in
+[automated-invoice-testing](https://github.com/averylhammond/automated-invoice-testing),
+which is wired in as a submodule:
 
-   Run git submodule update --init to clone and initialize the repo
-    - The resulting folder structure is shown below:
-     <PRE>- project_root/
-          └── FishbowlInvoiceTool/
-              └── scripts/copy_resources.sh
-              └── automated-invoice-testing/
-                  └── resources/</PRE>
+```bash
+git submodule update --init
+```
 
-3) Run ./FishbowlInvoiceTool/scripts/copy_resources.sh to copy the necessary configuration files. This will
-   allow you to run the application using sample invoices and other config data. After running the script,
-   your folder structure should have the following additions:
-     <PRE>-FishbowlInvoiceTool/
-          ├── Configs/
-          │   └── Cost_Criteria.txt
-          |   └── Payment_Terms.txt
-          |   └── Sales_Reps.txt
-          └── Invoices/
-              └── S0-12345.pdf
-              └── S0-98675.pdf
-              └── etc</PRE>
+> **Note:** this submodule is private because it contains sensitive customer data. Never
+> commit data sourced from it back into this repo.
 
-4) Open a Python virtual environment
-    - python -m venv venv
+The resulting folder structure:
 
-5) Activate virtual environment
-    - Linux
-        - source venv/bin/activate
-    - Windows
-        - source venv/Scripts/activate
+```
+project_root/
+└── FishbowlInvoiceTool/
+    ├── scripts/copy_resources.sh
+    └── automated-invoice-testing/
+        └── resources/
+```
 
-6) Install dependencies
-    - pip install -r requirements/dev.txt
+**3. Stage the sample resources** so the app has invoices and configs to run against:
 
-    - NOTE: If on Linux, you need to install tkinter separately since it's not
-            included in the standard library. Then run step 4.
+```bash
+./scripts/copy_resources.sh
+```
 
-        - For Debian based distros:
-            - sudo apt-get install python3-tk for deb based distros
-        - For Fedora users:
-            - sudo dnf install python3-tkinter
-        - For Arch based distros:
-            - sudo pacman -S python3-tk
+This adds:
 
-7) Run application
-    - python main.py
+```
+FishbowlInvoiceTool/
+├── Configs/
+│   ├── Cost_Criteria.txt
+│   ├── Payment_Terms.txt
+│   └── Sales_Reps.txt
+└── Invoices/
+    ├── S0-12345.pdf
+    ├── S0-98675.pdf
+    └── ...
+```
 
-8) Run unit tests
-    - pytest tests/*
+**4. Create and activate a virtual environment** (Python 3.11):
+
+```bash
+python -m venv venv
+source venv/Scripts/activate   # Windows; use venv/bin/activate on Linux/Mac
+```
+
+**5. Install dependencies:**
+
+```bash
+pip install -r requirements/dev.txt      # release.txt plus pytest and pytest-cov
+pip install -r requirements/release.txt  # runtime dependencies only
+```
+
+> **Note:** on Linux, `tkinter` is not part of the standard library install and must be
+> installed separately, then the virtual environment reactivated:
+>
+> - Debian-based: `sudo apt-get install python3-tk`
+> - Fedora: `sudo dnf install python3-tkinter`
+> - Arch-based: `sudo pacman -S python3-tk`
+
+## Usage
+
+```bash
+python main.py                    # run the GUI
+python main.py --integration-test # run headless, writing logs/results.txt
+```
+
+Headless mode processes every invoice in `Invoices/` and exits without opening a window
+or showing popups. It is what CI uses to validate output without GUI interaction.
+
+See [`USER_GUIDE.txt`](USER_GUIDE.txt) for end-user instructions.
+
+## Testing
+
+```bash
+pytest tests/*                                        # unit tests
+pytest --cov=./ --cov-report=term-missing tests/*     # unit tests with a coverage table
+```
+
+The `tests/*` glob is required: test files use the `_tests.py` suffix, which pytest's
+default discovery does not match.
+
+Reproduce the integration test locally (after `./scripts/copy_resources.sh`):
+
+```bash
+python main.py --integration-test
+diff logs/results.txt automated-invoice-testing/canonical_correct_results.txt
+```
+
+When invoice parsing or output formatting changes intentionally, regenerate
+`canonical_correct_results.txt` in the `automated-invoice-testing` repo and bump the
+submodule pointer.
+
+## Continuous integration
+
+All three CI workflows run on pull requests to `main` and on manual dispatch; the
+coverage workflow additionally runs on pushes to `main` so Codecov records a baseline for
+PR diffs.
+
+| Workflow | What it checks |
+| --- | --- |
+| [Unit Tests](.github/workflows/unit-tests.yml) | `pytest tests/*` on `ubuntu-latest`. |
+| [Integration Tests](.github/workflows/integration-tests.yml) | Runs the app headless on `windows-latest` and fails unless `logs/results.txt` matches the submodule's `canonical_correct_results.txt`. Needs the `CUSTOMER_DATA_PAT` secret to check out the private submodule. |
+| [Code Coverage](.github/workflows/code-coverage.yml) | `pytest --cov=./ --cov-report=xml --cov-fail-under=90 tests/*`, uploaded to Codecov. Needs the `CODECOV_TOKEN` secret. |
+
+## Releases
+
+Package a release build locally:
+
+```bash
+./scripts/package_release.sh false   # pass true to also bundle sample invoices
+```
+
+This builds the executable with PyInstaller into `release/FishbowlInvoiceTool/` and zips
+it. On Windows with [Inno Setup](https://jrsoftware.org/isinfo.php) installed it
+additionally builds `release/FishbowlInvoiceTool_Setup.exe` from `scripts/installer.iss`;
+that step is skipped on Linux or when Inno Setup is absent.
+
+Pushing a `v*` tag runs the
+[Release workflow](.github/workflows/release.yml), which verifies the tag matches
+`VERSION` in `source/constants.py`, runs the unit and integration tests, packages the zip
+and installer, and publishes them as a GitHub Release.
+
+## Related projects
+
+- [FishbowlInventoryTool](https://github.com/averylhammond/FishbowlInventoryTool) — the
+  sibling desktop app, which parses Fishbowl inventory availability and turnover report
+  PDFs into an Excel report.
+- [fishbowl-common](https://github.com/averylhammond/fishbowl-common) — the shared
+  infrastructure package both apps depend on, providing `ArgumentProvider`,
+  `SettingsRepository`, and `UpdateChecker`.
