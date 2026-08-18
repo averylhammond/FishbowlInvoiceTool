@@ -3,9 +3,7 @@ from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
 from typing import Callable
 
-from source.gui.color_theme import Theme
-from source.gui.Tooltip import Tooltip
-from source.gui.ThemedSubwindow import ThemedSubwindow
+from fishbowl_common.gui import Theme, ThemedSubwindow, Tooltip
 
 
 # InvoiceDiscoveryWindow class to let the user copy downloaded invoice PDFs into

@@ -6,9 +6,14 @@ from unittest.mock import patch, call, MagicMock
 
 from source.Invoice import Invoice
 from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
-from source.gui.color_theme import DARK, LIGHT
-from source.gui.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
+from fishbowl_common.gui import (
+    DARK,
+    LIGHT,
+    DEFAULT_FONT_FAMILY,
+    DEFAULT_FONT_SIZE,
+)
 from source.constants import (
+    APP_NAME,
     VERSION,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
@@ -690,8 +695,9 @@ def test_handle_discover_invoices_opens_window(mock_window_cls, display):
 @patch("source.gui.InvoiceAppDisplay.AboutWindow")
 def test_handle_about_opens_window(mock_window_cls, display):
     """
-    Verifies that handle_about opens an AboutWindow showing the current
-    application version, styled with the active theme/font.
+    Verifies that handle_about opens an AboutWindow showing this application's
+    name and current version, styled with the active theme/font. The shared
+    AboutWindow is application-agnostic, so both are injected.
 
     Args:
         mock_window_cls (unittest.mock.MagicMock): Mocks the AboutWindow class
@@ -700,10 +706,12 @@ def test_handle_about_opens_window(mock_window_cls, display):
 
     display.display.handle_about()
 
-    # The about window is opened with the current version and active theme/font
+    # The about window is opened with this app's name and version, and the
+    # active theme/font
     mock_window_cls.assert_called_once_with(
         parent=display.display,
         title="About",
+        app_name=APP_NAME,
         version=VERSION,
         theme=display.display.current_theme,
         font_family=display.display.current_font_family,

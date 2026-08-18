@@ -3,6 +3,10 @@ from pathlib import Path
 
 DECIMAL_ZERO = Decimal("0.00")
 
+# Display name of this application. Passed to the shared AboutWindow, which is
+# application-agnostic and takes the name it shows by injection.
+APP_NAME = "Fishbowl Invoice Tool"
+
 # Current application version. Single source of truth for the version, kept
 # consistent with application releases and surfaced to the user via Help -> About.
 VERSION = "4.0.2"

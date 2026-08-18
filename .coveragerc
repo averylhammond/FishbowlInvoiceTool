@@ -6,5 +6,4 @@ omit =
     ./venv/*
     .venv/*
     ./source/__init__.py
-    ./source/color_theme.py
     ./source/constants.py

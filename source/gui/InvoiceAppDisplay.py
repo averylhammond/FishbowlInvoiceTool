@@ -5,26 +5,25 @@ from typing import Callable
 
 from source.Invoice import Invoice
 from fishbowl_common import ArgumentProvider
-from source.gui.AboutWindow import AboutWindow
-from source.gui.FileEditorWindow import FileEditorWindow
-from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
-from source.gui.MessageWindow import MessageWindow
-from source.gui.UpdateWindow import UpdateWindow
-from source.gui.Tooltip import Tooltip
-from source.gui.color_theme import (
+from fishbowl_common.gui import (
     ALL_THEMES,
     DARK,  # Default theme used by GUI
-    RED,  # Used for the EXIT button
-    THEME_BY_NAME,
-    Theme,
-)
-from source.gui.font_settings import (
     DEFAULT_FONT_FAMILY,
     DEFAULT_FONT_SIZE,
     FONT_FAMILIES,
     FONT_SIZES,
+    RED,  # Used for the EXIT button
+    THEME_BY_NAME,
+    AboutWindow,
+    FileEditorWindow,
+    MessageWindow,
+    Theme,
+    Tooltip,
+    UpdateWindow,
 )
+from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
 from source.constants import (
+    APP_NAME,
     VERSION,
     INVOICES_PATH,
     PAYMENT_TERMS_PATH,
@@ -566,6 +565,7 @@ class InvoiceAppDisplay(tk.Tk):
         AboutWindow(
             parent=self,
             title="About",
+            app_name=APP_NAME,
             version=VERSION,
             theme=self.current_theme,
             font_family=self.current_font_family,
