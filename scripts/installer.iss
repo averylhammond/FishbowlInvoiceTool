@@ -104,9 +104,13 @@ Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#AppName}}"; F
 Filename: "{app}\{#AppExeName}"; Flags: nowait; Check: WantsRelaunch
 
 [Code]
-{ True when the installer was started by the application's own updater, which
-  passes /RELAUNCH=1. {param:relaunch|0} expands to the switch's value, or to 0
-  when it was not passed at all. }
+// True when the installer was started by the application's own updater, which
+// passes /RELAUNCH=1. The param constant below expands to the switch's value, or
+// to 0 when it was not passed at all.
+//
+// These are // comments rather than Pascal's { } form deliberately: a brace
+// comment does not nest, so the closing brace of a {param:...} constant written
+// inside one ends the comment early and the rest of it is compiled as code.
 function WantsRelaunch: Boolean;
 begin
   Result := ExpandConstant('{param:relaunch|0}') = '1';
