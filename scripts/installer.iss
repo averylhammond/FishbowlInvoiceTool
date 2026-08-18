@@ -52,6 +52,18 @@ DefaultDirName={autopf}\FishbowlInvoiceTool
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 
+; Force close applications Restart Manager cannot shut down gracefully. This is
+; what makes the in-app "Update and Restart" work: the running app launches this
+; installer and then exits, but Restart Manager scans within a few hundred ms and
+; asks the app to close by posting to its window. A PyInstaller onefile build has
+; two processes -- the bootloader and its child -- and the bootloader owns no
+; window, so it never answers. Setup then waits out its 30-second timeout, reports
+; "Some applications could not be shut down", and because the updater passes
+; /SUPPRESSMSGBOXES the Abort/Retry/Ignore prompt defaults to Abort: the upgrade
+; silently rolls back and the user is left on the old version. Without a window to
+; close, no delay on the app's side fixes this -- Setup has to terminate it.
+CloseApplications=force
+
 WizardStyle=modern
 Compression=lzma2/max
 SolidCompression=yes
