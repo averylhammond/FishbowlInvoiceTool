@@ -12,7 +12,7 @@ APP_NAME = "Fishbowl Invoice Tool"
 VERSION = "4.0.2"
 
 # GitHub repository ("owner/name") this app releases from. Passed to the shared
-# UpdateChecker so it knows which repo's releases to compare VERSION against.
+# UpdateCoordinator so it knows which repo's releases to compare VERSION against.
 GITHUB_REPO = "averylhammond/FishbowlInvoiceTool"
 
 # Application file paths, relative to the executable's current working directory.
