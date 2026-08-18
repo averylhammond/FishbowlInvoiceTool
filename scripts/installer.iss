@@ -116,6 +116,39 @@ Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#AppName}}"; F
 Filename: "{app}\{#AppExeName}"; Flags: nowait; Check: WantsRelaunch
 
 [Code]
+// Clears one variable from Setup's own environment. Declared against the Win32
+// API because Pascal Script has no built-in way to unset a variable; passing an
+// empty value deletes it, which is what CMD's "set NAME=" does underneath.
+function SetEnvVar(lpName: String; lpValue: String): Boolean;
+  external 'SetEnvironmentVariableW@kernel32.dll stdcall';
+
+// Drops the PyInstaller bootloader variables Setup inherited from the app that
+// started it, so the relaunched app does not.
+//
+// The app is a PyInstaller onefile build, so its environment carries _PYI_*
+// variables describing the extracted bundle. It launches this installer as a
+// child process, which inherits them, and the [Run] relaunch below would pass
+// them on again. Since PyInstaller 6.22.1 a starting app that sees them assumes
+// it is a worker sub-process of a onefile parent and requires its parent process
+// to be the same executable -- here it is Setup, so it refuses to start with
+// "Security validation failure: parent process has different executable". An
+// in-place upgrade keeps the same path, so nothing else tips it off.
+//
+// Called from InitializeSetup so it applies to everything Setup spawns.
+procedure ClearInheritedPyInstallerEnv;
+begin
+  SetEnvVar('_PYI_ARCHIVE_FILE', '');
+  SetEnvVar('_PYI_APPLICATION_HOME_DIR', '');
+  SetEnvVar('_PYI_PARENT_PROCESS_LEVEL', '');
+  SetEnvVar('_MEIPASS2', '');
+end;
+
+function InitializeSetup: Boolean;
+begin
+  ClearInheritedPyInstallerEnv;
+  Result := True;
+end;
+
 // True when the installer was started by the application's own updater, which
 // passes /RELAUNCH=1. The param constant below expands to the switch's value, or
 // to 0 when it was not passed at all.

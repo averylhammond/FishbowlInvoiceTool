@@ -45,6 +45,17 @@ when a `v*` tag is pushed. Three things there exist for the in-app updater and a
   left on the old version with no error. No delay on the app's side fixes this, since there is no
   window to close — Setup has to terminate the process. Do not weaken this to plain
   `CloseApplications=yes`.
+- **Setup clears the inherited `_PYI_*` variables before relaunching the app.** The app is a
+  PyInstaller onefile build, so its environment describes its extracted bundle; it launches the
+  installer as a child process, which inherits those variables and would pass them to the relaunched
+  app. Since PyInstaller 6.22.1 an app that starts with them set assumes it is a worker sub-process
+  of a onefile parent and requires its parent process to be the same executable — it is Setup, so it
+  refuses to start with "Security validation failure: parent process has different executable". An
+  in-place upgrade keeps the same path, so nothing else tips it off. `InitializeSetup` in the `.iss`
+  unsets them. The deeper fix belongs upstream, in `fishbowl_common`'s `UpdateInstaller`, which
+  should hand the installer a sanitized environment rather than its own; this one also covers users
+  upgrading from an app version released before that lands. Note `package_release.sh` leaves
+  PyInstaller unpinned, which is how a bootloader change landed mid-release-series (see issue #99).
 - **`release.yml` publishes `SHA256SUMS.txt`** alongside the zip and the installer, written with
   `sha256sum` from inside `release/` so the names in it are bare and match the asset names on the
   Release. The updater verifies the installer against it **before executing it**, so a release
