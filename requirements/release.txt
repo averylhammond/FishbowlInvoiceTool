@@ -1,4 +1,4 @@
-fishbowl-common[gui] @ git+https://github.com/averylhammond/fishbowl-common.git@v1.2.0
+fishbowl-common[gui] @ git+https://github.com/averylhammond/fishbowl-common.git@v1.2.1
 pyasn1==0.6.1
 pypdf==4.0.0
 rsa==4.9.1
