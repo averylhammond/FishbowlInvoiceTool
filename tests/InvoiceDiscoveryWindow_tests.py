@@ -5,8 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
 from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
-from source.gui.color_theme import DARK
-from source.gui.font_settings import DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
+from fishbowl_common.gui import DARK, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 
 
 ###############################################################################
