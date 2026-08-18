@@ -36,6 +36,15 @@ when a `v*` tag is pushed. Three things there exist for the in-app updater and a
   `WantsRelaunch` `[Code]` function (`{param:relaunch|0} = '1'`) relaunches it, and only for that
   route: a hand-run silent install still springs no window open. Do not "simplify" this by dropping
   `skipifsilent` from the first entry.
+- **`CloseApplications=force` is what makes the silent upgrade actually apply.** The running app
+  launches the installer and exits, but Restart Manager scans a few hundred milliseconds later and
+  asks the app to close by posting to its window — and a PyInstaller onefile build has two
+  processes, the bootloader and its child, the bootloader owning no window. It never answers, Setup
+  waits out its 30-second timeout, and because the updater passes `/SUPPRESSMSGBOXES` the resulting
+  Abort/Retry/Ignore prompt defaults to **Abort**: the upgrade rolls back silently and the user is
+  left on the old version with no error. No delay on the app's side fixes this, since there is no
+  window to close — Setup has to terminate the process. Do not weaken this to plain
+  `CloseApplications=yes`.
 - **`release.yml` publishes `SHA256SUMS.txt`** alongside the zip and the installer, written with
   `sha256sum` from inside `release/` so the names in it are bare and match the asset names on the
   Release. The updater verifies the installer against it **before executing it**, so a release
