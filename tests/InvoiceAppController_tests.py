@@ -8,6 +8,7 @@ from source.InvoiceAppController import InvoiceAppController
 from source.constants import (
     COST_CRITERIA_PATH,
     GITHUB_REPO,
+    INSTALLER_ASSET_PATTERN,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     SETTINGS_DB_PATH,
@@ -166,15 +167,22 @@ def test_init_wires_error_reporter(controller):
 def test_init_builds_the_update_coordinator(controller):
     """
     Verifies that __init__ builds the shared UpdateCoordinator with this
-    application's version and repository, handing it the display it reports its
-    outcome through. Constructing it performs no network I/O; only start() does.
+    application's version, repository and installer asset pattern, handing it the
+    display it reports its outcome through. The asset pattern is what lets the
+    coordinator find this app's installer on a release and offer an in-place
+    update; the shared package cannot know it, since each app names its own
+    installer differently. Constructing it performs no network I/O; only start()
+    does.
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
     """
 
     controller.coordinator_cls.assert_called_once_with(
-        current_version=VERSION, repo=GITHUB_REPO, display=controller.display
+        current_version=VERSION,
+        repo=GITHUB_REPO,
+        display=controller.display,
+        asset_pattern=INSTALLER_ASSET_PATTERN,
     )
 
     # Building the controller must not start a check on its own

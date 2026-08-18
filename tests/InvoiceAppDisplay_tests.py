@@ -772,7 +772,35 @@ def test_show_update_available_opens_window(mock_window_cls, display):
         theme=display.display.current_theme,
         font_family=display.display.current_font_family,
         font_size=display.display.current_font_size,
+        start_install_callback=None,
     )
+
+
+@patch("source.gui.InvoiceAppDisplay.UpdateWindow")
+def test_show_update_available_forwards_the_install_callback(mock_window_cls, display):
+    """
+    Verifies that the install callback the controller supplies is handed to the
+    update window, which is what makes it offer "Update and Restart" alongside the
+    manual download. The display never downloads or installs anything itself, so
+    forwarding this callback is its entire share of the feature.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the UpdateWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    # Running with a visible GUI (not headless)
+    display.arg_provider.integration_test_mode = False
+    result = SimpleNamespace(
+        update_available=True,
+        latest_version="9.9.9",
+        release_url="https://example.com/release",
+    )
+    start_install = MagicMock()
+
+    display.display.show_update_available(result, start_install)
+
+    assert mock_window_cls.call_args.kwargs["start_install_callback"] is start_install
 
 
 @patch("source.gui.InvoiceAppDisplay.UpdateWindow")

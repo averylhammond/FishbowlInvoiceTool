@@ -24,6 +24,35 @@ A Python/tkinter desktop app that parses Fishbowl-generated invoice PDFs and com
 - Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/*`
 - Package a release executable: `./scripts/package_release.sh false` (pass `true` to also bundle sample invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it. On Windows with Inno Setup installed, it additionally builds `release/FishbowlInvoiceTool_Setup.exe` (via `scripts/installer.iss`); this step is skipped on Linux or when Inno Setup is absent.
 
+## Release Packaging
+
+`scripts/package_release.sh` builds the payload; `scripts/installer.iss` turns it into
+`FishbowlInvoiceTool_Setup.exe` with Inno Setup, and `.github/workflows/release.yml` publishes both
+when a `v*` tag is pushed. Three things there exist for the in-app updater and are load-bearing:
+
+- **`/RELAUNCH=1` is what brings the app back after a silent upgrade.** The interactive `[Run]` entry
+  is flagged `skipifsilent`, so a `/VERYSILENT` install — which is how the updater invokes it — would
+  otherwise finish with the application simply gone. A second `[Run]` entry gated on the
+  `WantsRelaunch` `[Code]` function (`{param:relaunch|0} = '1'`) relaunches it, and only for that
+  route: a hand-run silent install still springs no window open. Do not "simplify" this by dropping
+  `skipifsilent` from the first entry.
+- **`release.yml` publishes `SHA256SUMS.txt`** alongside the zip and the installer, written with
+  `sha256sum` from inside `release/` so the names in it are bare and match the asset names on the
+  Release. The updater verifies the installer against it **before executing it**, so a release
+  missing that asset offers only the manual download — which is the graceful degradation, not a
+  failure. `INSTALLER_ASSET_PATTERN` in `source/constants.py` must stay in step with the installer's
+  `OutputBaseFilename`.
+- **The silent upgrade needs no UAC prompt**, which is what makes the feature viable at all:
+  `PrivilegesRequired=lowest` with `DefaultDirName={autopf}` resolves to `%LOCALAPPDATA%\Programs`,
+  and the stable `AppId` GUID lets Inno upgrade in place without being told `/DIR`. `data/` has no
+  `[Files]` entry and the input folders are flagged `uninsneveruninstall`, so settings, customer
+  PDFs and configs all survive an upgrade. Never change the `AppId`, and never share it with the
+  sibling's.
+
+Neither the executable nor the installer is code-signed, so a manual download still draws a
+SmartScreen warning. That matters more now that the app downloads and runs the installer itself; an
+authenticode certificate is tracked as follow-up work rather than being done here.
+
 ## Git Workflow (when working on a GitHub issue)
 
 When the work is tied to a specific GitHub issue, always do the following before making any changes:
@@ -38,8 +67,9 @@ The app is composed of five collaborating classes wired together in `InvoiceAppC
 - **`ArgumentProvider`** (from the shared **`fishbowl-common`** package, not `source/`) — parses CLI args. `--integration-test` flag enables headless mode (no GUI mainloop, no error popups, processes all invoices and exits) used by the integration test CI workflow.
   - Two other shared infrastructure classes also come from `fishbowl-common`: **`SettingsRepository`** (SQLite settings store — `InvoiceAppController` injects `SETTINGS_DB_PATH` as `db_path`) and **`UpdateCoordinator`** (the whole update-check feature — the daemon worker thread, the `UpdateChecker` fetch, the `display.after(0, …)` hop back onto the GUI thread, and the choice between opening `UpdateWindow` and popping "No Updates Available"/"Update Check Failed"; the controller injects `VERSION`, `GITHUB_REPO` and the display). The package is a pinned git dependency in `requirements/release.txt`; its classes are application-agnostic and take all app-specific values via constructor injection. See that repo for the class definitions and their tests.
     - `UpdateCoordinator` takes its display as a `typing.Protocol`, so it lives in the headless half of the package rather than `fishbowl_common.gui`; `InvoiceAppDisplay` satisfies it through `after()`, `show_update_available()` and `show_popup()`. `InvoiceAppController` builds it in `__init__` (after the display it reports through) and calls `start()` only in `start_application()`'s non-integration-test branch, so a headless run performs no network I/O; `handle_check_for_updates()` is the display's Help-menu callback and just forwards `start(manual=True)`. The threading and result-handling this repo used to own are covered by that class's own tests upstream — here only the wiring is tested.
+    - **In-app update ("Update and Restart").** The controller also injects `INSTALLER_ASSET_PATTERN` (`source/constants.py`) as the coordinator's `asset_pattern`, naming this app's installer among a release's assets; the shared package cannot know it, since each Fishbowl app names its own installer. Given that asset and a published `SHA256SUMS.txt`, the coordinator downloads the installer, verifies its digest, launches it silently detached and reports back — `InvoiceAppDisplay.show_update_available()` receives that flow as a second `start_install` argument and forwards it to `UpdateWindow` as `start_install_callback`. **The display's whole share of the feature is forwarding that callback**; it never downloads or executes anything itself. When the argument is `None` — no matching installer asset, no checksums asset, or a non-Windows platform — the window silently falls back to the browser-only "Exit and Update" it has always offered, which is also where a failed download lands. Both routes exit through the same `close_app_callback`, so the app leaves the same way whichever one is taken.
 - **`fishbowl_common.gui`** (the same package's GUI half) — the themed tkinter windows and styling data this app shares with the sibling `FishbowlInventoryTool`: `ThemedSubwindow`, `MessageWindow`, `AboutWindow`, `FileEditorWindow`, `UpdateWindow`, `Tooltip`, and the `color_theme`/`font_settings` data (`Theme`, `RED`, `ALL_THEMES`, `THEME_BY_NAME`, `FONT_FAMILIES`, `FONT_SIZES`, …). All of it is re-exported from `fishbowl_common.gui`, so a consumer imports from that one name rather than the individual modules. These lived in `source/gui/` until they were consolidated upstream; **do not re-add a local copy** — fix or extend them in `fishbowl-common` and bump the pin.
-  - It is a **separate import** from the top-level package, which stays tkinter-free so a headless run never loads tkinter. That split is what the `[gui]` extra in the `requirements/release.txt` pin marks: `fishbowl-common[gui] @ git+…@v1.1.0`.
+  - It is a **separate import** from the top-level package, which stays tkinter-free so a headless run never loads tkinter. That split is what the `[gui]` extra in the `requirements/release.txt` pin marks: `fishbowl-common[gui] @ git+…@v1.2.0`.
   - `AboutWindow` is application-agnostic, so it takes both the name and the version it displays by injection — `InvoiceAppDisplay.handle_about()` passes `APP_NAME` and `VERSION` from `source/constants.py`.
   - Their unit tests live upstream in `fishbowl-common/tests/gui/` and deliberately have **no counterpart here**; this repo tests only its own display classes and the wiring around the shared ones.
 - **`InvoiceDiscoveryWindow`** (`source/gui/InvoiceDiscoveryWindow.py`) — a `ThemedSubwindow` subclass letting the user copy downloaded invoice PDFs into `Invoices/` without leaving the app. It subclasses a shared base but **stays app-specific by decision** (see issue #105): it is coupled to this app's single-input-folder workflow, so it was deliberately not generalized and moved upstream.

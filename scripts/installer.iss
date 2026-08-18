@@ -94,4 +94,20 @@ Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
+; Interactive install: offer the usual "launch now" checkbox on the final page.
+; skipifsilent keeps a scripted silent deployment from springing a window open.
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+; In-app update: the running application launches this installer silently and then
+; exits so its executable can be replaced, so nothing above would bring it back.
+; Gated on the /RELAUNCH=1 switch the updater passes (see WantsRelaunch below) so
+; only that route relaunches, never a hand-run silent install.
+Filename: "{app}\{#AppExeName}"; Flags: nowait; Check: WantsRelaunch
+
+[Code]
+{ True when the installer was started by the application's own updater, which
+  passes /RELAUNCH=1. {param:relaunch|0} expands to the switch's value, or to 0
+  when it was not passed at all. }
+function WantsRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;

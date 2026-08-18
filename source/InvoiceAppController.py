@@ -9,6 +9,7 @@ from source.Invoice import Invoice
 from source.constants import (
     COST_CRITERIA_PATH,
     GITHUB_REPO,
+    INSTALLER_ASSET_PATTERN,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     SETTINGS_DB_PATH,
@@ -75,9 +76,14 @@ class InvoiceAppController:
         self.settings_repository.report_error = self.display.show_popup
 
         # Create the Update Coordinator, which owns the background release check
-        # and reports its outcome through the display created above
+        # and reports its outcome through the display created above. The asset
+        # pattern names this app's installer among the release's assets, which is
+        # what lets the user update in place rather than downloading it by hand.
         self.update_coordinator = UpdateCoordinator(
-            current_version=VERSION, repo=GITHUB_REPO, display=self.display
+            current_version=VERSION,
+            repo=GITHUB_REPO,
+            display=self.display,
+            asset_pattern=INSTALLER_ASSET_PATTERN,
         )
 
         # Use the File IO Controller to read in the criteria/exclusions for each cost section
