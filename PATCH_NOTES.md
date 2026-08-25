@@ -4,6 +4,13 @@ Each release's changes, newest first. The application shows the sections you hav
 seen yet the first time you open it after an update, and Help -> What's New brings this
 back at any time.
 
+## 4.2.0
+
+- **See what changed after an update.** The application now opens with a summary of
+  what's new the first time you start it after updating. Skip a release or two and you
+  will see everything you missed, not just the newest version. Help -> What's New brings
+  these notes back whenever you want them.
+
 ## 4.1.7
 
 - **Update without leaving the application.** When a new version is available, the update
