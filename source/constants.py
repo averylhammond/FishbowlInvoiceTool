@@ -45,9 +45,19 @@ SETTINGS_DB_PATH = DATA_DIR / "settings.db"
 # User guide shipped next to the executable; surfaced in-app via Help -> Open User Guide.
 USER_GUIDE_PATH = Path("USER_GUIDE.txt")
 
+# Patch notes shipped next to the executable, holding one "## X.Y.Z" section per
+# release. Shown on the first launch after an update and available any time from
+# Help -> What's New. Read at runtime rather than fetched, so the first launch
+# after an update needs no network.
+PATCH_NOTES_PATH = Path("PATCH_NOTES.md")
+
 # Keys under which user settings are persisted in the settings database. Shared
 # between the display (which reads/writes them) and any other consumer so the
 # two never drift apart.
 SETTING_KEY_THEME = "theme"
 SETTING_KEY_FONT_FAMILY = "font_family"
 SETTING_KEY_FONT_SIZE = "font_size"
+
+# Version the application was running the last time it was launched, compared
+# against VERSION on startup to spot the first launch after an update.
+SETTING_KEY_LAST_SEEN_VERSION = "last_seen_version"

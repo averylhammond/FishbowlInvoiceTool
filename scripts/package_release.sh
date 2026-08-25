@@ -129,9 +129,11 @@ else
 fi
 
 # Move the necessary existing files over to the release directory, including
-# the executable created by PyInstaller, and the user guide
+# the executable created by PyInstaller, the user guide, and the patch notes the
+# app shows on the first launch after an update
 mv "$ROOT_DIR/dist/AutoInvoiceProc$BINARY_EXT" "$RELEASE_DIR/"
 cp "$ROOT_DIR/USER_GUIDE.txt" "$RELEASE_DIR/"
+cp "$ROOT_DIR/PATCH_NOTES.md" "$RELEASE_DIR/"
 
 # Copy over the latest resources/Configs files that live in the automated-invoice-testing repo
 cp -a "$RESOURCES_DIR/Configs/." "$CONFIGS_DIR/"

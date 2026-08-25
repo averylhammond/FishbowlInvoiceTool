@@ -4,14 +4,23 @@ from pathlib import Path
 from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
-from fishbowl_common import ArgumentProvider, SettingsRepository, UpdateCoordinator
+from fishbowl_common import (
+    ArgumentProvider,
+    PatchNotes,
+    SettingsRepository,
+    UpdateCoordinator,
+    compare_versions,
+)
 from source.Invoice import Invoice
 from source.constants import (
+    APP_NAME,
     COST_CRITERIA_PATH,
     GITHUB_REPO,
     INSTALLER_ASSET_PATTERN,
+    PATCH_NOTES_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
+    SETTING_KEY_LAST_SEEN_VERSION,
     SETTINGS_DB_PATH,
     VERSION,
 )
@@ -50,7 +59,11 @@ class InvoiceAppController:
         # Create the Settings Repository and load the user's persisted settings so
         # they can be handed to the display and restored on startup.
         self.settings_repository = SettingsRepository(db_path=SETTINGS_DB_PATH)
-        saved_settings = self.settings_repository.get_all_settings()
+
+        # Held onto rather than used and discarded: as well as restoring the
+        # display's theme/font below, they carry the version this user last
+        # launched, which start_application() compares against VERSION.
+        self.saved_settings = self.settings_repository.get_all_settings()
 
         # Create the InvoiceAppDisplay GUI, providing it with the callbacks it
         # needs: processing invoices, reading a file's contents for the native
@@ -65,7 +78,8 @@ class InvoiceAppController:
             save_settings_callback=self.handle_save_setting,
             copy_invoice_callback=self.file_io_controller.copy_invoice_file,
             check_for_updates_callback=self.handle_check_for_updates,
-            settings=saved_settings,
+            view_patch_notes_callback=self.handle_view_patch_notes,
+            settings=self.saved_settings,
         )
 
         # Wire the GUI's popup into the File IO Controller and Settings Repository
@@ -85,6 +99,13 @@ class InvoiceAppController:
             display=self.display,
             asset_pattern=INSTALLER_ASSET_PATTERN,
         )
+
+        # Create the reader over the patch notes packaged next to the executable,
+        # which tells the user what changed after an update. Constructing it reads
+        # nothing -- the file is read on each call -- so it is built here with the
+        # rest of the collaborators and only consulted from the GUI branch of
+        # start_application(), the same shape the Update Coordinator above has.
+        self.patch_notes = PatchNotes(notes_path=PATCH_NOTES_PATH)
 
         # Use the File IO Controller to read in the criteria/exclusions for each cost section
         self.file_io_controller.parse_cost_criteria_file()
@@ -121,6 +142,13 @@ class InvoiceAppController:
             # network I/O.
             self.update_coordinator.start()
 
+            # Tell the user what changed if this is the first launch after an
+            # update. Confined to this branch, like the update check above, so an
+            # integration-test run reads no notes and opens no window -- this
+            # controller builds its display up front, so the gate has to be
+            # explicit rather than falling out of where the GUI is created.
+            self.show_patch_notes_if_updated(self.saved_settings)
+
             # Else, normally start the GUI application
             self.display.mainloop()
 
@@ -136,6 +164,68 @@ class InvoiceAppController:
         """
 
         self.update_coordinator.start(manual=True)
+
+    ###########################################################################
+    ###         InvoiceAppController -> handle_view_patch_notes()           ###
+    ###########################################################################
+    def handle_view_patch_notes(self):
+        """
+        Shows the patch notes on demand, triggered by the Help menu's "What's New"
+        item. Every version up to the running one is shown, newest first, since a
+        user who has already dismissed an update's notes has no other way back to
+        them. Wired into the display as its patch notes callback.
+        """
+
+        notes = self.patch_notes.notes_since(VERSION, None)
+
+        # Unlike the silent startup check below, a request the user made
+        # explicitly is answered even when there is nothing to show
+        if notes:
+            self.display.show_patch_notes(APP_NAME, VERSION, notes)
+        else:
+            self.display.show_popup(
+                title="No Patch Notes",
+                message=f"No patch notes found at: {PATCH_NOTES_PATH}.",
+            )
+
+    ###########################################################################
+    ###        InvoiceAppController -> show_patch_notes_if_updated()        ###
+    ###########################################################################
+    def show_patch_notes_if_updated(self, saved_settings: dict):
+        """
+        Shows the user what changed when this launch is the first one after an
+        update, and records the running version either way.
+
+        Nothing is shown on a fresh install (no version was ever stored), on an
+        ordinary relaunch, or after a downgrade: in none of those cases did an
+        update just happen. The very first launch after upgrading into this
+        feature shows nothing either, since a user coming from a build that never
+        wrote the setting is indistinguishable from a first-time user.
+
+        Args:
+            saved_settings (dict): The settings persisted by the last run, holding
+                the version that run was on
+        """
+
+        last_seen_version = saved_settings.get(SETTING_KEY_LAST_SEEN_VERSION)
+
+        # Record the running version before deciding anything, so an update's
+        # notes are shown once rather than on every launch that follows it
+        self.handle_save_setting(SETTING_KEY_LAST_SEEN_VERSION, VERSION)
+
+        if not last_seen_version or compare_versions(last_seen_version, VERSION) >= 0:
+            return
+
+        # Every version the user passed through, not just the one they landed on
+        notes = self.patch_notes.notes_since(VERSION, last_seen_version)
+        if not notes:
+            return
+
+        # Open the window once the main loop is running rather than inline: the
+        # shared window centers itself over this one, whose geometry reads as
+        # 1x1+0+0 until the root window has been mapped, so an inline call would
+        # put the notes in the corner of the screen instead of over the app
+        self.display.after(0, self.display.show_patch_notes, APP_NAME, VERSION, notes)
 
     ###########################################################################
     ###          InvoiceAppController -> handle_process_invoice()           ###
