@@ -4,6 +4,10 @@ Each release's changes, newest first. The application shows the sections you hav
 seen yet the first time you open it after an update, and Help -> What's New brings this
 back at any time.
 
+## 4.2.1
+
+- Maintenance release. Nothing about how the application works has changed.
+
 ## 4.2.0
 
 - **See what changed after an update.** The application now opens with a summary of
