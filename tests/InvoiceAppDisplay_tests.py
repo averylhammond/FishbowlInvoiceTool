@@ -59,7 +59,8 @@ def display(request):
             mocked Tk methods (`title`, `geometry`, `resizable`, `configure`,
             `config`), the mocked ArgumentProvider instance (`arg_provider`), and
             the callbacks passed at construction (`process_callback`,
-            `read_file_callback`, `save_config_callback`, `save_settings_callback`).
+            `read_file_callback`, `save_config_callback`, `save_settings_callback`,
+            `view_patch_notes_callback`).
     """
 
     # Settings supplied indirectly by a test, or None when not parametrized
@@ -95,6 +96,7 @@ def display(request):
         save_settings_callback = MagicMock()
         copy_invoice_callback = MagicMock()
         check_for_updates_callback = MagicMock()
+        view_patch_notes_callback = MagicMock()
 
         built_display = InvoiceAppDisplay(
             process_callback=callback,
@@ -103,6 +105,7 @@ def display(request):
             save_settings_callback=save_settings_callback,
             copy_invoice_callback=copy_invoice_callback,
             check_for_updates_callback=check_for_updates_callback,
+            view_patch_notes_callback=view_patch_notes_callback,
             title="Invoice Processor",
             window_resolution="750x750",
             settings=settings,
@@ -122,6 +125,7 @@ def display(request):
             save_settings_callback=save_settings_callback,
             copy_invoice_callback=copy_invoice_callback,
             check_for_updates_callback=check_for_updates_callback,
+            view_patch_notes_callback=view_patch_notes_callback,
             tooltip_cls=mock_tooltip_cls,
         )
 
@@ -734,6 +738,74 @@ def test_handle_check_for_updates_invokes_callback(display):
     display.display.handle_check_for_updates()
 
     display.check_for_updates_callback.assert_called_once_with()
+
+
+###############################################################################
+###          Tests InvoiceAppDisplay -> handle_view_patch_notes()           ###
+###############################################################################
+def test_build_widgets_wires_whats_new_into_the_help_menu(display):
+    """
+    Verifies that the Help menu offers a "What's New" item wired to the patch
+    notes handler, so a user who dismissed the window after an update still has a
+    way back to what changed.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    calls = display.display.help_menu.add_command.call_args_list
+
+    assert calls[-1].kwargs == {
+        "label": "What's New",
+        "command": display.display.handle_view_patch_notes,
+    }
+
+
+def test_handle_view_patch_notes_invokes_callback(display):
+    """
+    Verifies that the Help menu's "What's New" handler invokes the
+    view_patch_notes_callback supplied by the controller, which reads the notes
+    and hands them back through show_patch_notes(). The display reads no file of
+    its own.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_view_patch_notes()
+
+    display.view_patch_notes_callback.assert_called_once_with()
+
+
+###############################################################################
+###              Tests InvoiceAppDisplay -> show_patch_notes()              ###
+###############################################################################
+@patch("source.gui.InvoiceAppDisplay.PatchNotesWindow")
+def test_show_patch_notes_opens_window(mock_window_cls, display):
+    """
+    Verifies that show_patch_notes opens a PatchNotesWindow with the application
+    name, version and notes the controller supplied, styled with the active
+    theme/font. The shared window is application-agnostic, so all three are
+    injected, and the notes arrive as a string the controller has already
+    selected.
+
+    Args:
+        mock_window_cls (unittest.mock.MagicMock): Mocks the PatchNotesWindow class
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.show_patch_notes(APP_NAME, VERSION, "## 4.1.7")
+
+    mock_window_cls.assert_called_once_with(
+        parent=display.display,
+        title="What's New",
+        app_name=APP_NAME,
+        version=VERSION,
+        notes="## 4.1.7",
+        theme=display.display.current_theme,
+        font_family=display.display.current_font_family,
+        font_size=display.display.current_font_size,
+    )
 
 
 ###############################################################################

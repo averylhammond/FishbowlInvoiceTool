@@ -6,11 +6,14 @@ from decimal import Decimal
 
 from source.InvoiceAppController import InvoiceAppController
 from source.constants import (
+    APP_NAME,
     COST_CRITERIA_PATH,
     GITHUB_REPO,
     INSTALLER_ASSET_PATTERN,
+    PATCH_NOTES_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
+    SETTING_KEY_LAST_SEEN_VERSION,
     SETTINGS_DB_PATH,
     VERSION,
 )
@@ -29,7 +32,8 @@ def controller():
     Returns:
         types.SimpleNamespace: Holds the constructed controller (`controller`) and
             the mocked collaborator instances (`arg_provider`, `file_io`,
-            `processor`, `display`, `coordinator`) plus the patched `Invoice` class
+            `processor`, `display`, `coordinator`, `patch_notes`) plus the patched
+            `Invoice` class
             so individual tests can configure return values and assert calls.
     """
 
@@ -40,6 +44,7 @@ def controller():
         patch("source.InvoiceAppController.InvoiceAppDisplay") as mock_display_cls,
         patch("source.InvoiceAppController.SettingsRepository") as mock_settings_repo_cls,
         patch("source.InvoiceAppController.UpdateCoordinator") as mock_coordinator_cls,
+        patch("source.InvoiceAppController.PatchNotes") as mock_patch_notes_cls,
         patch("source.InvoiceAppController.Invoice") as mock_invoice_cls,
     ):
 
@@ -50,6 +55,7 @@ def controller():
         mock_display = mock_display_cls.return_value
         mock_settings_repo = mock_settings_repo_cls.return_value
         mock_coordinator = mock_coordinator_cls.return_value
+        mock_patch_notes = mock_patch_notes_cls.return_value
 
         # Provide the criteria attributes the controller reads off file_io while
         # wiring up the InvoiceProcessor during construction
@@ -83,6 +89,8 @@ def controller():
             settings_repo=mock_settings_repo,
             coordinator_cls=mock_coordinator_cls,
             coordinator=mock_coordinator,
+            patch_notes_cls=mock_patch_notes_cls,
+            patch_notes=mock_patch_notes,
             invoice_cls=mock_invoice_cls,
             invoice=mock_invoice_cls.return_value,
         )
@@ -126,6 +134,7 @@ def test_init_constructs_and_wires_collaborators(controller):
         save_settings_callback=controller.controller.handle_save_setting,
         copy_invoice_callback=controller.file_io.copy_invoice_file,
         check_for_updates_callback=controller.controller.handle_check_for_updates,
+        view_patch_notes_callback=controller.controller.handle_view_patch_notes,
         settings={"theme": "Ocean"},
     )
 
@@ -189,6 +198,23 @@ def test_init_builds_the_update_coordinator(controller):
     controller.coordinator.start.assert_not_called()
 
 
+def test_init_builds_the_patch_notes_reader(controller):
+    """
+    Verifies that __init__ builds the shared PatchNotes reader over the notes file
+    packaged next to the executable. Constructing it reads nothing -- the file is
+    read on each call -- so it is built with the rest of the collaborators and only
+    consulted from the GUI branch of start_application().
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.patch_notes_cls.assert_called_once_with(notes_path=PATCH_NOTES_PATH)
+
+    # Building the controller must not read the notes on its own
+    controller.patch_notes.notes_since.assert_not_called()
+
+
 def test_init_loads_persisted_settings(controller):
     """
     Verifies that __init__ reads the persisted settings from the settings
@@ -233,6 +259,26 @@ def test_start_application_resets_files_and_starts_gui(controller):
     controller.display.handle_process_all_invoices.assert_not_called()
 
 
+def test_start_application_checks_for_patch_notes(controller):
+    """
+    Verifies that a normal run checks whether this launch is the first one after
+    an update, handing the check the settings loaded during construction, before
+    entering the GUI loop.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.arg_provider.integration_test_mode = False
+
+    with patch.object(
+        controller.controller, "show_patch_notes_if_updated"
+    ) as mock_show_patch_notes:
+        controller.controller.start_application()
+
+    mock_show_patch_notes.assert_called_once_with({"theme": "Ocean"})
+
+
 def test_start_application_integration_test_mode_processes_all(controller):
     """
     Verifies that start_application processes all invoices directly (without the
@@ -254,6 +300,12 @@ def test_start_application_integration_test_mode_processes_all(controller):
     # The update check is never started in integration test mode
     controller.coordinator.start.assert_not_called()
 
+    # Nor are the patch notes read or shown: this controller builds its display up
+    # front, so the headless gate has to be explicit rather than falling out of
+    # where the GUI is created
+    controller.patch_notes.notes_since.assert_not_called()
+    controller.display.after.assert_not_called()
+
 
 ###############################################################################
 ###        Tests InvoiceAppController -> handle_check_for_updates()         ###
@@ -271,6 +323,170 @@ def test_handle_check_for_updates_starts_manual_check(controller):
     controller.controller.handle_check_for_updates()
 
     controller.coordinator.start.assert_called_once_with(manual=True)
+
+
+###############################################################################
+###       Tests InvoiceAppController -> show_patch_notes_if_updated()       ###
+###############################################################################
+# Stand-in for what the shared reader returns: one version's section, which the
+# controller passes through untouched
+NOTES = "## 4.1.7\n\n- Added a thing"
+
+
+def test_show_patch_notes_if_updated_shows_the_notes_after_an_update(controller):
+    """
+    Verifies that a launch following an update shows the notes for every version
+    the user passed through, and stamps the running version so they are shown once
+    rather than on every launch after it.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.patch_notes.notes_since.return_value = NOTES
+
+    controller.controller.show_patch_notes_if_updated(
+        {SETTING_KEY_LAST_SEEN_VERSION: "4.0.0"}
+    )
+
+    # The whole range is requested, not just the version landed on, so a skipped
+    # release is still announced
+    controller.patch_notes.notes_since.assert_called_once_with(VERSION, "4.0.0")
+    controller.settings_repo.save_setting.assert_called_once_with(
+        key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION
+    )
+
+    # Opened through after() rather than inline: the shared window centers itself
+    # over the main window, whose geometry is not known until it has been mapped
+    controller.display.after.assert_called_once_with(
+        0,
+        controller.display.show_patch_notes,
+        APP_NAME,
+        VERSION,
+        NOTES,
+    )
+
+
+def test_show_patch_notes_if_updated_shows_nothing_on_a_fresh_install(controller):
+    """
+    Verifies that a launch with no stored version shows nothing but still stamps
+    the running version. No update happened: this is either a first-time user, who
+    has no interest in what changed before they arrived, or someone upgrading from
+    a build that never wrote the setting, which is indistinguishable from one.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.controller.show_patch_notes_if_updated({})
+
+    controller.settings_repo.save_setting.assert_called_once_with(
+        key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION
+    )
+    controller.patch_notes.notes_since.assert_not_called()
+    controller.display.after.assert_not_called()
+
+
+def test_show_patch_notes_if_updated_shows_nothing_on_an_ordinary_relaunch(controller):
+    """
+    Verifies that reopening the same version shows nothing, so an update's notes
+    appear once rather than every time the application starts.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.controller.show_patch_notes_if_updated(
+        {SETTING_KEY_LAST_SEEN_VERSION: VERSION}
+    )
+
+    controller.patch_notes.notes_since.assert_not_called()
+    controller.display.after.assert_not_called()
+
+
+def test_show_patch_notes_if_updated_shows_nothing_after_a_downgrade(controller):
+    """
+    Verifies that a launch following a downgrade or a sideways install shows
+    nothing and stamps the running version, since the user has already seen these
+    notes.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.controller.show_patch_notes_if_updated(
+        {SETTING_KEY_LAST_SEEN_VERSION: "99.0.0"}
+    )
+
+    controller.settings_repo.save_setting.assert_called_once_with(
+        key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION
+    )
+    controller.patch_notes.notes_since.assert_not_called()
+    controller.display.after.assert_not_called()
+
+
+def test_show_patch_notes_if_updated_shows_nothing_when_there_are_no_notes(controller):
+    """
+    Verifies that an update whose notes file is missing or says nothing about the
+    versions passed through opens no window. The notes are a convenience, so a
+    missing file leaves the launch exactly as it was before the feature existed.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.patch_notes.notes_since.return_value = ""
+
+    controller.controller.show_patch_notes_if_updated(
+        {SETTING_KEY_LAST_SEEN_VERSION: "4.0.0"}
+    )
+
+    controller.display.after.assert_not_called()
+
+
+###############################################################################
+###         Tests InvoiceAppController -> handle_view_patch_notes()         ###
+###############################################################################
+def test_handle_view_patch_notes_shows_every_version_up_to_this_one(controller):
+    """
+    Verifies that the Help menu's "What's New" shows the notes for every version
+    up to the running one, so a user who dismissed the window after an update
+    still has a way back to what changed.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.patch_notes.notes_since.return_value = NOTES
+
+    controller.controller.handle_view_patch_notes()
+
+    # No lower bound, so every section up to the running version is shown
+    controller.patch_notes.notes_since.assert_called_once_with(VERSION, None)
+    controller.display.show_patch_notes.assert_called_once_with(
+        APP_NAME, VERSION, NOTES
+    )
+
+
+def test_handle_view_patch_notes_reports_when_there_are_no_notes(controller):
+    """
+    Verifies that a request the user made explicitly is answered even when the
+    notes file is missing, unlike the silent startup check which simply shows
+    nothing.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.patch_notes.notes_since.return_value = ""
+
+    controller.controller.handle_view_patch_notes()
+
+    controller.display.show_patch_notes.assert_not_called()
+    controller.display.show_popup.assert_called_once_with(
+        title="No Patch Notes",
+        message=f"No patch notes found at: {PATCH_NOTES_PATH}.",
+    )
 
 
 ###############################################################################
