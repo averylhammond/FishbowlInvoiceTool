@@ -23,11 +23,13 @@ GITHUB_REPO = "averylhammond/FishbowlInvoiceTool"
 INSTALLER_ASSET_PATTERN = "FishbowlInvoiceTool_Setup.exe"
 
 # Application file paths, relative to the executable's current working directory.
+# Directory constants are suffixed _DIR and file constants _PATH, matching the
+# sibling FishbowlInventoryTool so the two stay recognisable to each other.
 
 # Base directories. The specific file paths below are composed from these.
 LOGS_DIR = Path("logs")
 CONFIGS_DIR = Path("Configs")
-INVOICES_PATH = Path("Invoices")
+INVOICES_DIR = Path("Invoices")
 DATA_DIR = Path("data")
 
 # Log files
