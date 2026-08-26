@@ -26,7 +26,7 @@ from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
 from source.constants import (
     APP_NAME,
     VERSION,
-    INVOICES_PATH,
+    INVOICES_DIR,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     COST_CRITERIA_PATH,
@@ -464,7 +464,7 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Open a file dialog to select a PDF invoice file (Tk requires a str path)
         file_path = filedialog.askopenfilename(
-            initialdir=str(INVOICES_PATH),
+            initialdir=str(INVOICES_DIR),
             title="Select Invoice PDF",
             filetypes=[("PDF files", "*.pdf")],  # Filter for PDF files only
         )
@@ -537,7 +537,7 @@ class InvoiceAppDisplay(tk.Tk):
 
         try:
             # Loop through all invoice files in the invoices directory and process each one
-            for file_path in INVOICES_PATH.resolve().iterdir():
+            for file_path in INVOICES_DIR.resolve().iterdir():
 
                 # Process each invoice, appending output to the results.txt file and output widget
                 self.process_callback(file_path, append_output=True)

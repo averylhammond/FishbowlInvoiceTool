@@ -10,7 +10,7 @@ from source.constants import (
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     COST_CRITERIA_PATH,
-    INVOICES_PATH,
+    INVOICES_DIR,
 )
 
 
@@ -256,11 +256,11 @@ class InvoiceAppFileIO:
                 failed (the failure is also surfaced via report_error)
         """
 
-        destination_path = INVOICES_PATH / source_path.name
+        destination_path = INVOICES_DIR / source_path.name
 
         try:
             # Ensure the Invoices/ directory exists before copying into it
-            INVOICES_PATH.mkdir(parents=True, exist_ok=True)
+            INVOICES_DIR.mkdir(parents=True, exist_ok=True)
 
             # Leave an existing file untouched unless the caller confirmed an
             # overwrite, so the user is never silently overwritten

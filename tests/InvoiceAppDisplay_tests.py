@@ -447,21 +447,21 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_popup, display):
 ###############################################################################
 ###         Tests InvoiceAppDisplay -> handle_process_all_invoices()        ###
 ###############################################################################
-@patch("source.gui.InvoiceAppDisplay.INVOICES_PATH")
-def test_handle_process_all_invoices_processes_each(mock_invoices_path, display):
+@patch("source.gui.InvoiceAppDisplay.INVOICES_DIR")
+def test_handle_process_all_invoices_processes_each(mock_invoices_dir, display):
     """
     Verifies that handle_process_all_invoices iterates the invoices directory and
     forwards each file to the process callback with append_output True.
 
     Args:
-        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
+        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # The invoices directory yields two invoice files
     first_invoice = MagicMock()
     second_invoice = MagicMock()
-    mock_invoices_path.resolve.return_value.iterdir.return_value = [
+    mock_invoices_dir.resolve.return_value.iterdir.return_value = [
         first_invoice,
         second_invoice,
     ]
@@ -479,22 +479,22 @@ def test_handle_process_all_invoices_processes_each(mock_invoices_path, display)
 
 
 @patch.object(InvoiceAppDisplay, "show_popup")
-@patch("source.gui.InvoiceAppDisplay.INVOICES_PATH")
+@patch("source.gui.InvoiceAppDisplay.INVOICES_DIR")
 def test_handle_process_all_invoices_error_shows_popup(
-    mock_invoices_path, mock_show_popup, display
+    mock_invoices_dir, mock_show_popup, display
 ):
     """
     Verifies that handle_process_all_invoices shows an error popup when iterating
     the invoices directory raises an exception.
 
     Args:
-        mock_invoices_path (unittest.mock.MagicMock): Mocks the INVOICES_PATH constant
+        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
         mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
         display (pytest.fixture): Provides the display and its mocks
     """
 
     # Resolving/iterating the invoices directory fails
-    mock_invoices_path.resolve.return_value.iterdir.side_effect = OSError(
+    mock_invoices_dir.resolve.return_value.iterdir.side_effect = OSError(
         "directory unavailable"
     )
 
