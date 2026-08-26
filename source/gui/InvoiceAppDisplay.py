@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 from source.Invoice import Invoice
-from fishbowl_common import ArgumentProvider
+from fishbowl_common import ArgumentProvider, UpdateCheckResult
 from fishbowl_common.gui import (
     ALL_THEMES,
     DARK,  # Default theme used by GUI
@@ -684,7 +684,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     def show_update_available(
         self,
-        result,
+        result: UpdateCheckResult,
         start_install: (
             Callable[[Callable[[int, int], None], Callable[[bool], None]], None] | None
         ) = None,

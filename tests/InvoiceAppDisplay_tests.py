@@ -6,6 +6,7 @@ from unittest.mock import patch, call, MagicMock
 
 from source.Invoice import Invoice
 from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
+from fishbowl_common import UpdateCheckResult
 from fishbowl_common.gui import (
     DARK,
     LIGHT,
@@ -824,7 +825,7 @@ def test_show_update_available_opens_window(mock_window_cls, display):
 
     # Running with a visible GUI (not headless)
     display.arg_provider.integration_test_mode = False
-    result = SimpleNamespace(
+    result = UpdateCheckResult(
         update_available=True,
         latest_version="9.9.9",
         release_url="https://example.com/release",
@@ -863,7 +864,7 @@ def test_show_update_available_forwards_the_install_callback(mock_window_cls, di
 
     # Running with a visible GUI (not headless)
     display.arg_provider.integration_test_mode = False
-    result = SimpleNamespace(
+    result = UpdateCheckResult(
         update_available=True,
         latest_version="9.9.9",
         release_url="https://example.com/release",
@@ -888,7 +889,7 @@ def test_show_update_available_suppressed_in_integration_mode(mock_window_cls, d
 
     # Running headless for integration testing
     display.arg_provider.integration_test_mode = True
-    result = SimpleNamespace(
+    result = UpdateCheckResult(
         update_available=True,
         latest_version="9.9.9",
         release_url="https://example.com/release",
