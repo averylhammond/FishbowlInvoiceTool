@@ -52,8 +52,9 @@ echo "Derived project root: $ROOT_DIR"
 echo "Resources location: $RESOURCES_DIR"
 
 # Local-developer-only environment prep. These steps prepare a developer's working tree
-# for a clean build; in CI they are unnecessary and the git clean would delete the
-# freshly checked-out submodule, so guard them behind the CI check.
+# for a clean build; in CI the workspace is already pristine and the submodule is checked
+# out by the workflow, so guard them behind the CI check rather than cleaning a tree that
+# was just created.
 if [[ "$IS_CI" == "true" ]]; then
     echo "CI detected; skipping local env prep (venv deactivate, git clean, submodule init)."
 else
@@ -64,10 +65,16 @@ else
     fi
 
     # Run a git clean to clean up the project tree before packaging, including removing
-    # the old virtual environment if necessary
-    git clean -fdxf
+    # the old virtual environment if necessary. A single -f on purpose: git skips the
+    # registered automated-invoice-testing submodule either way, and the second -f that
+    # used to be here only widened what could be deleted for no gain. This matches the
+    # sibling FishbowlInventoryTool.
+    git clean -fdx
 
-    # Initialize the submodule if its resources are missing
+    # Initialize the submodule if its resources are missing, which covers a fresh clone
+    # where 'git submodule update --init' has not been run yet. The clean above leaves an
+    # already-initialized submodule alone, so this is a first-run fallback rather than a
+    # repair step.
     if [[ ! -d "$RESOURCES_DIR" ]]; then
         echo "Testing resources not found. Attempting to initialize submodules..."
         git submodule update --init --recursive

@@ -1,6 +1,7 @@
 # No need to track cache files or IDE-specific files
 __pycache__/
 .vscode/
+.pytest_cache/
 
 # Ignore virtual environment files
 venv/
@@ -20,11 +21,14 @@ release/
 .coverage
 coverage.xml
 
-# Ignore invoices moved into this folder for testing
+# Ignore invoices moved into this folder for testing, but keep the folder itself
+# so a fresh clone has somewhere to put them
 Invoices/*
+!Invoices/.gitkeep
 
-# Ignore config files
+# Ignore config files, but keep the folder itself for the same reason
 Configs/*
+!Configs/.gitkeep
 
 # Ignore the per-machine user settings database
 data/
