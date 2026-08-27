@@ -152,5 +152,6 @@ and installer, and publishes them as a GitHub Release.
   sibling desktop app, which parses Fishbowl inventory availability and turnover report
   PDFs into an Excel report.
 - [fishbowl-common](https://github.com/averylhammond/fishbowl-common) — the shared
-  infrastructure package both apps depend on, providing `ArgumentProvider`,
-  `SettingsRepository`, and `UpdateChecker`.
+  infrastructure and GUI package both apps depend on. This app uses `ArgumentProvider`,
+  `SettingsRepository`, `UpdateCoordinator`, `PatchNotes` and `compare_versions()` from its
+  headless half, and the themed windows and theme/font data from `fishbowl_common.gui`.
