@@ -1,161 +1,148 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this
+repository.
+
+> **Keep the guidance current.** Whenever you change the architecture — add/remove/rename a class
+> or module, move a responsibility between this repo and `fishbowl-common`, change a public
+> signature, or alter the build/test/release workflow — update **this file or the matching
+> `.claude/rules/` file** in the same change. Treat that as part of the definition of done for any
+> structural change, not an afterthought.
 
 ## Project Overview
 
-A Python/tkinter desktop app that parses Fishbowl-generated invoice PDFs and computes labor/material/shipping cost breakdowns and totals, comparing the calculated total against the listed total to catch Fishbowl's floating-point rounding errors. The input files in the Configs/ folder determine which sales representative generated each invoice, which payment method was agreed upon, and instructions on how to break each itemized line into categories.
+A Python/tkinter desktop app that parses Fishbowl-generated invoice PDFs and computes
+labor/material/shipping cost breakdowns and totals, comparing the calculated total against the
+listed total to catch Fishbowl's floating-point rounding errors. The input files in `Configs/`
+determine which sales representative generated each invoice, which payment method was agreed upon,
+and how each itemized line breaks into categories.
+
+It is one of two Fishbowl desktop tools. The sibling is
+[FishbowlInventoryTool](https://github.com/averylhammond/FishbowlInventoryTool); the shared
+infrastructure and GUI package both depend on is
+[fishbowl-common](https://github.com/averylhammond/fishbowl-common).
 
 ## Setup
 
-- Submodule `automated-invoice-testing` provides sample invoices/configs for development and integration testing: `git submodule update --init`
-- This submodule repo is private since it contains sensitive customer data. Never commit information from sources obtained in this repo to preserve customer privacy.
-- `./scripts/copy_resources.sh` copies sample `Configs/` and `Invoices/` from the submodule into the project root (required before running the app or integration tests locally).
-- Virtual env: `python -m venv venv`, then `source venv/Scripts/activate` (Windows) or `source venv/bin/activate` (Linux/Mac).
-- Install deps: `pip install -r requirements/dev.txt` (pulls in `release.txt` plus pytest/pytest-cov).
+- Submodule `automated-invoice-testing` provides sample invoices/configs for development and
+  integration testing: `git submodule update --init`
+- **This submodule repo is private since it contains sensitive customer data. Never commit
+  information obtained from it, and never echo its contents into a CI log.**
+- `./scripts/copy_resources.sh` copies sample `Configs/` and `Invoices/` from the submodule into
+  the project root (required before running the app or integration tests locally).
+- Virtual env: `python -m venv venv`, then `source venv/Scripts/activate` (Windows) or
+  `source venv/bin/activate` (Linux/Mac).
+- Install deps: `pip install -r requirements/dev.txt` (pulls in `release.txt` plus
+  pytest/pytest-cov). CI pins Python `3.11.9`.
 
 ## Common Commands
 
 - Run the app (GUI): `python main.py`
-- Run the app headless (processes all invoices in `Invoices/` and writes `logs/results.txt`, no GUI): `python main.py --integration-test`
+- Run the app headless (processes all invoices in `Invoices/` and writes `logs/results.txt`, no
+  GUI): `python main.py --integration-test`
 - Run all unit tests: `pytest tests/*`
 - Run a single test file: `pytest tests/Invoice_tests.py`
-- Run a single test: `pytest tests/processor_utilities_tests.py::test_search_text_by_re_order_number_correct_format`
-- Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/*`
-- Package a release executable: `./scripts/package_release.sh false` (pass `true` to also bundle sample invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it. On Windows with Inno Setup installed, it additionally builds `release/FishbowlInvoiceTool_Setup.exe` (via `scripts/installer.iss`); this step is skipped on Linux or when Inno Setup is absent.
+- Run a single test:
+  `pytest tests/processor_utilities_tests.py::test_search_text_by_re_order_number_correct_format`
+- Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml --cov-fail-under=90 tests/*`
+- Package a release: `./scripts/package_release.sh false` (pass `true` to also bundle sample
+  invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
+  with Inno Setup installed it also builds `release/FishbowlInvoiceTool_Setup.exe`.
 
-## Release Packaging
+## CI
 
-`scripts/package_release.sh` builds the payload; `scripts/installer.iss` turns it into
-`FishbowlInvoiceTool_Setup.exe` with Inno Setup, and `.github/workflows/release.yml` publishes both
-when a `v*` tag is pushed. Several things there exist for the in-app updater and are load-bearing:
+Four workflows in `.github/workflows/`: unit tests and code coverage on `ubuntu-latest`,
+integration tests and releases on `windows-latest`. Coverage is gated at **90%**. The integration
+check diffs `logs/results.txt` against the submodule's `canonical_correct_results.txt`, so any
+change to parsing or output formatting breaks it until that canonical file is updated.
 
-- **`/RELAUNCH=1` is what brings the app back after a silent upgrade.** The interactive `[Run]` entry
-  is flagged `skipifsilent`, so a `/VERYSILENT` install — which is how the updater invokes it — would
-  otherwise finish with the application simply gone. A second `[Run]` entry gated on the
-  `WantsRelaunch` `[Code]` function (`{param:relaunch|0} = '1'`) relaunches it, and only for that
-  route: a hand-run silent install still springs no window open. Do not "simplify" this by dropping
-  `skipifsilent` from the first entry.
-- **`CloseApplications=force` is what makes the silent upgrade actually apply.** The running app
-  launches the installer and exits, but Restart Manager scans a few hundred milliseconds later and
-  asks the app to close by posting to its window — and a PyInstaller onefile build has two
-  processes, the bootloader and its child, the bootloader owning no window. It never answers, Setup
-  waits out its 30-second timeout, and because the updater passes `/SUPPRESSMSGBOXES` the resulting
-  Abort/Retry/Ignore prompt defaults to **Abort**: the upgrade rolls back silently and the user is
-  left on the old version with no error. No delay on the app's side fixes this, since there is no
-  window to close — Setup has to terminate the process. Do not weaken this to plain
-  `CloseApplications=yes`.
-- **Setup clears the inherited `_PYI_*` variables before relaunching the app.** The app is a
-  PyInstaller onefile build, so its environment describes its extracted bundle; it launches the
-  installer as a child process, which inherits those variables and would pass them to the relaunched
-  app. Since PyInstaller 6.22.1 an app that starts with them set assumes it is a worker sub-process
-  of a onefile parent and requires its parent process to be the same executable — it is Setup, so it
-  refuses to start with "Security validation failure: parent process has different executable". An
-  in-place upgrade keeps the same path, so nothing else tips it off. `InitializeSetup` in the `.iss`
-  unsets them. The deeper fix belongs upstream, in `fishbowl_common`'s `UpdateInstaller`, which
-  should hand the installer a sanitized environment rather than its own; this one also covers users
-  upgrading from an app version released before that lands. Note `package_release.sh` leaves
-  PyInstaller unpinned, which is how a bootloader change landed mid-release-series (see issue #99).
-- **`release.yml` publishes `SHA256SUMS.txt`** alongside the zip and the installer, written with
-  `sha256sum` from inside `release/` so the names in it are bare and match the asset names on the
-  Release. The updater verifies the installer against it **before executing it**, so a release
-  missing that asset offers only the manual download — which is the graceful degradation, not a
-  failure. `INSTALLER_ASSET_PATTERN` in `source/constants.py` must stay in step with the installer's
-  `OutputBaseFilename`.
-- **`PATCH_NOTES.md` ships in the payload and must be replaced on upgrade.**
-  `package_release.sh` copies it next to `USER_GUIDE.txt`, and its `[Files]` entry is flagged
-  plain `ignoreversion` — deliberately **not** the `onlyifdoesntexist uninsneveruninstall` the
-  `Configs\*`/`Invoices\*` entries below it use. Those flags protect the customer's own data;
-  this is app content, and a stale copy would have the app announce an update by showing the
-  previous release's notes. There is also a `{group}\What's New` `[Icons]` entry beside the
-  user guide's.
-- **`release.yml` fails a tag whose version has no `## <VERSION>` section in `PATCH_NOTES.md`**,
-  alongside the existing tag-versus-`VERSION` check and with the same `::error::` treatment.
-  Shipping a release whose notes never mention it is precisely the failure this feature would
-  otherwise hide until a customer updated into it. Cutting a release is therefore: bump `VERSION`,
-  add that version's `PATCH_NOTES.md` section, merge, then push a matching `vX.Y.Z` tag.
-- **The silent upgrade needs no UAC prompt**, which is what makes the feature viable at all:
-  `PrivilegesRequired=lowest` with `DefaultDirName={autopf}` resolves to `%LOCALAPPDATA%\Programs`,
-  and the stable `AppId` GUID lets Inno upgrade in place without being told `/DIR`. `data/` has no
-  `[Files]` entry and the input folders are flagged `uninsneveruninstall`, so settings, customer
-  PDFs and configs all survive an upgrade. Never change the `AppId`, and never share it with the
-  sibling's.
-
-Neither the executable nor the installer is code-signed, so a manual download still draws a
-SmartScreen warning. That matters more now that the app downloads and runs the installer itself; an
-authenticode certificate is tracked as follow-up work rather than being done here.
-
-## Git Workflow (when working on a GitHub issue)
-
-When the work is tied to a specific GitHub issue, always do the following before making any changes:
-
-- **Start from an up-to-date base branch.** Check out the base branch (usually `main` unless another branch is explicitly provided) and pull the latest (`git checkout main && git pull`) before creating the new branch, so work branches off the current tip rather than a stale local copy.
-- **Name the branch so it links to the issue in GitHub.** Include the issue number in the branch name (e.g. `28-native-config-management` or `issue-28-native-config-management`) so GitHub associates the branch and its PR with the issue. Then branch off the freshly pulled base (`git checkout -b <issue-number>-<short-description>`).
+Pushing a `v*` tag runs the release workflow, which refuses the tag unless it matches
+`constants.VERSION` **and** `PATCH_NOTES.md` has a matching `## <VERSION>` section. **Cutting a
+release is: bump `VERSION`, add that version's `PATCH_NOTES.md` section, merge, then push a
+matching `vX.Y.Z` tag.** Details in `.claude/rules/ci.md`.
 
 ## Architecture
 
-The app is composed of five collaborating classes wired together in `InvoiceAppController`:
+`InvoiceAppController` constructs and wires everything. Each module owns exactly one concern:
 
-- **`ArgumentProvider`** (from the shared **`fishbowl-common`** package, not `source/`) — parses CLI args. `--integration-test` flag enables headless mode (no GUI mainloop, no error popups, processes all invoices and exits) used by the integration test CI workflow.
-  - Three other shared infrastructure classes also come from `fishbowl-common`: **`SettingsRepository`** (SQLite settings store — `InvoiceAppController` injects `SETTINGS_DB_PATH` as `db_path`) and **`UpdateCoordinator`** (the whole update-check feature — the daemon worker thread, the `UpdateChecker` fetch, the `display.after(0, …)` hop back onto the GUI thread, and the choice between opening `UpdateWindow` and popping "No Updates Available"/"Update Check Failed"; the controller injects `VERSION`, `GITHUB_REPO` and the display), and **`PatchNotes`** (reads the packaged `PATCH_NOTES.md` and returns the `## X.Y.Z` sections between two versions; the controller injects `PATCH_NOTES_PATH`). The package is a pinned git dependency in `requirements/release.txt`; its classes are application-agnostic and take all app-specific values via constructor injection. See that repo for the class definitions and their tests.
-    - `UpdateCoordinator` takes its display as a `typing.Protocol`, so it lives in the headless half of the package rather than `fishbowl_common.gui`; `InvoiceAppDisplay` satisfies it through `after()`, `show_update_available()` and `show_popup()`. `InvoiceAppController` builds it in `__init__` (after the display it reports through) and calls `start()` only in `start_application()`'s non-integration-test branch, so a headless run performs no network I/O; `handle_check_for_updates()` is the display's Help-menu callback and just forwards `start(manual=True)`. The threading and result-handling this repo used to own are covered by that class's own tests upstream — here only the wiring is tested.
-    - **In-app update ("Update and Restart").** The controller also injects `INSTALLER_ASSET_PATTERN` (`source/constants.py`) as the coordinator's `asset_pattern`, naming this app's installer among a release's assets; the shared package cannot know it, since each Fishbowl app names its own installer. Given that asset and a published `SHA256SUMS.txt`, the coordinator downloads the installer, verifies its digest, launches it silently detached and reports back — `InvoiceAppDisplay.show_update_available()` receives that flow as a second `start_install` argument and forwards it to `UpdateWindow` as `start_install_callback`. **The display's whole share of the feature is forwarding that callback**; it never downloads or executes anything itself. When the argument is `None` — no matching installer asset, no checksums asset, or a non-Windows platform — the window silently falls back to the browser-only "Exit and Update" it has always offered, which is also where a failed download lands. Both routes exit through the same `close_app_callback`, so the app leaves the same way whichever one is taken.
-    - **Patch notes on the first launch after an update.** Since the app now updates itself silently, the user comes back to a window indistinguishable from the one they left; `PatchNotes` plus `SETTING_KEY_LAST_SEEN_VERSION` are what tell them what they got. `InvoiceAppController.show_patch_notes_if_updated()` compares the stored version against `VERSION` with the shared `compare_versions()` and shows the notes only when the stored one is **older**, passing the whole range to `notes_since()` so a user who skipped a release still sees it. A fresh install (nothing stored), an ordinary relaunch and a downgrade all show nothing, and every case stamps `VERSION` — so an update's notes appear once rather than on every launch after it. The first launch after upgrading *into* this feature shows nothing either, since a build that never wrote the key is indistinguishable from a fresh install.
-      - **This controller builds its display in `__init__`, so the check is gated on `argument_provider.integration_test_mode` explicitly**, in `start_application()`'s GUI branch beside `update_coordinator.start()`. The sibling `FishbowlInventoryTool` builds its GUI collaborators inside that branch and gets "no database, no window" structurally — do not copy its placement here. `PatchNotes` itself is constructed in `__init__` with the other collaborators (constructing it reads nothing; the file is read per call), exactly as `UpdateCoordinator` is.
-      - **The window is opened through `display.after(0, …)`, never inline**, and must stay that way: `ThemedSubwindow._center_over_parent()` reads the parent's geometry, which is `1x1+0+0` until the root window has been mapped, so an inline call would put the notes in the corner of the screen instead of over the app.
-      - `handle_view_patch_notes()` is the display's Help -> What's New callback and shows every section up to `VERSION` (`notes_since(VERSION, None)`) — a user who dismissed the window after an update has no other way back. Unlike the silent startup check it reports when there is nothing to show, the same manual-versus-automatic split the update check makes.
-- **`fishbowl_common.gui`** (the same package's GUI half) — the themed tkinter windows and styling data this app shares with the sibling `FishbowlInventoryTool`: `ThemedSubwindow`, `MessageWindow`, `AboutWindow`, `FileEditorWindow`, `UpdateWindow`, `PatchNotesWindow`, `Tooltip`, and the `color_theme`/`font_settings` data (`Theme`, `RED`, `ALL_THEMES`, `THEME_BY_NAME`, `FONT_FAMILIES`, `FONT_SIZES`, …). All of it is re-exported from `fishbowl_common.gui`, so a consumer imports from that one name rather than the individual modules. These lived in `source/gui/` until they were consolidated upstream; **do not re-add a local copy** — fix or extend them in `fishbowl-common` and bump the pin.
-  - It is a **separate import** from the top-level package, which stays tkinter-free so a headless run never loads tkinter. That split is what the `[gui]` extra in the `requirements/release.txt` pin marks: `fishbowl-common[gui] @ git+…@v1.5.0`.
-  - `AboutWindow` is application-agnostic, so it takes both the name and the version it displays by injection — `InvoiceAppDisplay.handle_about()` passes `APP_NAME` and `VERSION` from `source/constants.py`.
-  - `PatchNotesWindow` shows what changed in the version now running: a heading naming the app and version, the notes in a read-only `ScrolledText`, and a Close button. It takes the notes as a **string**, not a path — they are frequently several releases' sections concatenated — which is why it is not a `FileEditorWindow(editable=False)`. Like `AboutWindow` it is application-agnostic, so `InvoiceAppDisplay.show_patch_notes()` takes the name and version from the controller and adds only the current theme/font.
-  - Their unit tests live upstream in `fishbowl-common/tests/gui/` and deliberately have **no counterpart here**; this repo tests only its own display classes and the wiring around the shared ones.
-- **`InvoiceDiscoveryWindow`** (`source/gui/InvoiceDiscoveryWindow.py`) — a `ThemedSubwindow` subclass letting the user copy downloaded invoice PDFs into `Invoices/` without leaving the app. It subclasses a shared base but **stays app-specific by decision** (see issue #105): it is coupled to this app's single-input-folder workflow, so it was deliberately not generalized and moved upstream.
-- **`InvoiceAppFileIO`** (`source/InvoiceAppFileIO.py`) — all file I/O: reads invoice PDFs via pypdf (one string per page), reads/writes `logs/debug.txt` and `logs/results.txt`, and parses the three config files in `Configs/` (`Sales_Reps.txt`, `Payment_Terms.txt`, `Cost_Criteria.txt`) into dicts/lists used by the processor.
-- **`InvoiceProcessor`** (`source/InvoiceProcessor.py`) + **`processor_utilities.py`** — core parsing logic. `populate_invoice()` extracts header fields (order/PO number, date, customer, payment terms, sales rep) from page 1 via regex. `process_invoice()` walks the line-item table across all pages line-by-line, classifying each payment line as labor/shipping/material cost using the criteria/exclusions loaded from `Cost_Criteria.txt`, then `process_end_of_invoice()` reads sales tax and the listed total once it hits the `Total:Subtotal` marker. All currency values use `Decimal` (see `format_currency`, `DECIMAL_ZERO` in `source/constants.py`) to avoid float precision issues — never use `float` for cost values.
-- **`Invoice`** (`source/Invoice.py`) — plain data holder for one invoice's fields plus `to_formatted_string()` for output.
-- **`InvoiceAppDisplay`** (`source/gui/InvoiceAppDisplay.py`) — tkinter GUI (`tk.Tk` subclass). Menu bar (File/Edit/View/Preferences) lets users edit the three config files (Edit menu) and view the log files (View menu) in a native `FileEditorWindow`, switch themes and fonts (both from `fishbowl_common.gui`). In integration-test mode, popups are suppressed (`show_popup` checks `argument_provider.integration_test_mode`). The Help menu offers About, Check for Updates, Open User Guide and **What's New**; the last of these just calls `view_patch_notes_callback`, and the controller hands the notes back through `show_patch_notes(app_name, version, notes)`, so the display reads no file and holds no version of its own.
-- **`FileEditorWindow`** (from `fishbowl_common.gui`) — a `tk.Toplevel` window that displays one text file's contents, styled with the active theme/font. Editable mode (Edit menu, config files) shows a Save button that calls a `save_config_callback`; read-only mode (View menu, log files) disables editing and shows no Save button. File reads/writes go through `InvoiceAppFileIO` (`read_text_file`/`write_text_file`); the controller's `handle_save_config` persists edits and re-parses the affected config so changes take effect without a restart.
-- **`InvoiceAppController`** (`source/InvoiceAppController.py`) — entry point glue. Constructs the other components, loads config files, and orchestrates `handle_process_invoice()`: read PDF -> populate invoice -> process invoice -> display output -> warn on total mismatch -> write to `logs/results.txt`. The relative file paths (`Configs/`, `Invoices/`, `logs/`) live in `source/constants.py` and are read directly by the components that need them (`InvoiceAppFileIO`, `InvoiceAppDisplay`).
+| Module | Owns |
+| --- | --- |
+| `source/InvoiceAppController.py` | Entry-point glue: builds the collaborators, loads configs, orchestrates `handle_process_invoice()` (read PDF → populate → process → display → warn on total mismatch → write `logs/results.txt`) |
+| `source/InvoiceAppFileIO.py` | All file I/O: invoice PDFs via pypdf (one string per page), the `logs/` files, copying invoices in, and parsing the three `Configs/` files |
+| `source/InvoiceProcessor.py` | Parsing: `populate_invoice()` for header fields, `process_invoice()` for the line-item table, `process_end_of_invoice()` for tax and listed total |
+| `source/processor_utilities.py` | Shared parsing helpers (`search_text_by_re`, `find_sales_rep`, `format_currency`, …) |
+| `source/Invoice.py` | Plain data holder for one invoice, plus `to_formatted_string()` |
+| `source/constants.py` | Paths, `APP_NAME`/`VERSION`/`GITHUB_REPO`, setting keys, `DECIMAL_ZERO` |
+| `source/gui/InvoiceAppDisplay.py` | The `tk.Tk` root: main window and the File/Edit/View/Preferences/Help menu bar |
+| `source/gui/InvoiceDiscoveryWindow.py` | Copying downloaded invoice PDFs into `Invoices/` without leaving the app |
+
+**Everything else is `fishbowl-common`, taken as a pinned git tag.** From the headless half:
+`ArgumentProvider`, `SettingsRepository`, `UpdateCoordinator`, `PatchNotes`, `compare_versions()`.
+From `fishbowl_common.gui`: `ThemedSubwindow`, `MessageWindow`, `AboutWindow`, `FileEditorWindow`,
+`UpdateWindow`, `PatchNotesWindow`, `Tooltip`, and the theme/font data. Those two imports are
+deliberately separate — the top-level package stays tkinter-free so a headless run never loads
+tkinter, which is what the `[gui]` extra in the pin marks.
+
+The shared classes are application-agnostic and take every app-specific value by constructor
+injection. **They lived in `source/gui/` until they were consolidated upstream; do not re-add a
+local copy** — fix or extend them in `fishbowl-common` and bump the pin. Their tests live upstream
+too, and deliberately have no counterpart here.
+
+Two responsibilities worth knowing before touching them:
+
+- **`UpdateCoordinator` owns the whole update feature** — the background check, the download,
+  digest verification, and the silent in-place install. The display's entire share of it is
+  forwarding a callback; it never downloads or executes anything.
+- **`InvoiceDiscoveryWindow` stays app-specific by decision** (issue #105): it is coupled to this
+  app's single-input-folder workflow, so it was deliberately not generalized and moved upstream.
 
 ## Key Conventions
 
-- `__debug__`-gated code (debug log writing/reset, "Debug Log" menu item) is stripped in the PyInstaller release build (`python -O`), per `scripts/package_release.sh`.
-- Config files (`Configs/*.txt`) use `*` as a comment-line prefix and are not committed to this repo — they come from the `automated-invoice-testing` submodule via `copy_resources.sh`.
-- The integration test workflow runs `python main.py --integration-test` and diffs the produced `logs/results.txt` against `automated-invoice-testing/canonical_correct_results.txt`, so any change to invoice parsing/output formatting can break it — check that submodule's expected output if changing `Invoice.to_formatted_string()` or processing logic.
+- **All currency values are `Decimal`** (`format_currency`, `DECIMAL_ZERO`) — never `float` for a
+  cost value. Catching floating-point rounding errors is the point of the app.
+- `__debug__`-gated code (debug log writing/reset, the "Debug Log" menu item) is stripped from the
+  release build, which compiles with **`python -OO`** per `scripts/package_release.sh`.
+- Config files (`Configs/*.txt`) use `*` as a comment-line prefix and are **not committed** — they
+  come from the `automated-invoice-testing` submodule via `copy_resources.sh`.
+- Prefer extending behavior through config entries (`Cost_Criteria.txt`, `Payment_Terms.txt`,
+  `Sales_Reps.txt`) or new theme/font data upstream over adding `if/elif` branches to existing
+  parsing and display methods.
+- Pass a class only the narrow dependencies it needs — `InvoiceProcessor` takes `labor_criteria`,
+  `labor_exclusions` and `shipping_criteria` individually rather than the whole
+  `InvoiceAppFileIO`. Avoid god objects in constructors.
+- New logic goes in the class that owns that concern, not bolted onto `InvoiceAppController`. If a
+  method is doing two distinct jobs (parsing *and* formatting), split it.
+- Before adding a regex, lookup or formatting routine, check `processor_utilities.py`; before
+  adding a themed window or widget helper, check `fishbowl_common.gui` — anything both Fishbowl
+  tools need belongs there rather than in `source/gui/`.
+- Add type hints and concise docstrings in the existing style (see any method in
+  `source/InvoiceProcessor.py` for the expected `Args:`/`Returns:` format), and add tests in
+  `tests/` for any new branch or utility function in the same change.
 
-## Production-Grade Code Practices (SOLID / DRY)
+## Git Workflow (when working on a GitHub issue)
 
-When adding or modifying code, favor changes that keep components focused and substitutable rather than growing existing classes with unrelated responsibilities:
+When the work is tied to a specific GitHub issue, always do the following before making changes:
 
-- **Single Responsibility** — Each class here already maps to one concern (file I/O, parsing, display, orchestration). New logic should go in the class that owns that concern, not bolted onto `InvoiceAppController`. If a method is doing two distinct jobs (e.g., parsing *and* formatting), split it.
-- **Open/Closed** — Prefer extending behavior via new config-driven entries (`Cost_Criteria.txt`, `Payment_Terms.txt`, `Sales_Reps.txt`) or new theme/font entries (upstream in `fishbowl_common.gui`) over adding new conditional branches to existing parsing/display methods. When a new cost category or invoice field type is needed, look for the existing list/dict-driven pattern (e.g., `labor_criteria`, `ALL_THEMES`) before adding `if/elif` chains.
-- **Liskov Substitution** — `Theme` instances (from `fishbowl_common.gui`) and any future strategy-style objects must remain drop-in interchangeable; don't special-case a specific theme/criteria object's identity in calling code.
-- **Interface Segregation** — Pass only the specific criteria/paths/callbacks a class needs (as the constructors already do — e.g., `InvoiceProcessor` takes `labor_criteria`, `labor_exclusions`, `shipping_criteria` individually rather than the whole `InvoiceAppFileIO`). Avoid passing large "god objects" into constructors when a narrower dependency will do.
-- **Dependency Inversion** — Components depend on `InvoiceAppFileIO` and config data passed in at construction time (see `InvoiceAppController.__init__`), not on global state. Shared file paths are centralized in `source/constants.py` and imported where needed rather than hardcoded inline; tests substitute behavior by mocking `open`/`os`/pypdf calls rather than by injecting paths (see existing `tests/*_tests.py` for the mocking patterns already in use).
-- **DRY** — Shared parsing helpers belong in `processor_utilities.py` (e.g., `format_currency`, `search_text_by_re`); shared constants belong in `constants.py`, and styling data upstream in `fishbowl_common.gui`. Before adding a new regex/lookup/formatting routine, check these modules for an existing equivalent — and before adding a themed window or widget helper, check `fishbowl_common.gui`, since anything both Fishbowl tools need belongs there rather than in `source/gui/`.
-- Add type hints and concise docstrings consistent with the existing style (see any method in `source/InvoiceProcessor.py` for the expected `Args:`/`Returns:` format), and add corresponding tests in `tests/` for any new branch or utility function.
+- **Start from an up-to-date base branch.** Check out the base branch (usually `main` unless
+  another is given) and pull (`git checkout main && git pull`) before creating the new branch, so
+  work branches off the current tip rather than a stale local copy.
+- **Name the branch so it links to the issue in GitHub.** Include the issue number (e.g.
+  `28-native-config-management`), then branch off the freshly pulled base
+  (`git checkout -b <issue-number>-<short-description>`).
+- Merge through a PR, with a subject line ending `(closes #N)`.
+- **A change to a public signature in `fishbowl-common` is not one PR but three**: the package
+  first, then this repo's pin, then `FishbowlInventoryTool`.
 
-## Unit Testing
+## Where the rest of the guidance lives
 
-Unit tests live in `tests/` and run under `pytest`. When writing or modifying them, follow the two principles below.
+Detail that only matters for part of the codebase lives in `.claude/rules/`, loaded when a
+matching file is opened. Put new detail in the matching rule file rather than growing this one.
 
-### Test one object in isolation
-
-Every unit test exercises exactly **one** class or function (the "unit under test"). Replace **all** collaborating objects with mocks so a failure points unambiguously at the unit being tested — never let a unit test depend on the real behavior of another class, the filesystem, a PDF, or the GUI. Reuse the patterns already established in the suite rather than inventing new ones:
-
-- **Mock injected collaborators with `MagicMock(spec=Collaborator)`** and pass them into the constructor. See the `mock_file_io` and `invoice_processor` fixtures in `tests/InvoiceProcessor_tests.py`, where `InvoiceProcessor` is built with a `MagicMock(spec=InvoiceAppFileIO)` so no real file I/O occurs. The `spec=` argument keeps the mock honest — it only allows attributes/methods the real class defines.
-- **Mock module-level dependencies with `@patch` / `mock_open`.** For classes that call `os`, `open`, or pypdf directly, patch those calls instead of touching the real filesystem — see `tests/InvoiceAppFileIO_tests.py` (e.g. `@patch("os.remove")`, `@patch("os.path.exists", ...)`, `mock_open`).
-- **Construct the unit under test in a pytest fixture** (e.g. the `file_io` fixture) so each test starts from a clean, identically-configured object.
-- **Name unasserted mock parameters with a leading underscore** (`_mock_os_exists`) and reserve plain names (`mock_os_remove`) for mocks you assert against — matching the existing files.
-
-### Follow the FIRST principles
-
-- **Fast** — No real file, PDF, or GUI I/O; mock it. The whole `pytest tests/*` run should stay quick.
-- **Independent** — No ordering dependencies or shared mutable state between tests. Each test builds its own object via a fixture and asserts on its own data.
-- **Repeatable** — Deterministic on every run and machine. Do not rely on the real filesystem, the clock, or the `automated-invoice-testing` submodule — that submodule drives the *integration* test (`python main.py --integration-test`), not unit tests.
-- **Self-validating** — Each test asserts a clear pass/fail (`assert ... ==`, `assert_called_once_with(...)`). Never require manual inspection of `logs/` output to judge the result.
-- **Timely** — Add or extend tests in `tests/` alongside any new branch or utility function, in the same change (reinforcing the final bullet of the SOLID/DRY section above).
-
-### Conventions
-
-Match the existing files: give each test a docstring describing what it verifies, with an `Args:` block documenting each mock/fixture parameter, and group tests for a given function under the `###`-bordered comment banners used throughout `tests/`.
+| File | Loads when you touch | Carries |
+| --- | --- | --- |
+| `rules/invoice-processing.md` | `InvoiceProcessor.py`, `processor_utilities.py`, `InvoiceAppFileIO.py`, `Invoice.py` | The parse pipeline, the `Decimal` rule, config file formats, error-reporting contract |
+| `rules/gui.md` | `source/gui/**` | Window catalogue, menu structure, headless popup gate, theme/font reconfiguration, the `after(0, …)` startup rule |
+| `rules/shared-package.md` | `InvoiceAppController.py`, `constants.py`, `requirements/**` | What each shared class takes by injection, construction order, integration-test gating, patch-notes logic |
+| `rules/tests.md` | `tests/**` | Fixtures, patch targets, the tkinter-free `display` fixture, FIRST, banner and docstring conventions |
+| `rules/ci.md` | `.github/workflows/**` | Workflow internals, the coverage gate, the two release gates, submodule handling |
+| `rules/packaging.md` | `scripts/**` | `package_release.sh`, and the load-bearing `installer.iss` details the in-app updater depends on |
