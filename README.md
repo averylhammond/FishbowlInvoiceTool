@@ -57,6 +57,11 @@ FishbowlInvoiceTool/
     └── ...
 ```
 
+> **Note:** both folders are committed empty (a `.gitkeep` placeholder each) because
+> their contents are customer data and stay gitignored. Run this step before the first
+> launch — without the config files the app opens and reports a config error for each
+> one it cannot read.
+
 **4. Create and activate a virtual environment** (Python 3.11):
 
 ```bash
