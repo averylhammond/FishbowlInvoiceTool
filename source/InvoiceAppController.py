@@ -43,7 +43,9 @@ class InvoiceAppController:
         """
 
         # Argument provider to check for integration test mode
-        self.argument_provider = ArgumentProvider()
+        self.argument_provider = ArgumentProvider(
+            description="Fishbowl invoice cost-breakdown processor"
+        )
 
         # Create File IO Controller, which reads its file paths from source.constants
         self.file_io_controller = InvoiceAppFileIO()
