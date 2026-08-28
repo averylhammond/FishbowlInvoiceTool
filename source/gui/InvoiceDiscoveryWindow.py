@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, scrolledtext
 from pathlib import Path
+from tkinter import filedialog, messagebox, scrolledtext
 from typing import Callable
 
 from fishbowl_common.gui import Theme, ThemedSubwindow, Tooltip
@@ -26,7 +26,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         font_family: str,
         font_size: int,
         copy_callback: Callable[[Path, bool], str],
-    ):
+    ) -> None:
         """
         Initializes the InvoiceDiscoveryWindow object
 
@@ -53,16 +53,18 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         # before copying them all in at once.
         self.pending_files: list[Path] = []
 
-        # Tkinter Widgets
+        # Tkinter Widgets. Declared without a value rather than as `| None = None`:
+        # build_widgets() below creates every one of them before this constructor
+        # returns, so nothing can observe one unset.
         # fmt:off
-        self.instruction_label: tk.Label                   | None = None
-        self.selection_var:     tk.StringVar               | None = None
-        self.selection_entry:   tk.Entry                   | None = None
-        self.button_frame:      tk.Frame                   | None = None
-        self.browse_button:     tk.Button                  | None = None
-        self.copy_button:       tk.Button                  | None = None
-        self.close_button:      tk.Button                  | None = None
-        self.status_box:        scrolledtext.ScrolledText  | None = None
+        self.instruction_label: tk.Label
+        self.selection_var:     tk.StringVar
+        self.selection_entry:   tk.Entry
+        self.button_frame:      tk.Frame
+        self.browse_button:     tk.Button
+        self.copy_button:       tk.Button
+        self.close_button:      tk.Button
+        self.status_box:        scrolledtext.ScrolledText
         # fmt:on
 
         self.build_widgets()
@@ -74,7 +76,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
     ###########################################################################
     ###              InvoiceDiscoveryWindow -> build_widgets()              ###
     ###########################################################################
-    def build_widgets(self):
+    def build_widgets(self) -> None:
         """
         Creates the instruction label, selection display, action buttons
         (Browse / Copy Invoice(s) / Close), and the read-only status area
@@ -205,7 +207,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
     ###########################################################################
     ###                InvoiceDiscoveryWindow -> handle_browse()            ###
     ###########################################################################
-    def handle_browse(self):
+    def handle_browse(self) -> None:
         """
         On "Browse" press, opens a multi-select file dialog for PDF invoices and
         adds the chosen files to the pending list. Browsing again appends to the
@@ -236,7 +238,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
     ###########################################################################
     ###                 InvoiceDiscoveryWindow -> handle_copy()             ###
     ###########################################################################
-    def handle_copy(self):
+    def handle_copy(self) -> None:
         """
         On "Copy Invoice(s)" press, copies each pending invoice into the
         Invoices/ folder. If a same-named file already exists, asks the user to
@@ -279,7 +281,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
     ###########################################################################
     ###               InvoiceDiscoveryWindow -> _append_status()            ###
     ###########################################################################
-    def _append_status(self, message: str):
+    def _append_status(self, message: str) -> None:
         """
         Appends a status line to the read-only status box, scrolling to show it.
 

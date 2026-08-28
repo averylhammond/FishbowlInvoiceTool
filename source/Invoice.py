@@ -31,7 +31,7 @@ class Invoice:
     ###########################################################################
     ###                  Invoice -> to_formatted_string()                   ###
     ###########################################################################
-    def to_formatted_string(self):
+    def to_formatted_string(self) -> str:
         """
         Returns a formatted string to output invoice contents
 

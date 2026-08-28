@@ -1,9 +1,6 @@
 # Import necessary classes from modules
 from pathlib import Path
 
-from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
-from source.InvoiceAppFileIO import InvoiceAppFileIO
-from source.InvoiceProcessor import InvoiceProcessor
 from fishbowl_common import (
     ArgumentProvider,
     PatchNotes,
@@ -11,7 +8,7 @@ from fishbowl_common import (
     UpdateCoordinator,
     compare_versions,
 )
-from source.Invoice import Invoice
+
 from source.constants import (
     APP_NAME,
     COST_CRITERIA_PATH,
@@ -24,6 +21,10 @@ from source.constants import (
     SETTINGS_DB_PATH,
     VERSION,
 )
+from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
+from source.Invoice import Invoice
+from source.InvoiceAppFileIO import InvoiceAppFileIO
+from source.InvoiceProcessor import InvoiceProcessor
 
 # TODO: See if there is a good logging method to add for debugging
 
@@ -34,7 +35,7 @@ class InvoiceAppController:
     ###########################################################################
     ###                 InvoiceAppController -> __init__()                  ###
     ###########################################################################
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the InvoiceAppController object
 
@@ -121,7 +122,7 @@ class InvoiceAppController:
     ###########################################################################
     ###             InvoiceAppController -> start_application()             ###
     ###########################################################################
-    def start_application(self):
+    def start_application(self) -> None:
         """
         Starts the application by entering the tkinter main GUI loop
 
@@ -157,7 +158,7 @@ class InvoiceAppController:
     ###########################################################################
     ###          InvoiceAppController -> handle_check_for_updates()         ###
     ###########################################################################
-    def handle_check_for_updates(self):
+    def handle_check_for_updates(self) -> None:
         """
         Runs an on-demand update check, triggered by the Help menu's
         "Check for Updates" item. Wired into the display as its update callback,
@@ -170,7 +171,7 @@ class InvoiceAppController:
     ###########################################################################
     ###         InvoiceAppController -> handle_view_patch_notes()           ###
     ###########################################################################
-    def handle_view_patch_notes(self):
+    def handle_view_patch_notes(self) -> None:
         """
         Shows the patch notes on demand, triggered by the Help menu's "What's New"
         item. Every version up to the running one is shown, newest first, since a
@@ -193,7 +194,7 @@ class InvoiceAppController:
     ###########################################################################
     ###        InvoiceAppController -> show_patch_notes_if_updated()        ###
     ###########################################################################
-    def show_patch_notes_if_updated(self, saved_settings: dict):
+    def show_patch_notes_if_updated(self, saved_settings: dict[str, str]) -> None:
         """
         Shows the user what changed when this launch is the first one after an
         update, and records the running version either way.
@@ -205,8 +206,8 @@ class InvoiceAppController:
         wrote the setting is indistinguishable from a first-time user.
 
         Args:
-            saved_settings (dict): The settings persisted by the last run, holding
-                the version that run was on
+            saved_settings (dict[str, str]): The settings persisted by the last
+                run, holding the version that run was on
         """
 
         last_seen_version = saved_settings.get(SETTING_KEY_LAST_SEEN_VERSION)
@@ -232,7 +233,9 @@ class InvoiceAppController:
     ###########################################################################
     ###          InvoiceAppController -> handle_process_invoice()           ###
     ###########################################################################
-    def handle_process_invoice(self, invoice_filepath: Path, append_output: bool):
+    def handle_process_invoice(
+        self, invoice_filepath: Path, append_output: bool
+    ) -> None:
         """
         Directs components to process the invoice located at invoice_filepath
 
@@ -300,7 +303,7 @@ class InvoiceAppController:
     ###########################################################################
     ###            InvoiceAppController -> handle_save_config()             ###
     ###########################################################################
-    def handle_save_config(self, config_path: Path, contents: str):
+    def handle_save_config(self, config_path: Path, contents: str) -> None:
         """
         Persists edited config file contents to disk, then re-parses that config
         so the changes take effect in the running application without a restart.
@@ -332,7 +335,7 @@ class InvoiceAppController:
     ###########################################################################
     ###            InvoiceAppController -> handle_save_setting()            ###
     ###########################################################################
-    def handle_save_setting(self, key: str, value: str):
+    def handle_save_setting(self, key: str, value: str) -> None:
         """
         Persists a single user setting so it is restored on the next launch.
 
@@ -346,7 +349,7 @@ class InvoiceAppController:
     ###########################################################################
     ###           InvoiceAppController -> _reload_cost_criteria()           ###
     ###########################################################################
-    def _reload_cost_criteria(self):
+    def _reload_cost_criteria(self) -> None:
         """
         Re-parses the cost criteria config into the File IO Controller's criteria
         lists (cleared and repopulated in place, so the InvoiceProcessor's
@@ -357,7 +360,7 @@ class InvoiceAppController:
     ###########################################################################
     ###           InvoiceAppController -> _reload_payment_terms()           ###
     ###########################################################################
-    def _reload_payment_terms(self):
+    def _reload_payment_terms(self) -> None:
         """
         Re-parses the payment terms config into the controller's payment_terms list
         """
@@ -366,7 +369,7 @@ class InvoiceAppController:
     ###########################################################################
     ###            InvoiceAppController -> _reload_sales_reps()             ###
     ###########################################################################
-    def _reload_sales_reps(self):
+    def _reload_sales_reps(self) -> None:
         """
         Re-parses the sales reps config into the controller's sales_reps dictionary
         """

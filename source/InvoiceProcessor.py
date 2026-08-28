@@ -1,16 +1,16 @@
 from decimal import Decimal
 
+from source.constants import DECIMAL_ZERO
+from source.Invoice import Invoice
+from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.processor_utilities import (
-    search_text_by_re,
-    search_payment_line,
     find_currency_values,
     find_payment_terms,
     find_sales_rep,
     format_currency,
+    search_payment_line,
+    search_text_by_re,
 )
-from source.InvoiceAppFileIO import InvoiceAppFileIO
-from source.Invoice import Invoice
-from source.constants import DECIMAL_ZERO
 
 # The last label in the invoice's footer. pypdf emits the footer's label column
 # before its value column, so this label is followed by every footer amount in
@@ -38,18 +38,18 @@ class InvoiceProcessor:
     def __init__(
         self,
         file_io_controller: InvoiceAppFileIO,
-        labor_criteria: list,
-        labor_exclusions: list,
-        shipping_criteria: list,
-    ):
+        labor_criteria: list[str],
+        labor_exclusions: list[str],
+        shipping_criteria: list[str],
+    ) -> None:
         """
         Initializes the InvoiceProcessor object
 
         Args:
             file_io_controller (InvoiceAppFileIO): The file IO controller to be used
-            labor_criteria (list): Criteria to determine if a payment line is a labor cost
-            labor_exclusions (list): Criteria to exclude a payment line from being a labor cost
-            shipping_criteria (list): Criteria to determine if a payment line is a shipping cost
+            labor_criteria (list[str]): Criteria to determine if a payment line is a labor cost
+            labor_exclusions (list[str]): Criteria to exclude a payment line from being a labor cost
+            shipping_criteria (list[str]): Criteria to determine if a payment line is a shipping cost
         """
 
         self.file_io_controller = file_io_controller
@@ -61,15 +61,15 @@ class InvoiceProcessor:
     ###               InvoiceProcessor -> populate_invoice()                ###
     ###########################################################################
     def populate_invoice(
-        self, invoice: Invoice, sales_reps: dict, payment_terms: list
-    ):
+        self, invoice: Invoice, sales_reps: dict[str, str], payment_terms: list[str]
+    ) -> None:
         """
         Initializes all fields of an invoice object that appear on the first page of the invoice PDF
 
         Args:
             invoice (Invoice): The invoice object to be populated
-            sales_reps (dict): All possible sales rep codes and names
-            payment_terms (list): All possible payment terms
+            sales_reps (dict[str, str]): All possible sales rep codes and names
+            payment_terms (list[str]): All possible payment terms
         """
 
         if invoice is None:
@@ -108,7 +108,7 @@ class InvoiceProcessor:
     ###########################################################################
     def process_payment_line(
         self, text: str, line: str, invoice: Invoice, curr_line_num: int
-    ):
+    ) -> None:
         """
         Takes a given line from the payment table and processes it.
         This includes reading the entire row, determining if the payment line refers to a labor,
@@ -225,7 +225,7 @@ class InvoiceProcessor:
     ###########################################################################
     def process_end_of_invoice(
         self, text: str, starting_line: str, invoice: Invoice
-    ):
+    ) -> None:
         """
         Takes the ending of the invoice starting at "Total:subtotal" and searches for
         the sales tax and the listed total on the invoice
@@ -325,7 +325,7 @@ class InvoiceProcessor:
     ###########################################################################
     ###                InvoiceProcessor -> process_invoice()                ###
     ###########################################################################
-    def process_invoice(self, invoice: Invoice):
+    def process_invoice(self, invoice: Invoice) -> None:
         """
         Main function that processes the invoice PDF
 

@@ -1,9 +1,8 @@
 import tkinter as tk
-from tkinter import filedialog, scrolledtext
 from pathlib import Path
-from typing import Callable
+from tkinter import filedialog, scrolledtext
+from typing import Callable, Protocol
 
-from source.Invoice import Invoice
 from fishbowl_common import ArgumentProvider, UpdateCheckResult
 from fishbowl_common.gui import (
     ALL_THEMES,
@@ -22,24 +21,42 @@ from fishbowl_common.gui import (
     Tooltip,
     UpdateWindow,
 )
-from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+
 from source.constants import (
     APP_NAME,
-    VERSION,
+    COST_CRITERIA_PATH,
+    DEBUG_LOG_PATH,
     INVOICES_DIR,
     PAYMENT_TERMS_PATH,
-    SALES_REPS_PATH,
-    COST_CRITERIA_PATH,
     RESULTS_LOG_PATH,
-    DEBUG_LOG_PATH,
-    USER_GUIDE_PATH,
-    SETTING_KEY_THEME,
+    SALES_REPS_PATH,
     SETTING_KEY_FONT_FAMILY,
     SETTING_KEY_FONT_SIZE,
+    SETTING_KEY_THEME,
+    USER_GUIDE_PATH,
+    VERSION,
 )
+from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+from source.Invoice import Invoice
 
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
 #              pop up windows when Fishbowl invoices present rounding errors
+
+
+# The invoice-processing callback the controller hands in. Declared as a Protocol
+# rather than a Callable so append_output keeps its name: the call sites below pass
+# it by keyword, which Callable[[Path, bool], None] cannot express.
+class ProcessInvoiceCallback(Protocol):
+
+    def __call__(self, invoice_filepath: Path, append_output: bool) -> None:
+        """
+        Processes one invoice PDF and displays its cost breakdown.
+
+        Args:
+            invoice_filepath (Path): The invoice PDF to process
+            append_output (bool): Whether to append this invoice's output to what
+                is already there, or replace it
+        """
 
 
 # Invoice App Display class to own the GUI for selecting and processing invoices
@@ -51,7 +68,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     def __init__(
         self,
-        process_callback,
+        process_callback: ProcessInvoiceCallback,
         read_file_callback: Callable[[Path], str],
         save_config_callback: Callable[[Path, str], None],
         save_settings_callback: Callable[[str, str], None],
@@ -60,13 +77,14 @@ class InvoiceAppDisplay(tk.Tk):
         view_patch_notes_callback: Callable[[], None],
         title: str,
         window_resolution: str,
-        settings: dict | None = None,
-    ):
+        settings: dict[str, str] | None = None,
+    ) -> None:
         """
         Initializes the InvoiceAppDisplay object
 
         Args:
-            process_callback (callable): Callback function to process the selected invoice file
+            process_callback (ProcessInvoiceCallback): Callback that processes the
+                selected invoice file and displays its cost breakdown
             read_file_callback (Callable[[Path], str]): Callback that reads a file's
                 full contents, used to populate the native file editor/viewer window
             save_config_callback (Callable[[Path, str], None]): Callback that persists
@@ -86,7 +104,7 @@ class InvoiceAppDisplay(tk.Tk):
                 Help menu
             title (str): Title of the application window
             window_resolution (str): Resolution of the application window (e.g., "750x750")
-            settings (dict | None): Previously persisted settings (theme/font/font-size)
+            settings (dict[str, str] | None): Previously persisted settings (theme/font/font-size)
                 used to restore the user's last choices on startup. Missing or unknown
                 values fall back to the application defaults.
         """
@@ -143,25 +161,28 @@ class InvoiceAppDisplay(tk.Tk):
             settings.get(SETTING_KEY_FONT_SIZE)
         )
 
-        # Tkinter Widgets
+        # Tkinter Widgets. Declared without a value rather than as `| None = None`:
+        # build_widgets() is the last statement in this constructor and creates
+        # every one of them, so nothing can observe one unset and no method below
+        # needs to guard against None.
         # fmt:off
-        self.menu_bar:                    tk.Menu                    | None = None
-        self.file_menu:                   tk.Menu                    | None = None
-        self.edit_menu:                   tk.Menu                    | None = None
-        self.view_menu:                   tk.Menu                    | None = None
-        self.preferences_menu:            tk.Menu                    | None = None
-        self.help_menu:                   tk.Menu                    | None = None
-        self.title_label:                 tk.Label                   | None = None
-        self.file_frame:                  tk.Frame                   | None = None
-        self.file_entry:                  tk.Entry                   | None = None
-        self.browse_button:               tk.Button                  | None = None
-        self.button_frame:                tk.Frame                   | None = None
-        self.process_invoice_button:      tk.Button                  | None = None
-        self.exit_button:                 tk.Button                  | None = None
-        self.process_all_invoices_button: tk.Button                  | None = None
-        self.discover_invoices_button:    tk.Button                  | None = None
-        self.output_label:                tk.Label                   | None = None
-        self.output_box:                  scrolledtext.ScrolledText  | None = None
+        self.menu_bar:                    tk.Menu
+        self.file_menu:                   tk.Menu
+        self.edit_menu:                   tk.Menu
+        self.view_menu:                   tk.Menu
+        self.preferences_menu:            tk.Menu
+        self.help_menu:                   tk.Menu
+        self.title_label:                 tk.Label
+        self.file_frame:                  tk.Frame
+        self.file_entry:                  tk.Entry
+        self.browse_button:               tk.Button
+        self.button_frame:                tk.Frame
+        self.process_invoice_button:      tk.Button
+        self.exit_button:                 tk.Button
+        self.process_all_invoices_button: tk.Button
+        self.discover_invoices_button:    tk.Button
+        self.output_label:                tk.Label
+        self.output_box:                  scrolledtext.ScrolledText
         # fmt:on
 
         # Hover tooltips attached to the buttons, kept so they can be restyled
@@ -174,7 +195,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                InvoiceAppDisplay -> build_widgets()                 ###
     ###########################################################################
-    def build_widgets(self):
+    def build_widgets(self) -> None:
         """
         Creates the GUI widgets for the application
         This includes a title label, file selection entry, browse button, and action buttons
@@ -418,7 +439,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###               InvoiceAppDisplay -> _attach_tooltip()               ###
     ###########################################################################
-    def _attach_tooltip(self, widget, text: str):
+    def _attach_tooltip(self, widget: tk.Widget, text: str) -> None:
         """
         Attaches a hover tooltip to a widget, styled with the active theme/font,
         and tracks it so it can be restyled when the theme or font changes.
@@ -440,7 +461,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###               InvoiceAppDisplay -> _refresh_tooltips()             ###
     ###########################################################################
-    def _refresh_tooltips(self):
+    def _refresh_tooltips(self) -> None:
         """
         Restyles every attached tooltip with the current theme and font so the
         tooltips stay consistent after a theme or font change.
@@ -455,7 +476,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###             InvoiceAppDisplay -> handle_browse_button()             ###
     ###########################################################################
-    def handle_browse_button(self):
+    def handle_browse_button(self) -> None:
         """
         On "Browse" button press, opens a file dialog to select a PDF invoice file.
         Once selected, the file is set to the selected_file member variable
@@ -476,7 +497,9 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###            InvoiceAppDisplay -> display_invoice_output()            ###
     ###########################################################################
-    def display_invoice_output(self, invoice: Invoice, append_output: bool = False):
+    def display_invoice_output(
+        self, invoice: Invoice, append_output: bool = False
+    ) -> None:
         """
         Displays the calculated totals of the invoice in the output box
 
@@ -488,22 +511,18 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Clear the output box if not appending
         if not append_output:
-            # Make sure output box was initialized before trying to clear it
-            if self.output_box:
-                self.output_box.delete(1.0, tk.END)
-                self.output_box.insert(tk.END, invoice.to_formatted_string())
+            self.output_box.delete(1.0, tk.END)
 
-        # If appending, insert a newline before adding the new output
+        # If appending, separate this invoice from the one above it
         else:
-            # Make sure output_box was initialized before trying to insert
-            if self.output_box:
-                self.output_box.insert(tk.END, "\n")
-                self.output_box.insert(tk.END, invoice.to_formatted_string())
+            self.output_box.insert(tk.END, "\n")
+
+        self.output_box.insert(tk.END, invoice.to_formatted_string())
 
     ###########################################################################
     ###            InvoiceAppDisplay -> handle_process_invoice()            ###
     ###########################################################################
-    def handle_process_invoice(self):
+    def handle_process_invoice(self) -> None:
         """
         On "Process This Invoice" button press, processes the selected PDF invoice file
         by forwarding the call to the provided process_callback function specified during construction
@@ -528,7 +547,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###         InvoiceAppDisplay -> handle_process_all_invoices()          ###
     ###########################################################################
-    def handle_process_all_invoices(self):
+    def handle_process_all_invoices(self) -> None:
         """
         On "Process All Invoices" button press, processes all invoice PDF files in the specified invoices directory
         by iterating through each file and calling the process_callback function for each one.
@@ -551,7 +570,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###          InvoiceAppDisplay -> handle_discover_invoices()            ###
     ###########################################################################
-    def handle_discover_invoices(self):
+    def handle_discover_invoices(self) -> None:
         """
         On "Discover Invoices" button press, opens the Invoice Discovery window so
         the user can copy downloaded invoice PDFs into the Invoices/ folder
@@ -569,7 +588,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                 InvoiceAppDisplay -> handle_about()                 ###
     ###########################################################################
-    def handle_about(self):
+    def handle_about(self) -> None:
         """
         On "About" menu press, opens the About window showing the current
         application version, themed to match the rest of the application.
@@ -587,7 +606,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###          InvoiceAppDisplay -> handle_check_for_updates()            ###
     ###########################################################################
-    def handle_check_for_updates(self):
+    def handle_check_for_updates(self) -> None:
         """
         On "Check for Updates" menu press, asks the controller to run an on-demand
         update check. The controller surfaces the outcome back through
@@ -598,7 +617,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###            InvoiceAppDisplay -> handle_open_user_guide()            ###
     ###########################################################################
-    def handle_open_user_guide(self):
+    def handle_open_user_guide(self) -> None:
         """
         On "Open User Guide" menu press, opens the bundled user guide in a native
         read-only viewer window, themed to match the rest of the application.
@@ -616,7 +635,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###           InvoiceAppDisplay -> handle_view_patch_notes()            ###
     ###########################################################################
-    def handle_view_patch_notes(self):
+    def handle_view_patch_notes(self) -> None:
         """
         On "What's New" menu press, asks the controller for the patch notes. The
         controller reads them and hands them back through show_patch_notes(), so
@@ -627,7 +646,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###              InvoiceAppDisplay -> show_patch_notes()                ###
     ###########################################################################
-    def show_patch_notes(self, app_name: str, version: str, notes: str):
+    def show_patch_notes(self, app_name: str, version: str, notes: str) -> None:
         """
         Shows the user what changed, in a themed window matching the rest of the
         application. Called by the controller both on the first launch after an
@@ -653,7 +672,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                  InvoiceAppDisplay -> show_popup()                  ###
     ###########################################################################
-    def show_popup(self, title: str, message: str):
+    def show_popup(self, title: str, message: str) -> None:
         """
         Displays a message (informational or error) in a popup window
 
@@ -688,7 +707,7 @@ class InvoiceAppDisplay(tk.Tk):
         start_install: (
             Callable[[Callable[[int, int], None], Callable[[bool], None]], None] | None
         ) = None,
-    ):
+    ) -> None:
         """
         Notifies the user that a newer release is available by opening a themed
         popup showing the available version, with an "Exit and Update" button that
@@ -731,18 +750,17 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                 InvoiceAppDisplay -> handle_clear()                 ###
     ###########################################################################
-    def handle_clear(self):
+    def handle_clear(self) -> None:
         """
         Clears the output box and resets the selected file path
         """
         self.selected_file.set("")
-        if self.output_box:
-            self.output_box.delete(1.0, tk.END)
+        self.output_box.delete(1.0, tk.END)
 
     ###########################################################################
     ###            InvoiceAppDisplay -> _open_config_editor()               ###
     ###########################################################################
-    def _open_config_editor(self, config_path: Path, title: str):
+    def _open_config_editor(self, config_path: Path, title: str) -> None:
         """
         Opens a native, editable window for the given config file, prefilled with
         its current contents and wired to persist edits via the save callback
@@ -773,7 +791,7 @@ class InvoiceAppDisplay(tk.Tk):
         missing_message: str,
         text_width: int | None = None,
         text_height: int | None = None,
-    ):
+    ) -> None:
         """
         Opens a native, read-only window showing the given text file if it exists.
         Shows an error popup with the provided message if the file is not present.
@@ -811,7 +829,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###             InvoiceAppDisplay -> handle_cost_criteria()             ###
     ###########################################################################
-    def handle_cost_criteria(self):
+    def handle_cost_criteria(self) -> None:
         """
         Opens the Cost Criteria config file in a native editor window
         """
@@ -820,7 +838,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###             InvoiceAppDisplay -> handle_payment_terms()             ###
     ###########################################################################
-    def handle_payment_terms(self):
+    def handle_payment_terms(self) -> None:
         """
         Opens the Payment Terms config file in a native editor window
         """
@@ -829,7 +847,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###              InvoiceAppDisplay -> handle_sales_reps()               ###
     ###########################################################################
-    def handle_sales_reps(self):
+    def handle_sales_reps(self) -> None:
         """
         Opens the Sales Reps config file in a native editor window
         """
@@ -838,7 +856,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###              InvoiceAppDisplay -> handle_results_log()              ###
     ###########################################################################
-    def handle_results_log(self):
+    def handle_results_log(self) -> None:
         """
         Opens the results log file in a native read-only viewer window if it
         exists. Shows an error popup if the file has not been created yet.
@@ -852,7 +870,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###               InvoiceAppDisplay -> handle_debug_log()               ###
     ###########################################################################
-    def handle_debug_log(self):
+    def handle_debug_log(self) -> None:
         """
         Opens the debug log file in a native read-only viewer window if it exists.
         Shows an error popup if the file has not been created yet.
@@ -866,7 +884,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                 InvoiceAppDisplay -> apply_theme()                  ###
     ###########################################################################
-    def apply_theme(self, theme: Theme):
+    def apply_theme(self, theme: Theme) -> None:
         """
         Applies a color theme to all widgets in the application
 
@@ -925,7 +943,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###              InvoiceAppDisplay -> apply_font_family()               ###
     ###########################################################################
-    def apply_font_family(self, family: str):
+    def apply_font_family(self, family: str) -> None:
         """
         Applies a font family to all text on screen
 
@@ -941,7 +959,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###               InvoiceAppDisplay -> apply_font_size()                ###
     ###########################################################################
-    def apply_font_size(self, size: int):
+    def apply_font_size(self, size: int) -> None:
         """
         Applies a font size to all text on screen
 
@@ -958,14 +976,14 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###               InvoiceAppDisplay -> _parse_font_size()               ###
     ###########################################################################
-    def _parse_font_size(self, value) -> int:
+    def _parse_font_size(self, value: str | None) -> int:
         """
         Converts a persisted font size value into an int, falling back to the
         default when it is missing or not a valid integer.
 
         Args:
-            value: The raw font size loaded from settings (a string, or None when
-                no size has been persisted yet)
+            value (str | None): The raw font size loaded from settings, or None
+                when no size has been persisted yet
 
         Returns:
             int: The restored font size, or DEFAULT_FONT_SIZE if value is missing
@@ -979,7 +997,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                 InvoiceAppDisplay -> _apply_font()                  ###
     ###########################################################################
-    def _apply_font(self):
+    def _apply_font(self) -> None:
         """
         Applies the current font family and size to all text on screen
         """
