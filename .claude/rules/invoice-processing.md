@@ -33,9 +33,38 @@ to quantize, and `DECIMAL_ZERO` from `source/constants.py` as the zero literal.
    `labor_cost` / `shipping_cost` / **`material_cost` as the fallback**, and to `subtotal` in
    every case. Material is the default branch, not a matched category.
 4. **`process_end_of_invoice()`** fires on the `Total:Subtotal` marker and reads sales tax and the
-   listed total.
+   listed total. See the footer rule below.
 
 The controller then compares the computed total against the listed one and warns on a mismatch.
+
+## Reading the footer
+
+**The footer's labels are not on the same line as their values, and never read one by line index.**
+pypdf's default extraction emits the footer's label column before its value column, so the page
+reads:
+
+```
+Total:Subtotal:
+Sales Tax:$1,234.56   <- the last label, then the SUBTOTAL
+$0.00                 <- sales tax
+$1,281.10             <- listed total
+```
+
+`process_end_of_invoice()` therefore anchors on `FOOTER_VALUE_LABEL` (`"Sales Tax:"`) and takes the
+first `FOOTER_VALUE_COUNT` amounts after it in order — subtotal, sales tax, listed total — via
+`find_currency_values()` in `processor_utilities.py`. That is what "by label" means here: a regex
+pairing a label with the amount on its own line would read the subtotal as the sales tax. It used
+to read `splitlines()[2]` and `[3]`, which a single extra line in the footer would have shifted
+(#93).
+
+The first amount, the invoice's own listed subtotal, is deliberately discarded — `invoice.subtotal`
+is summed from the payment lines, and reporting where the two disagree is the point of the app.
+
+A footer with no label, or with fewer amounts than expected, is **reported through
+`report_error` and leaves both amounts at `DECIMAL_ZERO`** rather than raising. Because
+`find_currency_values()` matches digits only, a non-numeric amount falls out as a short list rather
+than a `decimal.InvalidOperation` escaping into the tkinter callback, where `--noconsole` would
+have swallowed the traceback and the app would appear to do nothing.
 
 **Classification is config-driven, not coded.** A new cost category or matching term belongs in
 `Configs/Cost_Criteria.txt`, not in a new `if/elif` in the processor. Shared regex, lookup and

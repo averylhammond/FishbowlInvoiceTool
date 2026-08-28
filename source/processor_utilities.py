@@ -1,7 +1,14 @@
-from re import search
+from re import findall, search
 from decimal import Decimal, ROUND_HALF_UP
 
 from source.constants import DECIMAL_ZERO
+
+# Matches one currency amount written the way Fishbowl prints it: a dollar sign,
+# optional space, optional minus, thousands separators, and an optional decimal
+# part. The digits are captured without the "$" so the match can be converted
+# directly. Text that is not a number simply does not match, which is what lets
+# callers detect a malformed value instead of raising on the conversion.
+CURRENCY_PATTERN = r"\$\s*(-?[\d,]*\d(?:\.\d+)?)"
 
 
 def search_text_by_re(text: str, regex: str) -> str:
@@ -46,6 +53,24 @@ def search_payment_line(line: str, regex: str) -> Decimal:
         return format_currency(match[-1].replace(",", ""))
     else:
         return DECIMAL_ZERO
+
+
+def find_currency_values(text: str) -> list[Decimal]:
+    """
+    Finds every currency amount in the text, in the order they appear
+
+    Args:
+        text (str): The text to be searched
+
+    Returns:
+        list[Decimal]: One Decimal per currency amount found, empty list if none
+    """
+
+    # Strip the thousands separators before converting, since Decimal() rejects them
+    return [
+        format_currency(value=match.replace(",", ""))
+        for match in findall(pattern=CURRENCY_PATTERN, string=text)
+    ]
 
 
 def find_payment_terms(text: str, payment_terms: list) -> str:
