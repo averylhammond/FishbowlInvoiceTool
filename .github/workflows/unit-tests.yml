@@ -48,4 +48,4 @@ jobs:
     # Run unit tests with pytest
     - name: Run tests and code coverage
       run: |
-        pytest tests/*
+        pytest tests/
