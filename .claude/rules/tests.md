@@ -68,6 +68,20 @@ banners used throughout `tests/`:
 ###############################################################################
 ```
 
+**Import the names under test explicitly — never `from <module> import *`.** A wildcard
+import binds whatever the module happens to export, so a name deleted or renamed in `source/`
+fails at the point of *use*, in one test, rather than at import, in every test that file holds —
+which makes a rename far harder to trace. Import lists are sorted and parenthesized across lines
+once they no longer fit on one.
+
+**One fixture convention: build the unit under test in a pytest fixture**, and give a test that
+needs a differently-constructed object its arguments through indirect parametrization
+(`@pytest.mark.parametrize("window", [{"return_value": "copied"}], indirect=True)`) rather than a
+`_build_window(...)`-style helper. The helper form left this repo with the shared subwindow
+classes; do not reintroduce it. A fixture that patches widget classes `yield`s from **inside** its
+`with` block, so the patches stay live for the test body and the patched classes themselves can be
+asserted against — see `button_cls` in `tests/test_InvoiceDiscoveryWindow.py`.
+
 **Do not add tests here for anything owned by `fishbowl-common`.** Its classes and windows
 (`ThemedSubwindow`, `MessageWindow`, `AboutWindow`, `FileEditorWindow`, `UpdateWindow`,
 `PatchNotesWindow`, `Tooltip`, `UpdateCoordinator`, `SettingsRepository`, `PatchNotes`) are
