@@ -37,6 +37,16 @@ to quantize, and `DECIMAL_ZERO` from `source/constants.py` as the zero literal.
 
 The controller then compares the computed total against the listed one and warns on a mismatch.
 
+**The pipeline needs a text layer, and the controller refuses the invoice when there is none.**
+`handle_process_invoice()` rejects a PDF whose pages all extract blank, before `populate_invoice()`
+runs. Every step above is regex over pypdf's extracted text, so a PDF with no text silently
+produces a complete, plausible, entirely zero result — and because the calculated and listed totals
+then agree at `$0.00`, the mismatch warning does not fire either. That is what a scanned invoice,
+or one re-printed through a virtual printer such as "Microsoft Print to PDF", looks like: the page
+is stored as an image, or its text as vector outlines, and pypdf extracts `""`. Reporting it is the
+only honest option short of adding OCR. **Keep that guard ahead of any new parsing step**, and note
+that a rejected invoice contributes no block to `logs/results.txt`.
+
 ## Reading the footer
 
 **The footer's labels are not on the same line as their values, and never read one by line index.**
