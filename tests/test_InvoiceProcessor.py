@@ -16,7 +16,14 @@ def mock_file_io():
     """
     Returns a mocked InvoiceAppFileIO object
     """
-    return MagicMock(spec=InvoiceAppFileIO)
+    mock = MagicMock(spec=InvoiceAppFileIO)
+
+    # report_error is assigned in InvoiceAppFileIO.__init__ rather than declared on
+    # the class, so spec= does not know about it. Attach it explicitly so the
+    # processor's error path can be asserted against
+    mock.report_error = MagicMock()
+
+    return mock
 
 
 @pytest.fixture
@@ -49,8 +56,9 @@ def invoice():
         "Ordered Total Price\n"
         "1 LABOR install\n"
         "2 SHIPPING charges\n"
-        "Total:Subtotal\n"
-        "$10.00\n"
+        "Total:Subtotal:\n"
+        "Sales Tax:$10.00\n"
+        "$2.00\n"
         "$12.00\n"
     ]
 
@@ -493,19 +501,12 @@ def test_find_hr_cost_returns_zero_when_no_match(
 ###############################################################################
 ###           Tests InvoiceProcessor -> process_end_of_invoice()            ###
 ###############################################################################
-@patch(
-    "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
-)
-def test_process_end_of_invoice_sets_values(
-    mock_format_currency, invoice_processor, invoice
-):
+def test_process_end_of_invoice_sets_values(invoice_processor, invoice):
     """
-    Verifies that process_end_of_invoice correctly extracts sales tax and listed total
-    and computes the invoice total
+    Verifies that process_end_of_invoice reads the sales tax and listed total from
+    the footer's amounts and computes the invoice total
 
     Args:
-        mock_format_currency (unittest.mock.MagicMock): Mocked format_currency function
         invoice_processor (pytest.fixture): Test fixture for InvoiceProcessor
         invoice (pytest.fixture): Test fixture for Invoice
     """
@@ -513,33 +514,138 @@ def test_process_end_of_invoice_sets_values(
     # Setup: Assume subtotal is already computed
     invoice.subtotal = Decimal("100.00")
 
-    # Simulated end-of-invoice text, typically from PDF page content
+    # Simulated end-of-invoice text. The footer's labels are emitted before its
+    # amounts, so the label is followed by the subtotal, the sales tax and the total
     text = (
         "Some other content\n"
-        "Total: 100.00\n"
-        "Other Line\n"
+        "Total:Subtotal:\n"
+        "Sales Tax:$100.00\n"
         "$8.50\n"
         "$108.50\n"
-        "Footer"
+        "Page 1 of 2"
     )
 
     # Call the method with a known start point
     invoice_processor.process_end_of_invoice(
         text=text,
-        starting_line="Total: 100.00",
+        starting_line="Total:Subtotal:",
         invoice=invoice,
     )
 
-    # Verify parsed fields
+    # Verify parsed fields, the amount on the label's own line being the subtotal
     assert invoice.sales_tax == Decimal("8.50")
     assert invoice.listed_total == Decimal("108.50")
 
     # Verify calculated total
     assert invoice.total == Decimal("108.50")
 
-    # Verify formatting was applied (subtotal + sales_tax passed to format_currency)
-    mock_format_currency.assert_any_call(value=Decimal("100.00"))
-    mock_format_currency.assert_any_call(value=Decimal("8.50"))
+    # Verify that a readable footer reports no error
+    invoice_processor.file_io_controller.report_error.assert_not_called()
+
+
+def test_process_end_of_invoice_ignores_unexpected_extra_line(
+    invoice_processor, invoice
+):
+    """
+    Verifies that an unexpected extra line in the footer does not shift which amounts
+    are read, which reading them by line index would have done
+
+    Args:
+        invoice_processor (pytest.fixture): Test fixture for InvoiceProcessor
+        invoice (pytest.fixture): Test fixture for Invoice
+    """
+
+    invoice.subtotal = Decimal("100.00")
+
+    # Footer carrying an extra line between the marker and the labelled amounts
+    text = (
+        "Total:Subtotal:\n"
+        "Discount:\n"
+        "Sales Tax:$100.00\n"
+        "$8.50\n"
+        "$108.50\n"
+        "Page 1 of 2"
+    )
+
+    invoice_processor.process_end_of_invoice(
+        text=text,
+        starting_line="Total:Subtotal:",
+        invoice=invoice,
+    )
+
+    # Verify the amounts are still read correctly despite the extra line
+    assert invoice.sales_tax == Decimal("8.50")
+    assert invoice.listed_total == Decimal("108.50")
+    invoice_processor.file_io_controller.report_error.assert_not_called()
+
+
+def test_process_end_of_invoice_reports_on_non_numeric_total(
+    invoice_processor, invoice
+):
+    """
+    Verifies that a footer whose listed total is not a number is reported rather than
+    raising, and that the unreadable amounts are left at zero
+
+    Args:
+        invoice_processor (pytest.fixture): Test fixture for InvoiceProcessor
+        invoice (pytest.fixture): Test fixture for Invoice
+    """
+
+    invoice.subtotal = Decimal("100.00")
+
+    # Footer whose listed total is not a number
+    text = (
+        "Total:Subtotal:\n"
+        "Sales Tax:$100.00\n"
+        "$8.50\n"
+        "$SEE ATTACHED\n"
+        "Page 1 of 2"
+    )
+
+    invoice_processor.process_end_of_invoice(
+        text=text,
+        starting_line="Total:Subtotal:",
+        invoice=invoice,
+    )
+
+    # Verify both amounts are left at zero rather than partially read
+    assert invoice.sales_tax == DECIMAL_ZERO
+    assert invoice.listed_total == DECIMAL_ZERO
+
+    # Verify the total falls back to the subtotal summed from the payment lines
+    assert invoice.total == Decimal("100.00")
+
+    # Verify the failure was surfaced to the user
+    invoice_processor.file_io_controller.report_error.assert_called_once()
+
+
+def test_process_end_of_invoice_reports_on_missing_label(
+    invoice_processor, invoice
+):
+    """
+    Verifies that a footer with no sales tax label is reported rather than having its
+    amounts read from wherever they happen to fall
+
+    Args:
+        invoice_processor (pytest.fixture): Test fixture for InvoiceProcessor
+        invoice (pytest.fixture): Test fixture for Invoice
+    """
+
+    invoice.subtotal = Decimal("100.00")
+
+    # Footer carrying amounts but no label to anchor them to
+    text = "Total:Subtotal:\n$100.00\n$8.50\n$108.50\nPage 1 of 2"
+
+    invoice_processor.process_end_of_invoice(
+        text=text,
+        starting_line="Total:Subtotal:",
+        invoice=invoice,
+    )
+
+    # Verify the amounts are left at zero and the failure was surfaced to the user
+    assert invoice.sales_tax == DECIMAL_ZERO
+    assert invoice.listed_total == DECIMAL_ZERO
+    invoice_processor.file_io_controller.report_error.assert_called_once()
 
 
 ###############################################################################

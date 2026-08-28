@@ -3,6 +3,7 @@ from decimal import Decimal
 from source.processor_utilities import (
     search_text_by_re,
     search_payment_line,
+    find_currency_values,
     find_payment_terms,
     find_sales_rep,
     format_currency,
@@ -10,6 +11,22 @@ from source.processor_utilities import (
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.Invoice import Invoice
 from source.constants import DECIMAL_ZERO
+
+# The last label in the invoice's footer. pypdf emits the footer's label column
+# before its value column, so this label is followed by every footer amount in
+# order -- subtotal, sales tax, listed total -- rather than by its own value:
+#
+#     Total:Subtotal:
+#     Sales Tax:$1,234.56   <- the last label, then the SUBTOTAL
+#     $46.54                <- sales tax
+#     $1,281.10             <- listed total
+#
+# Anchoring here and reading the amounts in order is therefore what locates them
+# by label. Matching an amount on the label's own line would read the subtotal.
+FOOTER_VALUE_LABEL = "Sales Tax:"
+
+# How many amounts the footer lists: subtotal, sales tax, and the listed total
+FOOTER_VALUE_COUNT = 3
 
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
@@ -222,13 +239,31 @@ class InvoiceProcessor:
         # Only need to process from the start of the subtotal to the end
         text = text[(text.find(starting_line)) :]
 
-        # Find sales tax and listed total and place into invoice
-        invoice.sales_tax = Decimal(
-            text.splitlines()[2].replace("$", "").replace(",", "")
+        # Anchor on the footer's last label, so the amounts are located by what
+        # precedes them rather than by their line number
+        label_index = text.find(FOOTER_VALUE_LABEL)
+        values = (
+            find_currency_values(text=text[label_index:])[:FOOTER_VALUE_COUNT]
+            if label_index != -1
+            else []
         )
-        invoice.listed_total = Decimal(
-            text.splitlines()[3].replace("$", "").replace(",", "")
-        )
+
+        # A footer missing its label, or listing fewer amounts than expected, means
+        # the invoice cannot be read. Report it and leave the amounts at zero rather
+        # than guessing at a value the user's total would then be compared against
+        if len(values) < FOOTER_VALUE_COUNT:
+            self.file_io_controller.report_error(
+                "Invoice Parse Error",
+                f"Could not read the sales tax and listed total from invoice {invoice.order_number}.",
+            )
+            invoice.sales_tax = DECIMAL_ZERO
+            invoice.listed_total = DECIMAL_ZERO
+        else:
+            # The first amount is the invoice's own subtotal, which is deliberately
+            # discarded: the subtotal on the invoice object is summed from the payment
+            # lines, and reporting where the two disagree is the point of the app
+            invoice.sales_tax = values[1]
+            invoice.listed_total = values[2]
 
         # Calculate the total of all processed listed costs
         invoice.total = format_currency(

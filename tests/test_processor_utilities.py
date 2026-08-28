@@ -242,6 +242,53 @@ def test_search_payment_line_quantity_wrong_format():
 
 
 ###############################################################################
+###        Tests for processor_utilities -> find_currency_values()          ###
+###############################################################################
+def test_find_currency_values_returns_values_in_order():
+    """
+    Tests that find_currency_values() returns every currency amount in the text as a
+    Decimal, in the order the amounts appear
+    """
+
+    text = "Sales Tax:$1,234.56\n$0.00\n$25.50"
+
+    assert find_currency_values(text=text) == [
+        Decimal("1234.56"),
+        Decimal("0.00"),
+        Decimal("25.50"),
+    ]
+
+
+def test_find_currency_values_ignores_non_currency_numbers():
+    """
+    Tests that find_currency_values() matches only amounts prefixed with a dollar sign,
+    so page numbers and dates in the invoice footer are not mistaken for amounts
+    """
+
+    text = "Page 2 of January 1, 2025 11:34:34 AM CDT 2\n$8.50"
+
+    assert find_currency_values(text=text) == [Decimal("8.50")]
+
+
+def test_find_currency_values_ignores_non_numeric_value():
+    """
+    Tests that a dollar sign followed by text rather than digits produces no value,
+    which is what lets the caller detect a malformed amount instead of raising
+    """
+
+    assert find_currency_values(text="Total:$SEE ATTACHED") == []
+
+
+def test_find_currency_values_no_values_returns_empty_list():
+    """
+    Tests that find_currency_values() returns an empty list when the text holds no
+    currency amounts at all
+    """
+
+    assert find_currency_values(text="Total:Subtotal:") == []
+
+
+###############################################################################
 ###         Tests for processor_utilities -> find_payment_terms()           ###
 ###############################################################################
 def test_find_payment_terms_correct_format():
