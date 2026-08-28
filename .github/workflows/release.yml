@@ -72,7 +72,7 @@ jobs:
     # Run unit tests against the tagged commit
     - name: Run unit tests
       run: |
-        pytest tests/*
+        pytest tests/
 
     # Run integration tests and verify output matches the canonical results
     - name: Run integration test

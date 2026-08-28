@@ -5,14 +5,16 @@ paths:
 
 # Unit testing conventions
 
-Unit tests live in `tests/`, one `tests/<ModuleName>_tests.py` per module under `source/`.
+Unit tests live in `tests/`, one `tests/test_<ModuleName>.py` per module under `source/`. That
+name matches pytest's default `python_files` pattern, so a bare `pytest` collects the whole
+suite and the jobs in `.github/workflows/` invoke it as `pytest tests/` with no glob.
 `tests/__init__.py` is empty but load-bearing: with it present, pytest's prepend import mode puts
 the repo root on `sys.path`, which is what makes `from source... import` resolve. There is no
 `conftest.py`; coverage configuration lives in `.coveragerc`, which measures `./source` and omits
 `main.py`, `tests/`, the venvs, `source/__init__.py` and `source/constants.py`.
 
-`tests/InvoiceProcessor_tests.py` (a class with injected collaborators) and
-`tests/InvoiceAppDisplay_tests.py` (the widget-patching fixture) are the two reference
+`tests/test_InvoiceProcessor.py` (a class with injected collaborators) and
+`tests/test_InvoiceAppDisplay.py` (the widget-patching fixture) are the two reference
 implementations — mirror them rather than inventing new patterns.
 
 ## Test one object in isolation
@@ -23,12 +25,12 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
 
 - **Mock injected collaborators with `MagicMock(spec=Collaborator)`** and pass them into the
   constructor. See the `mock_file_io` and `invoice_processor` fixtures in
-  `tests/InvoiceProcessor_tests.py`, where `InvoiceProcessor` is built with a
+  `tests/test_InvoiceProcessor.py`, where `InvoiceProcessor` is built with a
   `MagicMock(spec=InvoiceAppFileIO)` so no real file I/O occurs. The `spec=` argument keeps the
   mock honest — it only allows attributes and methods the real class defines.
 - **Mock module-level dependencies with `@patch` / `mock_open`.** For classes that call `os`,
   `open`, or pypdf directly, patch those calls instead of touching the real filesystem — see
-  `tests/InvoiceAppFileIO_tests.py` (e.g. `@patch("os.remove")`,
+  `tests/test_InvoiceAppFileIO.py` (e.g. `@patch("os.remove")`,
   `@patch("os.path.exists", ...)`, `mock_open`).
 - **Construct the unit under test in a pytest fixture** (e.g. the `file_io` fixture) so each test
   starts from a clean, identically-configured object.
@@ -43,7 +45,7 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
 
 ## Follow the FIRST principles
 
-- **Fast** — No real file, PDF, or GUI I/O; mock it. The whole `pytest tests/*` run stays quick.
+- **Fast** — No real file, PDF, or GUI I/O; mock it. The whole `pytest tests/` run stays quick.
 - **Independent** — No ordering dependencies or shared mutable state between tests. Each test
   builds its own object via a fixture and asserts on its own data.
 - **Repeatable** — Deterministic on every run and machine. Do not rely on the real filesystem, the

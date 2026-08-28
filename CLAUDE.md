@@ -40,11 +40,11 @@ infrastructure and GUI package both depend on is
 - Run the app (GUI): `python main.py`
 - Run the app headless (processes all invoices in `Invoices/` and writes `logs/results.txt`, no
   GUI): `python main.py --integration-test`
-- Run all unit tests: `pytest tests/*`
-- Run a single test file: `pytest tests/Invoice_tests.py`
+- Run all unit tests: `pytest tests/`
+- Run a single test file: `pytest tests/test_Invoice.py`
 - Run a single test:
-  `pytest tests/processor_utilities_tests.py::test_search_text_by_re_order_number_correct_format`
-- Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml --cov-fail-under=90 tests/*`
+  `pytest tests/test_processor_utilities.py::test_search_text_by_re_order_number_correct_format`
+- Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml --cov-fail-under=90 tests/`
 - Package a release: `./scripts/package_release.sh false` (pass `true` to also bundle sample
   invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
   with Inno Setup installed it also builds `release/FishbowlInvoiceTool_Setup.exe`.
