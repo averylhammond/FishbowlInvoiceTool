@@ -537,6 +537,58 @@ def test_handle_process_invoice_first_page_none_shows_error_and_returns(controll
     controller.processor.populate_invoice.assert_not_called()
 
 
+def test_handle_process_invoice_no_text_shows_error_and_returns(controller):
+    """
+    Verifies that handle_process_invoice shows an error popup and returns early
+    when the invoice PDF has pages but none of them hold any text, as happens
+    with a scanned or printed-to-PDF copy that carries no text layer.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # The PDF read returns pages, but every one of them extracted as blank
+    controller.file_io.read_invoice_file.return_value = ["", "   \n", ""]
+
+    controller.controller.handle_process_invoice(
+        invoice_filepath="scanned.pdf", append_output=False
+    )
+
+    # An error popup is shown and processing stops before populating the invoice,
+    # so no all-zero result is displayed or written to the results file
+    controller.display.show_popup.assert_called_once()
+    controller.processor.populate_invoice.assert_not_called()
+    controller.processor.process_invoice.assert_not_called()
+    controller.display.display_invoice_output.assert_not_called()
+    controller.file_io.print_invoice_to_output_file.assert_not_called()
+
+
+def test_handle_process_invoice_text_on_later_page_is_processed(controller):
+    """
+    Verifies that handle_process_invoice processes an invoice whose first page
+    extracted as blank but which holds text on a later page, so the no-text guard
+    rejects only PDFs that are blank throughout.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    # The first page came back blank, but a later page carries the table
+    controller.file_io.read_invoice_file.return_value = ["", "page two text"]
+    controller.invoice.total = Decimal("10.00")
+    controller.invoice.listed_total = Decimal("10.00")
+
+    controller.controller.handle_process_invoice(
+        invoice_filepath="invoice.pdf", append_output=False
+    )
+
+    # The invoice is processed as normal, with no popup shown
+    controller.processor.process_invoice.assert_called_once_with(
+        invoice=controller.invoice
+    )
+    controller.display.show_popup.assert_not_called()
+
+
 def test_handle_process_invoice_full_flow_totals_match(controller):
     """
     Verifies the full happy-path flow: when the calculated total matches the

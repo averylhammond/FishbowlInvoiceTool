@@ -261,6 +261,26 @@ class InvoiceAppController:
             )
             return
 
+        # A PDF whose pages hold no text at all cannot be parsed, and failing here
+        # rather than pressing on is the whole point of the check: every field
+        # would otherwise fall back to its default and the app would report a
+        # confident $0.00 breakdown for an invoice it never actually read. The
+        # totals would agree at $0.00, so even the mismatch warning below would
+        # stay silent. This is what a PDF re-printed through a virtual printer
+        # (e.g. "Microsoft Print to PDF") looks like: the page is stored as an
+        # image, or its text as vector outlines, with no text layer left behind.
+        if not any(page and page.strip() for page in invoice.page_contents):
+            self.display.show_popup(
+                title="No Readable Text",
+                message=(
+                    f"No text could be read from the invoice PDF located at {invoice_filepath}. "
+                    "It appears to be a scanned or printed-to-PDF copy, which stores the page "
+                    "as an image and leaves no text for the app to read. Save the invoice "
+                    "directly from Fishbowl instead of printing it to PDF, then try again."
+                ),
+            )
+            return
+
         # Print results of reading invoice to debug.txt if in debug mode
         self.file_io_controller.print_to_debug_file(
             f"Processing invoice: {invoice_filepath} with {len(invoice.page_contents)} pages."
