@@ -4,6 +4,16 @@ Each release's changes, newest first. The application shows the sections you hav
 seen yet the first time you open it after an update, and Help -> What's New brings this
 back at any time.
 
+## 4.2.2
+
+- **An invoice the application cannot read is now reported instead of processed.** Some
+  invoices hold no readable text at all -- a scanned copy, or one re-printed through a tool
+  like Microsoft Print to PDF, stores the page as a picture with nothing behind it to read.
+  The application used to work through one of these as though every field were empty and
+  show you a breakdown of all zeros, with no warning that anything had gone wrong. It now
+  tells you the file cannot be read and suggests saving the invoice from Fishbowl directly
+  rather than printing it to PDF.
+
 ## 4.2.1
 
 - Maintenance release. Nothing about how the application works has changed.
