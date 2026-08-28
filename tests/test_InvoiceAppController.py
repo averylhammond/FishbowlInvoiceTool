@@ -109,7 +109,9 @@ def test_init_constructs_and_wires_collaborators(controller):
     """
 
     # Each collaborator should have been constructed exactly once
-    controller.arg_provider_cls.assert_called_once_with()
+    controller.arg_provider_cls.assert_called_once_with(
+        description="Fishbowl invoice cost-breakdown processor"
+    )
     controller.file_io_cls.assert_called_once_with()
 
     # The processor is wired with the file_io controller and the criteria pulled
