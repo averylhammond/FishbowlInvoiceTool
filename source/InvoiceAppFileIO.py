@@ -1,17 +1,18 @@
 import shutil
-import pypdf
 from pathlib import Path
 from typing import Callable
 
-from source.Invoice import Invoice
+import pypdf
+
 from source.constants import (
-    DEBUG_LOG_PATH,
-    RESULTS_LOG_PATH,
-    PAYMENT_TERMS_PATH,
-    SALES_REPS_PATH,
     COST_CRITERIA_PATH,
+    DEBUG_LOG_PATH,
     INVOICES_DIR,
+    PAYMENT_TERMS_PATH,
+    RESULTS_LOG_PATH,
+    SALES_REPS_PATH,
 )
+from source.Invoice import Invoice
 
 
 # InvoiceAppFileIO class to handle all file input/output operations
@@ -20,7 +21,9 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###                   InvoiceAppFileIO -> __init__()                    ###
     ###########################################################################
-    def __init__(self, report_error: Callable[[str, str], None] = lambda *_: None):
+    def __init__(
+        self, report_error: Callable[[str, str], None] = lambda *_: None
+    ) -> None:
         """
         Initializes the InvoiceAppFileIO object
 
@@ -35,14 +38,14 @@ class InvoiceAppFileIO:
         self.report_error = report_error
 
         # Initialize cost criteria/exclusion lists
-        self.labor_criteria = []
-        self.labor_exclusions = []
-        self.shipping_criteria = []
+        self.labor_criteria: list[str] = []
+        self.labor_exclusions: list[str] = []
+        self.shipping_criteria: list[str] = []
 
     ###########################################################################
     ###                InvoiceAppFileIO -> reset_debug_file()               ###
     ###########################################################################
-    def reset_debug_file(self):
+    def reset_debug_file(self) -> None:
         """
         Deletes the debug.txt file if it exists, to reset the debug log for the next execution
         Note: This function does nothing in the release configuration
@@ -67,7 +70,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###               InvoiceAppFileIO -> reset_results_file()             ###
     ###########################################################################
-    def reset_results_file(self):
+    def reset_results_file(self) -> None:
         """
         Deletes the results.txt file if it exists, to reset the results log for the next execution
         """
@@ -87,7 +90,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###              InvoiceAppFileIO -> print_to_debug_file()              ###
     ###########################################################################
-    def print_to_debug_file(self, contents: str):
+    def print_to_debug_file(self, contents: str) -> None:
         """
         Writes the string contents to the debug.txt file
         Note: This function does nothing in the release configuration
@@ -117,7 +120,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     def print_invoice_to_output_file(
         self, invoice: Invoice, append_output: bool = False
-    ):
+    ) -> None:
         """
         Writes each field of the invoice object to results.txt
 
@@ -175,7 +178,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###                InvoiceAppFileIO -> write_text_file()                ###
     ###########################################################################
-    def write_text_file(self, file_path: Path, contents: str):
+    def write_text_file(self, file_path: Path, contents: str) -> None:
         """
         Writes the given string contents to a text file, overwriting any existing
         contents
@@ -200,7 +203,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###               InvoiceAppFileIO -> read_invoice_file()               ###
     ###########################################################################
-    def read_invoice_file(self, invoice_filepath: Path) -> list:
+    def read_invoice_file(self, invoice_filepath: Path) -> list[str]:
         """
         Converts the given invoice PDF into a list of strings
         Each string in the list represents a page of the invoice PDF
@@ -209,8 +212,8 @@ class InvoiceAppFileIO:
             invoice_filepath (Path): The file path of the invoice to read in
 
         Returns:
-            list: A list of strings where each string is the text from a page of the
-                invoice, or an empty list if the PDF could not be read
+            list[str]: One string per page of the invoice, in page order, or an
+                empty list if the PDF could not be read
         """
 
         try:
@@ -281,14 +284,15 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###            InvoiceAppFileIO -> parse_sales_reps_config()            ###
     ###########################################################################
-    def parse_sales_reps_config(self) -> dict:
+    def parse_sales_reps_config(self) -> dict[str, str]:
         """
         Builds the Sales Reps dictionary that contains the invoice code and
         matching name for each sales rep as defined in the sales reps config file
 
         Returns:
-            dict: The populated dictionary with all codes as keys and names as
-                values, or an empty dictionary if the config file could not be read
+            dict[str, str]: The populated dictionary with all codes as keys and
+                names as values, or an empty dictionary if the config file could
+                not be read
         """
 
         sales_reps = {}
@@ -323,14 +327,14 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###          InvoiceAppFileIO -> parse_payment_terms_config()           ###
     ###########################################################################
-    def parse_payment_terms_config(self) -> list:
+    def parse_payment_terms_config(self) -> list[str]:
         """
         Builds the payment_terms list that contains each possible
         payment term as defined in the payment terms config file
 
         Returns:
-            list: A list of strings, each string is a payment term that could be
-                found in an invoice, or an empty list if the config could not be read
+            list[str]: One payment term per entry, each of which could be found in
+                an invoice, or an empty list if the config could not be read
         """
 
         payment_terms = []
@@ -363,7 +367,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###            InvoiceAppFileIO -> add_cost_criteria_field()            ###
     ###########################################################################
-    def add_cost_criteria_field(self, category: str, line: str):
+    def add_cost_criteria_field(self, category: str, line: str) -> None:
         """
         Given the current category being read in the cost criteria config file, add the entry
         to the list of criteria/exclusions
@@ -394,7 +398,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###           InvoiceAppFileIO -> parse_cost_criteria_file()            ###
     ###########################################################################
-    def parse_cost_criteria_file(self):
+    def parse_cost_criteria_file(self) -> None:
         """
         Reads all cost criteria/exclusions from the provided config file and stores them
         in member variables

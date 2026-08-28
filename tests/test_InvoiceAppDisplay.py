@@ -379,24 +379,6 @@ def test_display_invoice_output_appends_when_requested(display):
     )
 
 
-def test_display_invoice_output_no_output_box(display):
-    """
-    Verifies that display_invoice_output safely does nothing when the output box
-    has not been initialized.
-
-    Args:
-        display (pytest.fixture): Provides the display and its mocks
-    """
-
-    # Simulate the output box never having been built
-    display.display.output_box = None
-    mock_invoice = MagicMock(spec=Invoice)
-
-    # No error should be raised, and the invoice is never formatted for display
-    display.display.display_invoice_output(mock_invoice)
-    mock_invoice.to_formatted_string.assert_not_called()
-
-
 ###############################################################################
 ###           Tests InvoiceAppDisplay -> handle_process_invoice()           ###
 ###############################################################################
@@ -570,24 +552,6 @@ def test_handle_clear_resets_state(display):
     # The selected file is reset and the output box is emptied
     display.display.selected_file.set.assert_called_once_with("")
     display.display.output_box.delete.assert_called_once_with(1.0, tk.END)
-
-
-def test_handle_clear_no_output_box(display):
-    """
-    Verifies that handle_clear still resets the selected file and does not error
-    when the output box has not been initialized.
-
-    Args:
-        display (pytest.fixture): Provides the display and its mocks
-    """
-
-    # Simulate the output box never having been built
-    display.display.output_box = None
-
-    display.display.handle_clear()
-
-    # The selected file is still reset even without an output box
-    display.display.selected_file.set.assert_called_once_with("")
 
 
 ###############################################################################

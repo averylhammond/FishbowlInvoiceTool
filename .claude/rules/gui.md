@@ -70,6 +70,14 @@ Rules for this class:
   styling until restart. Already-open subwindows keep the theme they snapshotted.
 - **Add a new theme or font upstream**, as data in `fishbowl_common.gui` — the menus are built by
   iterating those collections, so nothing here needs a new branch.
+- **Widgets are declared, not defaulted to `None`.** The `# fmt:off` block in `__init__` carries a
+  bare `self.x: tk.Y` per widget, with no value: `build_widgets()` is the last statement in the
+  constructor and creates every one of them, so nothing can observe one unset and no method guards
+  against `None`. A new widget goes in that block *and* in `build_widgets()`. `InvoiceDiscoveryWindow`
+  follows the same rule.
+- **`process_callback` is typed by the `ProcessInvoiceCallback` Protocol**, not a `Callable`: the
+  call sites pass `append_output` by keyword, which `Callable[[Path, bool], None]` cannot express.
+  The other callbacks are called positionally and stay plain `Callable`s.
 
 ## `InvoiceDiscoveryWindow`
 

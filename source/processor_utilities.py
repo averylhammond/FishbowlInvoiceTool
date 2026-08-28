@@ -1,5 +1,5 @@
+from decimal import ROUND_HALF_UP, Decimal
 from re import findall, search
-from decimal import Decimal, ROUND_HALF_UP
 
 from source.constants import DECIMAL_ZERO
 
@@ -73,13 +73,13 @@ def find_currency_values(text: str) -> list[Decimal]:
     ]
 
 
-def find_payment_terms(text: str, payment_terms: list) -> str:
+def find_payment_terms(text: str, payment_terms: list[str]) -> str:
     """
     Searches text for an occurrence of any of the possible payment terms
 
     Args:
         text (str): The text to be searched
-        payment_terms (list): Contains all possible payment terms
+        payment_terms (list[str]): Contains all possible payment terms
 
     Returns:
         str: The payment term if found, empty string otherwise
@@ -97,13 +97,13 @@ def find_payment_terms(text: str, payment_terms: list) -> str:
     return str()
 
 
-def find_sales_rep(text: str, sales_reps: dict) -> str:
+def find_sales_rep(text: str, sales_reps: dict[str, str]) -> str:
     """
     Searches the text for an occurrence of any of the possible sales reps
 
     Args:
         text (str): The text to be searched
-        sales_reps (dict): Contains all possible sales rep codes and names
+        sales_reps (dict[str, str]): Contains all possible sales rep codes and names
 
     Returns:
         str: The name of the sales rep if found, empty string otherwise
@@ -120,13 +120,14 @@ def find_sales_rep(text: str, sales_reps: dict) -> str:
     return str()
 
 
-def format_currency(value) -> Decimal:
+def format_currency(value: str | Decimal) -> Decimal:
     """
-    Takes a string representation of a currency value and formats it
-    to a Decimal with two decimal places, rounding half up
+    Takes a currency value and formats it to a Decimal with two decimal
+    places, rounding half up
 
     Args:
-        value (any): The string representation of the currency value
+        value (str | Decimal): The currency value to format, either as the
+            string it was read from the invoice as or as an already-summed amount
 
     Returns:
         Decimal: The formatted currency value if conversion is successful,

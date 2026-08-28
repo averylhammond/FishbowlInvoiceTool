@@ -118,6 +118,13 @@ Two responsibilities worth knowing before touching them:
 - Add type hints and concise docstrings in the existing style (see any method in
   `source/InvoiceProcessor.py` for the expected `Args:`/`Returns:` format), and add tests in
   `tests/` for any new branch or utility function in the same change.
+- **Every `def` in `source/` is fully annotated**: every parameter, and a return type on every
+  function including `-> None`. Spell container types out — `list[str]`, `dict[str, str]` — since
+  a bare `list` tells a reader (and a type checker) nothing. Keep the docstring's `Args:`/`Returns:`
+  types in step with the annotation; they are the same claim written twice.
+- **Imports are grouped stdlib / third-party / first-party**, one blank line between groups,
+  alphabetized within each. `fishbowl_common` is third party — it is installed from a pinned git
+  tag — so it never sits among the `source.*` imports.
 
 ## Git Workflow (when working on a GitHub issue)
 
