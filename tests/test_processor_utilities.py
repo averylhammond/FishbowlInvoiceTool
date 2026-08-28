@@ -1,6 +1,12 @@
 import pytest
 from decimal import Decimal
-from source.processor_utilities import *
+from source.processor_utilities import (
+    find_currency_values,
+    find_payment_terms,
+    find_sales_rep,
+    search_payment_line,
+    search_text_by_re,
+)
 
 from source.constants import DECIMAL_ZERO
 

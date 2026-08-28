@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import patch, mock_open, call, MagicMock
 
 from source.Invoice import Invoice
-from source.InvoiceAppFileIO import *
+from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.constants import (
     SALES_REPS_PATH,
     PAYMENT_TERMS_PATH,
