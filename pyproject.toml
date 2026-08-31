@@ -15,6 +15,7 @@ omit = [
     "./venv/*",
     ".venv/*",
     "./source/__init__.py",
+    "./source/gui/__init__.py",
     "./source/constants.py",
 ]
 
