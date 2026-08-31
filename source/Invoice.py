@@ -36,7 +36,7 @@ class Invoice:
         Returns a formatted string to output invoice contents
 
         Returns:
-            str: A formatted string containing all of the invoice's fields on separate lines
+            A formatted string containing all of the invoice's fields on separate lines
         """
 
         return (

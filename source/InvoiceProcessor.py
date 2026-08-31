@@ -46,10 +46,10 @@ class InvoiceProcessor:
         Initializes the InvoiceProcessor object
 
         Args:
-            file_io_controller (InvoiceAppFileIO): The file IO controller to be used
-            labor_criteria (list[str]): Criteria to determine if a payment line is a labor cost
-            labor_exclusions (list[str]): Criteria to exclude a payment line from being a labor cost
-            shipping_criteria (list[str]): Criteria to determine if a payment line is a shipping cost
+            file_io_controller: The file IO controller to be used
+            labor_criteria: Criteria to determine if a payment line is a labor cost
+            labor_exclusions: Criteria to exclude a payment line from being a labor cost
+            shipping_criteria: Criteria to determine if a payment line is a shipping cost
         """
 
         self.file_io_controller = file_io_controller
@@ -67,9 +67,9 @@ class InvoiceProcessor:
         Initializes all fields of an invoice object that appear on the first page of the invoice PDF
 
         Args:
-            invoice (Invoice): The invoice object to be populated
-            sales_reps (dict[str, str]): All possible sales rep codes and names
-            payment_terms (list[str]): All possible payment terms
+            invoice: The invoice object to be populated
+            sales_reps: All possible sales rep codes and names
+            payment_terms: All possible payment terms
         """
 
         if invoice is None:
@@ -115,10 +115,10 @@ class InvoiceProcessor:
         shipping, or material cost, and finding the cost. It then adds that cost to the invoice total
 
         Args:
-            text (str): The current page of the invoice
-            line (str): The line at which the payment line starts
-            invoice (Invoice): The invoice object to be modified
-            curr_line_num (int): The current payment line number being processed
+            text: The current page of the invoice
+            line: The line at which the payment line starts
+            invoice: The invoice object to be modified
+            curr_line_num: The current payment line number being processed
         """
 
         # If this line contains a subtotal, do nothing
@@ -178,10 +178,10 @@ class InvoiceProcessor:
         Searches the payment_lines for any listing of cost listed in quantity
 
         Args:
-            payment_lines (str): The lines of text that make up the payment line
+            payment_lines: The lines of text that make up the payment line
 
         Returns:
-            Decimal: The cost if found, 0.0 otherwise
+            The cost if found, 0.0 otherwise
         """
 
         # Search the payment lines for any line that contains a cost listed in quantity
@@ -203,10 +203,10 @@ class InvoiceProcessor:
         Searches the payment_lines for any listing of cost listed in hourly rate
 
         Args:
-            payment_lines (str): The lines of text that make up the payment line
+            payment_lines: The lines of text that make up the payment line
 
         Returns:
-            Decimal: The cost if found, 0.0 otherwise
+            The cost if found, 0.0 otherwise
         """
 
         # Search the payment lines for any line that contains a cost listed in hourly rate
@@ -231,9 +231,9 @@ class InvoiceProcessor:
         the sales tax and the listed total on the invoice
 
         Args:
-            text (str): The invoice page to be processed
-            starting_line (str): The line at which the end of the invoice starts
-            invoice (Invoice): The invoice object to be modified
+            text: The invoice page to be processed
+            starting_line: The line at which the end of the invoice starts
+            invoice: The invoice object to be modified
         """
 
         # Only need to process from the start of the subtotal to the end
@@ -279,10 +279,10 @@ class InvoiceProcessor:
         and exclusions that were defined during construction
 
         Args:
-            line (str): One line of text from the purchase table
+            line: One line of text from the purchase table
 
         Returns:
-            bool: True if a labor cost, False otherwise
+            True if a labor cost, False otherwise
         """
 
         # Check if the line contains any of the labor criteria
@@ -309,10 +309,10 @@ class InvoiceProcessor:
         that was defined during construction
 
         Args:
-            line (str): One line of text from the purchase table
+            line: One line of text from the purchase table
 
         Returns:
-            bool: True if a shipping cost, False otherwise
+            True if a shipping cost, False otherwise
         """
 
         # Check if the line contains any of the shipping criteria
@@ -330,7 +330,7 @@ class InvoiceProcessor:
         Main function that processes the invoice PDF
 
         Args:
-            invoice (Invoice): The empty invoice object to be populated
+            invoice: The empty invoice object to be populated
         """
 
         # Keep track of next expected payment line number

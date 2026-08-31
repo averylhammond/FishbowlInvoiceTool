@@ -53,9 +53,9 @@ class ProcessInvoiceCallback(Protocol):
         Processes one invoice PDF and displays its cost breakdown.
 
         Args:
-            invoice_filepath (Path): The invoice PDF to process
-            append_output (bool): Whether to append this invoice's output to what
-                is already there, or replace it
+            invoice_filepath: The invoice PDF to process
+            append_output: Whether to append this invoice's output to what is already
+                there, or replace it
         """
 
 
@@ -83,30 +83,26 @@ class InvoiceAppDisplay(tk.Tk):
         Initializes the InvoiceAppDisplay object
 
         Args:
-            process_callback (ProcessInvoiceCallback): Callback that processes the
-                selected invoice file and displays its cost breakdown
-            read_file_callback (Callable[[Path], str]): Callback that reads a file's
-                full contents, used to populate the native file editor/viewer window
-            save_config_callback (Callable[[Path, str], None]): Callback that persists
-                edited config contents (and reloads them), invoked when the user saves
-            save_settings_callback (Callable[[str, str], None]): Callback that persists
-                a single user setting (key, value), invoked when the user changes a
-                theme/font/font-size preference
-            copy_invoice_callback (Callable[[Path, bool], str]): Callback that copies
-                a selected invoice PDF (source path, overwrite flag) into the
-                Invoices/ folder, used by the Invoice Discovery window. Returns
-                "copied", "exists", or "error"
-            check_for_updates_callback (Callable[[], None]): Callback that triggers
-                an on-demand update check, invoked when the user selects
-                "Check for Updates" from the Help menu
-            view_patch_notes_callback (Callable[[], None]): Callback that shows the
-                patch notes, invoked when the user selects "What's New" from the
-                Help menu
-            title (str): Title of the application window
-            window_resolution (str): Resolution of the application window (e.g., "750x750")
-            settings (dict[str, str] | None): Previously persisted settings (theme/font/font-size)
-                used to restore the user's last choices on startup. Missing or unknown
-                values fall back to the application defaults.
+            process_callback: Callback that processes the selected invoice file and
+                displays its cost breakdown
+            read_file_callback: Callback that reads a file's full contents, used to
+                populate the native file editor/viewer window
+            save_config_callback: Callback that persists edited config contents (and
+                reloads them), invoked when the user saves
+            save_settings_callback: Callback that persists a single user setting (key,
+                value), invoked when the user changes a theme/font/font-size preference
+            copy_invoice_callback: Callback that copies a selected invoice PDF (source
+                path, overwrite flag) into the Invoices/ folder, used by the Invoice
+                Discovery window. Returns "copied", "exists", or "error"
+            check_for_updates_callback: Callback that triggers an on-demand update check,
+                invoked when the user selects "Check for Updates" from the Help menu
+            view_patch_notes_callback: Callback that shows the patch notes, invoked when
+                the user selects "What's New" from the Help menu
+            title: Title of the application window
+            window_resolution: Resolution of the application window (e.g., "750x750")
+            settings: Previously persisted settings (theme/font/font-size) used to restore
+                the user's last choices on startup. Missing or unknown values fall back to
+                the application defaults.
         """
 
         super().__init__()
@@ -445,8 +441,8 @@ class InvoiceAppDisplay(tk.Tk):
         and tracks it so it can be restyled when the theme or font changes.
 
         Args:
-            widget (tk.Widget): The widget that shows the tooltip when hovered
-            text (str): The informational text to display on hover
+            widget: The widget that shows the tooltip when hovered
+            text: The informational text to display on hover
         """
         self.tooltips.append(
             Tooltip(
@@ -504,9 +500,10 @@ class InvoiceAppDisplay(tk.Tk):
         Displays the calculated totals of the invoice in the output box
 
         Args:
-            invoice (Invoice): The processed invoice containing calculated totals
-            append_output (bool): Whether to append to the output box or clear it first before writing
-                                    Defaults to False, meaning the output box will be cleared before writing
+            invoice: The processed invoice containing calculated totals
+            append_output: Whether to append to the output box or clear it first before
+                writing. Defaults to False, meaning the output box will be cleared
+                before writing
         """
 
         # Clear the output box if not appending
@@ -654,9 +651,9 @@ class InvoiceAppDisplay(tk.Tk):
         the controller has already selected.
 
         Args:
-            app_name (str): The application name to display in the heading
-            version (str): The version whose notes are being announced
-            notes (str): The notes to display, already selected by the controller
+            app_name: The application name to display in the heading
+            version: The version whose notes are being announced
+            notes: The notes to display, already selected by the controller
         """
         PatchNotesWindow(
             parent=self,
@@ -677,8 +674,8 @@ class InvoiceAppDisplay(tk.Tk):
         Displays a message (informational or error) in a popup window
 
         Args:
-            title (str): The title of the popup
-            message (str): The message to display
+            title: The title of the popup
+            message: The message to display
         """
 
         # If in integration test mode, do not show popups since this will be running
@@ -720,12 +717,12 @@ class InvoiceAppDisplay(tk.Tk):
         release.
 
         Args:
-            result (UpdateCheckResult): The outcome of the update check, exposing
-                the newer release's `latest_version` and `release_url`.
-            start_install (Callable | None): Downloads and starts this release's
-                installer, taking a progress callback and a completion callback.
-                None when the release cannot be installed in place, which leaves
-                the window offering only the manual download.
+            result: The outcome of the update check, exposing the newer release's
+                `latest_version` and `release_url`.
+            start_install: Downloads and starts this release's installer, taking a
+                progress callback and a completion callback. None when the release cannot
+                be installed in place, which leaves the window offering only the manual
+                download.
         """
 
         # If in integration test mode, do not show popups since this will be running
@@ -766,8 +763,8 @@ class InvoiceAppDisplay(tk.Tk):
         its current contents and wired to persist edits via the save callback
 
         Args:
-            config_path (Path): The config file to open for editing
-            title (str): The title to display on the editor window
+            config_path: The config file to open for editing
+            title: The title to display on the editor window
         """
         FileEditorWindow(
             parent=self,
@@ -797,15 +794,14 @@ class InvoiceAppDisplay(tk.Tk):
         Shows an error popup with the provided message if the file is not present.
 
         Args:
-            file_path (Path): The text file to open for viewing
-            title (str): The title to display on the viewer window
-            missing_message (str): The popup message shown when the file does not
-                exist
-            text_width (int | None): Width of the text box in character cells, or
-                None to use the default size (used to enlarge the viewer for
-                longer files such as the user guide)
-            text_height (int | None): Height of the text box in character cells, or
-                None to use the default size
+            file_path: The text file to open for viewing
+            title: The title to display on the viewer window
+            missing_message: The popup message shown when the file does not exist
+            text_width: Width of the text box in character cells, or None to use the
+                default size (used to enlarge the viewer for longer files such as the user
+                guide)
+            text_height: Height of the text box in character cells, or None to use the
+                default size
         """
         if file_path.exists():
             FileEditorWindow(
@@ -889,7 +885,7 @@ class InvoiceAppDisplay(tk.Tk):
         Applies a color theme to all widgets in the application
 
         Args:
-            theme (Theme): The theme to apply
+            theme: The theme to apply
         """
         self.current_theme = theme
 
@@ -948,7 +944,7 @@ class InvoiceAppDisplay(tk.Tk):
         Applies a font family to all text on screen
 
         Args:
-            family (str): The font family to apply
+            family: The font family to apply
         """
         self.current_font_family = family
         self._apply_font()
@@ -964,7 +960,7 @@ class InvoiceAppDisplay(tk.Tk):
         Applies a font size to all text on screen
 
         Args:
-            size (int): The font size to apply
+            size: The font size to apply
         """
         self.current_font_size = size
         self._apply_font()
@@ -982,12 +978,12 @@ class InvoiceAppDisplay(tk.Tk):
         default when it is missing or not a valid integer.
 
         Args:
-            value (str | None): The raw font size loaded from settings, or None
-                when no size has been persisted yet
+            value: The raw font size loaded from settings, or None when no size has been
+                persisted yet
 
         Returns:
-            int: The restored font size, or DEFAULT_FONT_SIZE if value is missing
-                or non-numeric.
+            The restored font size, or DEFAULT_FONT_SIZE if value is missing or
+            non-numeric.
         """
         try:
             return int(value)

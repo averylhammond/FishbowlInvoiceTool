@@ -31,16 +31,14 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         Initializes the InvoiceDiscoveryWindow object
 
         Args:
-            parent (tk.Misc): The parent window this window is attached to
-            title (str): Title of the discovery window
-            theme (Theme): The color theme to style the window with, snapshotted
-                at open time
-            font_family (str): The font family to display the text with
-            font_size (int): The font size to display the text with
-            copy_callback (Callable[[Path, bool], str]): Called with a source PDF
-                path and an overwrite flag to copy the file into the Invoices/
-                folder. Returns "copied", "exists", or "error" so this window can
-                confirm overwrites and report each outcome to the user
+            parent: The parent window this window is attached to
+            title: Title of the discovery window
+            theme: The color theme to style the window with, snapshotted at open time
+            font_family: The font family to display the text with
+            font_size: The font size to display the text with
+            copy_callback: Called with a source PDF path and an overwrite flag to copy the
+                file into the Invoices/ folder. Returns "copied", "exists", or "error" so
+                this window can confirm overwrites and report each outcome to the user
         """
 
         super().__init__(parent, title, theme, font_family, font_size)
@@ -198,8 +196,8 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         Determines the folder the Browse dialog should open in by default.
 
         Returns:
-            str: The user's Downloads folder if it exists (where invoices are
-                most likely downloaded), otherwise the user's home folder.
+            The user's Downloads folder if it exists (where invoices are most likely
+            downloaded), otherwise the user's home folder.
         """
         downloads = Path.home() / "Downloads"
         return str(downloads if downloads.exists() else Path.home())
@@ -286,7 +284,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         Appends a status line to the read-only status box, scrolling to show it.
 
         Args:
-            message (str): The status message to append
+            message: The status message to append
         """
 
         # The status box is read-only, so temporarily enable it to write

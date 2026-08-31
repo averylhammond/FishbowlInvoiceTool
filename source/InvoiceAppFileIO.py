@@ -28,10 +28,10 @@ class InvoiceAppFileIO:
         Initializes the InvoiceAppFileIO object
 
         Args:
-            report_error (Callable[[str, str], None]): Callback used to surface a
-                file I/O failure to the user, taking an error title and message.
-                Defaults to a no-op so file I/O never depends on a reporter being
-                wired in (the controller injects the GUI's error popup)
+            report_error: Callback used to surface a file I/O failure to the user, taking
+                an error title and message. Defaults to a no-op so file I/O never depends
+                on a reporter being wired in (the controller injects the GUI's error
+                popup)
         """
 
         # Callback used to report file I/O failures to the user
@@ -96,7 +96,7 @@ class InvoiceAppFileIO:
         Note: This function does nothing in the release configuration
 
         Args:
-            contents (str): The contents to be written to the debug file
+            contents: The contents to be written to the debug file
         """
 
         # If in release configuration, do nothing
@@ -125,9 +125,9 @@ class InvoiceAppFileIO:
         Writes each field of the invoice object to results.txt
 
         Args:
-            invoice (Invoice): The invoice whose fields are to be output
-            append_output (bool): Whether to append the output to the results file or overwrite it
-                                    Defaults to False, meaning the results file will be overwritten
+            invoice: The invoice whose fields are to be output
+            append_output: Whether to append the output to the results file or overwrite
+                it. Defaults to False, meaning the results file will be overwritten
         """
 
         # If appending output, use "a" for the file open call, otherwise use "w"
@@ -156,11 +156,11 @@ class InvoiceAppFileIO:
         Reads the full contents of a text file into a single string
 
         Args:
-            file_path (Path): The file path of the text file to read in
+            file_path: The file path of the text file to read in
 
         Returns:
-            str: The full contents of the file, or an empty string if the file
-                could not be read
+            The full contents of the file, or an empty string if the file could not be
+            read
         """
 
         try:
@@ -184,8 +184,8 @@ class InvoiceAppFileIO:
         contents
 
         Args:
-            file_path (Path): The file path of the text file to write to
-            contents (str): The contents to write to the file
+            file_path: The file path of the text file to write to
+            contents: The contents to write to the file
         """
 
         try:
@@ -209,11 +209,11 @@ class InvoiceAppFileIO:
         Each string in the list represents a page of the invoice PDF
 
         Args:
-            invoice_filepath (Path): The file path of the invoice to read in
+            invoice_filepath: The file path of the invoice to read in
 
         Returns:
-            list[str]: One string per page of the invoice, in page order, or an
-                empty list if the PDF could not be read
+            One string per page of the invoice, in page order, or an empty list if the PDF
+            could not be read
         """
 
         try:
@@ -248,15 +248,15 @@ class InvoiceAppFileIO:
         is returned so the UI can confirm with the user before overwriting.
 
         Args:
-            source_path (Path): The path of the invoice PDF to copy in
-            overwrite (bool): Whether to replace an existing same-named file in
-                the Invoices/ directory. Defaults to False, in which case an
-                existing file is left untouched and "exists" is returned
+            source_path: The path of the invoice PDF to copy in
+            overwrite: Whether to replace an existing same-named file in the Invoices/
+                directory. Defaults to False, in which case an existing file is left
+                untouched and "exists" is returned
 
         Returns:
-            str: "copied" if the file was copied, "exists" if a same-named file
-                already exists and overwrite was False, or "error" if the copy
-                failed (the failure is also surfaced via report_error)
+            "copied" if the file was copied, "exists" if a same-named file already exists
+            and overwrite was False, or "error" if the copy failed (the failure is also
+            surfaced via report_error)
         """
 
         destination_path = INVOICES_DIR / source_path.name
@@ -290,9 +290,8 @@ class InvoiceAppFileIO:
         matching name for each sales rep as defined in the sales reps config file
 
         Returns:
-            dict[str, str]: The populated dictionary with all codes as keys and
-                names as values, or an empty dictionary if the config file could
-                not be read
+            The populated dictionary with all codes as keys and names as values, or an
+            empty dictionary if the config file could not be read
         """
 
         sales_reps = {}
@@ -333,8 +332,8 @@ class InvoiceAppFileIO:
         payment term as defined in the payment terms config file
 
         Returns:
-            list[str]: One payment term per entry, each of which could be found in
-                an invoice, or an empty list if the config could not be read
+            One payment term per entry, each of which could be found in an invoice, or an
+            empty list if the config could not be read
         """
 
         payment_terms = []
@@ -373,8 +372,8 @@ class InvoiceAppFileIO:
         to the list of criteria/exclusions
 
         Args:
-            category (str): The category of criteria being parsed
-            line (str): The current line containing the criteria/exclusion
+            category: The category of criteria being parsed
+            line: The current line containing the criteria/exclusion
         """
 
         # If this is a Labor Criteria, add it to the appropriate list
