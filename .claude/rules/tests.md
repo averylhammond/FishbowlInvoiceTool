@@ -10,8 +10,9 @@ name matches pytest's default `python_files` pattern, so a bare `pytest` collect
 suite and the jobs in `.github/workflows/` invoke it as `pytest tests/` with no glob.
 `tests/__init__.py` is empty but load-bearing: with it present, pytest's prepend import mode puts
 the repo root on `sys.path`, which is what makes `from source... import` resolve. There is no
-`conftest.py`; coverage configuration lives in `.coveragerc`, which measures `./source` and omits
-`main.py`, `tests/`, the venvs, `source/__init__.py` and `source/constants.py`.
+`conftest.py`; pytest and coverage configuration lives in `pyproject.toml`, whose coverage section
+measures `./source` and omits `main.py`, `tests/`, the venvs, `source/__init__.py` and
+`source/constants.py`, and whose `fail_under = 90` is the gate CI relies on.
 
 `tests/test_InvoiceProcessor.py` (a class with injected collaborators) and
 `tests/test_InvoiceAppDisplay.py` (the widget-patching fixture) are the two reference

@@ -44,7 +44,8 @@ infrastructure and GUI package both depend on is
 - Run a single test file: `pytest tests/test_Invoice.py`
 - Run a single test:
   `pytest tests/test_processor_utilities.py::test_search_text_by_re_order_number_correct_format`
-- Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml --cov-fail-under=90 tests/`
+- Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/` — the 90% gate is
+  `fail_under` in `pyproject.toml`, so it applies locally too
 - Package a release: `./scripts/package_release.sh false` (pass `true` to also bundle sample
   invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
   with Inno Setup installed it also builds `release/FishbowlInvoiceTool_Setup.exe`.
