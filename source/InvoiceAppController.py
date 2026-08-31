@@ -206,8 +206,8 @@ class InvoiceAppController:
         wrote the setting is indistinguishable from a first-time user.
 
         Args:
-            saved_settings (dict[str, str]): The settings persisted by the last
-                run, holding the version that run was on
+            saved_settings: The settings persisted by the last run, holding the version
+                that run was on
         """
 
         last_seen_version = saved_settings.get(SETTING_KEY_LAST_SEEN_VERSION)
@@ -240,10 +240,10 @@ class InvoiceAppController:
         Directs components to process the invoice located at invoice_filepath
 
         Args:
-            invoice_filepath (Path): The filepath of the invoice PDF to be processed.
-            append_output (bool): Whether to append the Invoice outputs to any existing outputs.
-                                    True: append to existing results.txt and output box
-                                    False: overwrite existing results.txt and output box
+            invoice_filepath: The filepath of the invoice PDF to be processed.
+            append_output: Whether to append the Invoice outputs to any existing outputs.
+                True: append to existing results.txt and output box
+                False: overwrite existing results.txt and output box
         """
 
         invoice = Invoice()
@@ -329,8 +329,8 @@ class InvoiceAppController:
         so the changes take effect in the running application without a restart.
 
         Args:
-            config_path (Path): The config file being saved
-            contents (str): The new contents to write to the config file
+            config_path: The config file being saved
+            contents: The new contents to write to the config file
         """
 
         # Write the edited contents to disk
@@ -360,8 +360,8 @@ class InvoiceAppController:
         Persists a single user setting so it is restored on the next launch.
 
         Args:
-            key (str): The setting's identifier (e.g. "theme", "font_family")
-            value (str): The setting's value to store
+            key: The setting's identifier (e.g. "theme", "font_family")
+            value: The setting's value to store
         """
 
         self.settings_repository.save_setting(key=key, value=value)

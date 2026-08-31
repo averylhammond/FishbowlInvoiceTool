@@ -74,6 +74,10 @@ fails at the point of *use*, in one test, rather than at import, in every test t
 which makes a rename far harder to trace. Import lists are sorted and parenthesized across lines
 once they no longer fit on one.
 
+**Keep the parenthesized type in these `Args:` entries** — `display (pytest.fixture)`,
+`mock_show_popup (unittest.mock.MagicMock)`. Test parameters are unannotated, so unlike in
+`source/` the docstring is the only place the type is written.
+
 **One fixture convention: build the unit under test in a pytest fixture**, and give a test that
 needs a differently-constructed object its arguments through indirect parametrization
 (`@pytest.mark.parametrize("window", [{"return_value": "copied"}], indirect=True)`) rather than a

@@ -120,8 +120,11 @@ Two responsibilities worth knowing before touching them:
   `tests/` for any new branch or utility function in the same change.
 - **Every `def` in `source/` is fully annotated**: every parameter, and a return type on every
   function including `-> None`. Spell container types out — `list[str]`, `dict[str, str]` — since
-  a bare `list` tells a reader (and a type checker) nothing. Keep the docstring's `Args:`/`Returns:`
-  types in step with the annotation; they are the same claim written twice.
+  a bare `list` tells a reader (and a type checker) nothing. **The annotation is the only place a
+  type is written**: under `source/`, an `Args:` entry is `name: description` and a `Returns:`
+  block is the description alone, with no parenthesized or prefixed type repeating the signature.
+  Under `tests/` the docstring type stays, since fixture and mock parameters are unannotated —
+  see `.claude/rules/tests.md`.
 - **Imports are grouped stdlib / third-party / first-party**, one blank line between groups,
   alphabetized within each. `fishbowl_common` is third party — it is installed from a pinned git
   tag — so it never sits among the `source.*` imports.

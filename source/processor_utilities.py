@@ -16,11 +16,11 @@ def search_text_by_re(text: str, regex: str) -> str:
     Takes a given regex and searches the text for a match
 
     Args:
-        text (str): The text to be searched
-        regex (str): The regex to be matched
+        text: The text to be searched
+        regex: The regex to be matched
 
     Returns:
-        str: The matched string if found, empty string otherwise
+        The matched string if found, empty string otherwise
     """
     res = search(pattern=regex, string=text)
     if res:
@@ -35,11 +35,11 @@ def search_payment_line(line: str, regex: str) -> Decimal:
     special handling to extract the payment amount from the line
 
     Args:
-        line (str): One line of text from the purchase table
-        regex (str): Regex to be matched
+        line: One line of text from the purchase table
+        regex: Regex to be matched
 
     Returns:
-        Decimal: The payment amount as a Decimal if match found, 0.0 otherwise
+        The payment amount as a Decimal if match found, 0.0 otherwise
     """
 
     res = search(pattern=regex, string=line)
@@ -60,10 +60,10 @@ def find_currency_values(text: str) -> list[Decimal]:
     Finds every currency amount in the text, in the order they appear
 
     Args:
-        text (str): The text to be searched
+        text: The text to be searched
 
     Returns:
-        list[Decimal]: One Decimal per currency amount found, empty list if none
+        One Decimal per currency amount found, empty list if none
     """
 
     # Strip the thousands separators before converting, since Decimal() rejects them
@@ -78,11 +78,11 @@ def find_payment_terms(text: str, payment_terms: list[str]) -> str:
     Searches text for an occurrence of any of the possible payment terms
 
     Args:
-        text (str): The text to be searched
-        payment_terms (list[str]): Contains all possible payment terms
+        text: The text to be searched
+        payment_terms: Contains all possible payment terms
 
     Returns:
-        str: The payment term if found, empty string otherwise
+        The payment term if found, empty string otherwise
     """
 
     # Search for each possible payment term
@@ -102,11 +102,11 @@ def find_sales_rep(text: str, sales_reps: dict[str, str]) -> str:
     Searches the text for an occurrence of any of the possible sales reps
 
     Args:
-        text (str): The text to be searched
-        sales_reps (dict[str, str]): Contains all possible sales rep codes and names
+        text: The text to be searched
+        sales_reps: Contains all possible sales rep codes and names
 
     Returns:
-        str: The name of the sales rep if found, empty string otherwise
+        The name of the sales rep if found, empty string otherwise
     """
 
     # Search for each possible sales rep
@@ -126,12 +126,11 @@ def format_currency(value: str | Decimal) -> Decimal:
     places, rounding half up
 
     Args:
-        value (str | Decimal): The currency value to format, either as the
-            string it was read from the invoice as or as an already-summed amount
+        value: The currency value to format, either as the string it was read from the
+            invoice as or as an already-summed amount
 
     Returns:
-        Decimal: The formatted currency value if conversion is successful,
-        DECIMAL_ZERO otherwise
+        The formatted currency value if conversion is successful, DECIMAL_ZERO otherwise
     """
 
     # Try/catch: Calling Decimal() constructor with invalid string will raise an exception
