@@ -77,4 +77,4 @@ manual-versus-automatic split `handle_check_for_updates()` makes with `start(man
 Paths in `source/constants.py` are relative to the executable's working directory and suffixed
 `_DIR` for directories, `_PATH` for files — matching the sibling so the two stay recognisable.
 Compose file paths from the base directory constants rather than rebuilding them. Note
-`constants.py` is omitted from coverage in `.coveragerc`, so it must hold no logic.
+`constants.py` is omitted from coverage in `pyproject.toml`, so it must hold no logic.

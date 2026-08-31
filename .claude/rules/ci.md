@@ -21,8 +21,9 @@ Notes that are easy to get wrong:
 - **`unit-tests.yml` checks out into `project_directory`** and sets that as the job's
   `working-directory`, unlike the other three which check out at the root. Paths in that workflow
   are relative to it.
-- **The coverage gate is `--cov-fail-under=90`**, which fails the job (and blocks the PR once the
-  check is required in branch protection) whenever total coverage drops below 90%. The Codecov
+- **The coverage gate is `fail_under = 90` in `pyproject.toml`**, not a workflow flag, so a local
+  `pytest --cov` enforces it too. It fails the job (and blocks the PR once the check is required
+  in branch protection) whenever total coverage drops below 90%. The Codecov
   upload step is `if: always()` so the report still lands when the gate fails — that is exactly
   when the PR comment is most useful. `CODECOV_TOKEN` is the repo upload token.
 - **The two Windows workflows check out the private submodule** with
