@@ -43,7 +43,9 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
   supply persisted settings:
   `@pytest.mark.parametrize("display", [{"theme": "Light"}], indirect=True)`.
 - **Name unasserted mock parameters with a leading underscore** (`_mock_os_exists`) and reserve
-  plain names (`mock_os_remove`) for mocks you assert against.
+  plain names (`mock_os_remove`) for mocks you assert against. `ARG001` catches the ones you
+  forget, since ruff treats a leading underscore as the marker for a deliberately unused
+  argument.
 
 ## Follow the FIRST principles
 
@@ -73,12 +75,14 @@ banners used throughout `tests/`:
 **Import the names under test explicitly — never `from <module> import *`.** A wildcard
 import binds whatever the module happens to export, so a name deleted or renamed in `source/`
 fails at the point of *use*, in one test, rather than at import, in every test that file holds —
-which makes a rename far harder to trace. Import lists are sorted and parenthesized across lines
-once they no longer fit on one.
+which makes a rename far harder to trace. `F403`/`F405` enforce this, and `ruff check --fix`
+sorts and wraps the import lists, so run it rather than arranging them by hand.
 
 **Keep the parenthesized type in these `Args:` entries** — `display (pytest.fixture)`,
 `mock_show_popup (unittest.mock.MagicMock)`. Test parameters are unannotated, so unlike in
-`source/` the docstring is the only place the type is written.
+`source/` the docstring is the only place the type is written. This is why `ANN` is switched
+off for `tests/` in `per-file-ignores`; `PLR2004` is off there too, because an assertion's
+expected value belongs at the assertion rather than hoisted into a named constant.
 
 **One fixture convention: build the unit under test in a pytest fixture**, and give a test that
 needs a differently-constructed object its arguments through indirect parametrization

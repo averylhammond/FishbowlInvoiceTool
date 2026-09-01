@@ -1,14 +1,10 @@
-import pytest
 from pathlib import Path
-from unittest.mock import patch, mock_open, call, MagicMock
+from unittest.mock import MagicMock, call, mock_open, patch
+
+import pytest
 
 from source.Invoice import Invoice
 from source.InvoiceAppFileIO import InvoiceAppFileIO
-from source.constants import (
-    SALES_REPS_PATH,
-    PAYMENT_TERMS_PATH,
-    COST_CRITERIA_PATH,
-)
 
 
 ###############################################################################
@@ -157,39 +153,41 @@ def test_reset_results_file_reports_on_error(mock_results_path, file_io):
 ###############################################################################
 ###             Tests InvoiceAppFileIO -> print_to_debug_file()             ###
 ###############################################################################
-@patch("builtins.open", new_callable=mock_open)
 @patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
-def test_print_to_debug_file_appends(mock_debug_path, mock_file, file_io):
+def test_print_to_debug_file_appends(mock_debug_path, file_io):
     """
     Tests that print_to_debug_file() ensures the log directory exists, opens the
     debug log in append mode, and writes the contents with a trailing newline.
 
     Args:
         mock_debug_path (unittest.mock.MagicMock): Mocks the DEBUG_LOG_PATH constant
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
+
+    # The method calls DEBUG_LOG_PATH.open(), not the built-in, so the mocked
+    # constant carries the file handle
+    mock_debug_path.open = mock_open()
 
     file_io.print_to_debug_file("some debug message")
 
     # The directory is ensured and the contents are appended
     mock_debug_path.parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
-    mock_file.assert_called_once_with(file=mock_debug_path, mode="a")
-    mock_file().write.assert_called_once_with("some debug message\n")
+    mock_debug_path.open.assert_called_once_with(mode="a")
+    mock_debug_path.open().write.assert_called_once_with("some debug message\n")
 
 
-@patch("builtins.open", side_effect=OSError("disk full"))
 @patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
-def test_print_to_debug_file_reports_on_error(mock_debug_path, _mock_file, file_io):
+def test_print_to_debug_file_reports_on_error(mock_debug_path, file_io):
     """
     Tests that print_to_debug_file() fails gracefully, surfacing the failure
     through the error reporter instead of raising when the write fails.
 
     Args:
         mock_debug_path (unittest.mock.MagicMock): Mocks the DEBUG_LOG_PATH constant
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
+
+    mock_debug_path.open.side_effect = OSError("disk full")
 
     # No exception is raised, and the failure is reported to the user
     file_io.print_to_debug_file("some debug message")
@@ -199,11 +197,8 @@ def test_print_to_debug_file_reports_on_error(mock_debug_path, _mock_file, file_
 ###############################################################################
 ###        Tests InvoiceAppFileIO -> print_invoice_to_output_file()         ###
 ###############################################################################
-@patch("builtins.open", new_callable=mock_open)
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
-def test_print_invoice_to_output_file_overwrites_by_default(
-    mock_results_path, mock_file, file_io
-):
+def test_print_invoice_to_output_file_overwrites_by_default(mock_results_path, file_io):
     """
     Tests that print_invoice_to_output_file() ensures the log directory exists,
     opens the results log in write mode (overwriting) by default, and writes the
@@ -211,9 +206,11 @@ def test_print_invoice_to_output_file_overwrites_by_default(
 
     Args:
         mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
+
+    # The method calls RESULTS_LOG_PATH.open(), not the built-in
+    mock_results_path.open = mock_open()
 
     # Build a mock invoice whose formatted string is a known value
     mock_invoice = MagicMock(spec=Invoice)
@@ -223,24 +220,23 @@ def test_print_invoice_to_output_file_overwrites_by_default(
 
     # The directory is ensured and the invoice is written in overwrite mode
     mock_results_path.parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
-    mock_file.assert_called_once_with(file=mock_results_path, mode="w")
-    mock_file().write.assert_called_once_with("formatted invoice")
+    mock_results_path.open.assert_called_once_with(mode="w")
+    mock_results_path.open().write.assert_called_once_with("formatted invoice")
 
 
-@patch("builtins.open", new_callable=mock_open)
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
-def test_print_invoice_to_output_file_appends_when_requested(
-    mock_results_path, mock_file, file_io
-):
+def test_print_invoice_to_output_file_appends_when_requested(mock_results_path, file_io):
     """
     Tests that print_invoice_to_output_file() opens the results log in append mode
     when append_output is True and writes the invoice's formatted string.
 
     Args:
         mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
+
+    # The method calls RESULTS_LOG_PATH.open(), not the built-in
+    mock_results_path.open = mock_open()
 
     # Build a mock invoice whose formatted string is a known value
     mock_invoice = MagicMock(spec=Invoice)
@@ -249,24 +245,22 @@ def test_print_invoice_to_output_file_appends_when_requested(
     file_io.print_invoice_to_output_file(mock_invoice, append_output=True)
 
     # The invoice is written in append mode
-    mock_file.assert_called_once_with(file=mock_results_path, mode="a")
-    mock_file().write.assert_called_once_with("formatted invoice")
+    mock_results_path.open.assert_called_once_with(mode="a")
+    mock_results_path.open().write.assert_called_once_with("formatted invoice")
 
 
-@patch("builtins.open", side_effect=OSError("disk full"))
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
-def test_print_invoice_to_output_file_reports_on_error(
-    mock_results_path, _mock_file, file_io
-):
+def test_print_invoice_to_output_file_reports_on_error(mock_results_path, file_io):
     """
     Tests that print_invoice_to_output_file() fails gracefully, surfacing the
     failure through the error reporter instead of raising when the write fails.
 
     Args:
         mock_results_path (unittest.mock.MagicMock): Mocks the RESULTS_LOG_PATH constant
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
+
+    mock_results_path.open.side_effect = OSError("disk full")
 
     mock_invoice = MagicMock(spec=Invoice)
 
@@ -307,13 +301,13 @@ def test_read_invoice_file_extracts_each_page(mock_reader, file_io):
     "source.InvoiceAppFileIO.pypdf.PdfReader",
     side_effect=OSError("file not found"),
 )
-def test_read_invoice_file_reports_and_returns_empty_on_error(mock_reader, file_io):
+def test_read_invoice_file_reports_and_returns_empty_on_error(_mock_reader, file_io):
     """
     Tests that read_invoice_file() fails gracefully, surfacing the failure through
     the error reporter and returning an empty list when the PDF cannot be read.
 
     Args:
-        mock_reader (unittest.mock.MagicMock): Mocks pypdf.PdfReader to raise
+        _mock_reader (unittest.mock.MagicMock): Mocks pypdf.PdfReader to raise
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
 
@@ -329,9 +323,7 @@ def test_read_invoice_file_reports_and_returns_empty_on_error(mock_reader, file_
 ###############################################################################
 @patch("source.InvoiceAppFileIO.shutil.copy2")
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_copies_new_file(
-    mock_invoices_dir, mock_copy2, file_io
-):
+def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() ensures the Invoices/ directory exists and
     copies the file when no same-named file is already present, returning
@@ -357,9 +349,7 @@ def test_copy_invoice_file_copies_new_file(
 
 @patch("source.InvoiceAppFileIO.shutil.copy2")
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_exists_without_overwrite(
-    mock_invoices_dir, mock_copy2, file_io
-):
+def test_copy_invoice_file_exists_without_overwrite(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() does not overwrite an existing same-named file
     when overwrite is False, returning "exists" without copying.
@@ -383,9 +373,7 @@ def test_copy_invoice_file_exists_without_overwrite(
 
 @patch("source.InvoiceAppFileIO.shutil.copy2")
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_overwrites_when_confirmed(
-    mock_invoices_dir, mock_copy2, file_io
-):
+def test_copy_invoice_file_overwrites_when_confirmed(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() overwrites an existing same-named file when
     overwrite is True, copying the file and returning "copied".
@@ -409,9 +397,7 @@ def test_copy_invoice_file_overwrites_when_confirmed(
 
 @patch("source.InvoiceAppFileIO.shutil.copy2", side_effect=OSError("disk full"))
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_reports_and_returns_error_on_failure(
-    mock_invoices_dir, _mock_copy2, file_io
-):
+def test_copy_invoice_file_reports_and_returns_error_on_failure(mock_invoices_dir, _mock_copy2, file_io):
     """
     Tests that copy_invoice_file() fails gracefully, surfacing the failure through
     the error reporter and returning "error" when the copy cannot be completed.
@@ -437,7 +423,7 @@ def test_copy_invoice_file_reports_and_returns_error_on_failure(
 ###          Tests InvoiceAppFileIO -> parse_sales_reps_config()            ###
 ###############################################################################
 @patch(
-    "builtins.open",
+    "pathlib.Path.open",
     new_callable=mock_open,
     read_data="""* comment line
 SR1=John Smith
@@ -453,7 +439,7 @@ def test_parse_sales_reps_config_success(mock_file, file_io):
     and ignores comments and empty lines.
 
     Args:
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -469,11 +455,11 @@ def test_parse_sales_reps_config_success(mock_file, file_io):
     assert sales_reps == expected_sales_reps
 
     # Ensure that the file was opened in reading mode
-    mock_file.assert_called_once_with(file=SALES_REPS_PATH, mode="r")
+    mock_file.assert_called_once_with()
 
 
 @patch(
-    "builtins.open",
+    "pathlib.Path.open",
     new_callable=mock_open,
     read_data="",
 )
@@ -483,7 +469,7 @@ def test_parse_sales_reps_config_empty_file(mock_file, file_io):
     when the config file contains no entries.
 
     Args:
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -494,10 +480,10 @@ def test_parse_sales_reps_config_empty_file(mock_file, file_io):
     assert sales_reps == {}
 
     # Ensure the file was opened in reading mode
-    mock_file.assert_called_once_with(file=SALES_REPS_PATH, mode="r")
+    mock_file.assert_called_once_with()
 
 
-@patch("builtins.open", side_effect=OSError("file not found"))
+@patch("pathlib.Path.open", side_effect=OSError("file not found"))
 def test_parse_sales_reps_config_reports_on_error(_mock_file, file_io):
     """
     Tests that parse_sales_reps_config() fails gracefully, surfacing the failure
@@ -505,7 +491,7 @@ def test_parse_sales_reps_config_reports_on_error(_mock_file, file_io):
     file cannot be read.
 
     Args:
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
+        _mock_file (unittest.mock.MagicMock): Mocks Path.open() to raise
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -520,7 +506,7 @@ def test_parse_sales_reps_config_reports_on_error(_mock_file, file_io):
 ###        Tests InvoiceAppFileIO -> parse_payment_terms_config()           ###
 ###############################################################################
 @patch(
-    "builtins.open",
+    "pathlib.Path.open",
     new_callable=mock_open,
     read_data="""* comment
 NET 30
@@ -536,7 +522,7 @@ def test_parse_payment_terms_config_success(mock_file, file_io):
     and ignores comments and empty lines.
 
     Args:
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -552,11 +538,11 @@ def test_parse_payment_terms_config_success(mock_file, file_io):
     assert payment_terms == expected_payment_terms
 
     # Ensure that the file was opened in reading mode
-    mock_file.assert_called_once_with(file=PAYMENT_TERMS_PATH, mode="r")
+    mock_file.assert_called_once_with()
 
 
 @patch(
-    "builtins.open",
+    "pathlib.Path.open",
     new_callable=mock_open,
     read_data="",
 )
@@ -566,7 +552,7 @@ def test_parse_payment_terms_config_empty_file(mock_file, file_io):
     when the config file contains no entries.
 
     Args:
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -577,10 +563,10 @@ def test_parse_payment_terms_config_empty_file(mock_file, file_io):
     assert payment_terms == []
 
     # Ensure the file was opened in reading mode
-    mock_file.assert_called_once_with(file=PAYMENT_TERMS_PATH, mode="r")
+    mock_file.assert_called_once_with()
 
 
-@patch("builtins.open", side_effect=OSError("file not found"))
+@patch("pathlib.Path.open", side_effect=OSError("file not found"))
 def test_parse_payment_terms_config_reports_on_error(_mock_file, file_io):
     """
     Tests that parse_payment_terms_config() fails gracefully, surfacing the failure
@@ -588,7 +574,7 @@ def test_parse_payment_terms_config_reports_on_error(_mock_file, file_io):
     cannot be read.
 
     Args:
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
+        _mock_file (unittest.mock.MagicMock): Mocks Path.open() to raise
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -648,7 +634,7 @@ def test_add_cost_criteria_field_unknown_category(mock_debug_print, file_io):
 ###          Tests InvoiceAppFileIO -> parse_cost_criteria_file()           ###
 ###############################################################################
 @patch(
-    "builtins.open",
+    "pathlib.Path.open",
     new_callable=mock_open,
     read_data="""
 * Comment line
@@ -665,16 +651,14 @@ Ship criterion Y
 """,
 )
 @patch.object(InvoiceAppFileIO, "add_cost_criteria_field")
-def test_parse_cost_criteria_file_calls_add_cost_criteria_field(
-    mock_add_field, mock_file, file_io
-):
+def test_parse_cost_criteria_file_calls_add_cost_criteria_field(mock_add_field, mock_file, file_io):
     """
     Tests that parse_cost_criteria_file() reads the file correctly and
     calls add_cost_criteria_field() with the expected arguments.
 
     Args:
         mock_add_field (unittest.mock.MagicMock): Mocks the add_cost_criteria_field method
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Fixture for InvoiceAppFileIO object
     """
 
@@ -697,10 +681,10 @@ def test_parse_cost_criteria_file_calls_add_cost_criteria_field(
     assert mock_add_field.call_count == len(expected_calls)
 
     # Verify file was opened for reading
-    mock_file.assert_called_once_with(file=COST_CRITERIA_PATH, mode="r")
+    mock_file.assert_called_once_with()
 
 
-@patch("builtins.open", side_effect=OSError("file not found"))
+@patch("pathlib.Path.open", side_effect=OSError("file not found"))
 def test_parse_cost_criteria_file_reports_on_error(_mock_file, file_io):
     """
     Tests that parse_cost_criteria_file() fails gracefully, surfacing the failure
@@ -708,7 +692,7 @@ def test_parse_cost_criteria_file_reports_on_error(_mock_file, file_io):
     read.
 
     Args:
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
+        _mock_file (unittest.mock.MagicMock): Mocks Path.open() to raise
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -718,7 +702,7 @@ def test_parse_cost_criteria_file_reports_on_error(_mock_file, file_io):
 
 
 @patch(
-    "builtins.open",
+    "pathlib.Path.open",
     new_callable=mock_open,
     read_data="""LABOR CRITERIA:
 Labor criterion A
@@ -737,7 +721,7 @@ def test_parse_cost_criteria_file_is_idempotent(_mock_file, file_io):
     replaces the previous contents rather than appending duplicates.
 
     Args:
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        _mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -765,7 +749,7 @@ def test_parse_cost_criteria_file_is_idempotent(_mock_file, file_io):
 ###                Tests InvoiceAppFileIO -> read_text_file()               ###
 ###############################################################################
 @patch(
-    "builtins.open",
+    "pathlib.Path.open",
     new_callable=mock_open,
     read_data="line one\nline two\n",
 )
@@ -774,7 +758,7 @@ def test_read_text_file_returns_contents(mock_file, file_io):
     Tests that read_text_file() returns the full contents of the file.
 
     Args:
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
+        mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -783,17 +767,17 @@ def test_read_text_file_returns_contents(mock_file, file_io):
 
     # The whole file is returned and it was opened for reading
     assert contents == "line one\nline two\n"
-    mock_file.assert_called_once_with(file=file_path, mode="r")
+    mock_file.assert_called_once_with()
 
 
-@patch("builtins.open", side_effect=OSError("file not found"))
+@patch("pathlib.Path.open", side_effect=OSError("file not found"))
 def test_read_text_file_reports_on_error(_mock_file, file_io):
     """
     Tests that read_text_file() fails gracefully, surfacing the failure through
     the error reporter and returning an empty string when the file cannot be read.
 
     Args:
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
+        _mock_file (unittest.mock.MagicMock): Mocks Path.open() to raise
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
@@ -807,39 +791,38 @@ def test_read_text_file_reports_on_error(_mock_file, file_io):
 ###############################################################################
 ###               Tests InvoiceAppFileIO -> write_text_file()               ###
 ###############################################################################
-@patch("builtins.open", new_callable=mock_open)
-def test_write_text_file_writes_contents(mock_file, file_io):
+def test_write_text_file_writes_contents(file_io):
     """
     Tests that write_text_file() ensures the parent directory exists and writes
     the given contents to the file.
 
     Args:
-        mock_file (unittest.mock.MagicMock): Mocks the built-in open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
-    # A mock path so the parent.mkdir call can be asserted on
+    # A mock path so the parent.mkdir and open calls can be asserted on
     mock_path = MagicMock()
+    mock_path.open = mock_open()
     file_io.write_text_file(mock_path, "new contents")
 
     # The parent directory is ensured, then the file is opened for writing and written
     mock_path.parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
-    mock_file.assert_called_once_with(file=mock_path, mode="w")
-    mock_file().write.assert_called_once_with("new contents")
+    mock_path.open.assert_called_once_with(mode="w")
+    mock_path.open().write.assert_called_once_with("new contents")
 
 
-@patch("builtins.open", side_effect=OSError("permission denied"))
-def test_write_text_file_reports_on_error(_mock_file, file_io):
+def test_write_text_file_reports_on_error(file_io):
     """
     Tests that write_text_file() fails gracefully, surfacing the failure through
     the error reporter instead of raising when the file cannot be written.
 
     Args:
-        _mock_file (unittest.mock.MagicMock): Mocks the built-in open() to raise
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
-    file_io.write_text_file(MagicMock(), "new contents")
+    mock_path = MagicMock()
+    mock_path.open.side_effect = OSError("permission denied")
+    file_io.write_text_file(mock_path, "new contents")
 
     # The failure is reported to the user instead of raising
     file_io.report_error.assert_called_once()

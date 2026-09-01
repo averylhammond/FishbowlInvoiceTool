@@ -1,11 +1,12 @@
 import tkinter as tk
-import pytest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fishbowl_common.gui import DARK, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 
 from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
-from fishbowl_common.gui import DARK, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 
 
 ###############################################################################
@@ -54,22 +55,17 @@ def window(request):
         patch.object(InvoiceDiscoveryWindow, "title"),
         patch.object(InvoiceDiscoveryWindow, "configure"),
         patch.object(InvoiceDiscoveryWindow, "_center_over_parent"),
-        patch(
-            "source.gui.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget
-        ),
+        patch("source.gui.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget),
         patch("source.gui.InvoiceDiscoveryWindow.tk.Label", side_effect=_distinct_widget),
         patch("source.gui.InvoiceDiscoveryWindow.tk.Frame", side_effect=_distinct_widget),
         patch("source.gui.InvoiceDiscoveryWindow.tk.Entry", side_effect=_distinct_widget),
-        patch(
-            "source.gui.InvoiceDiscoveryWindow.tk.Button", side_effect=_distinct_widget
-        ) as mock_button,
+        patch("source.gui.InvoiceDiscoveryWindow.tk.Button", side_effect=_distinct_widget) as mock_button,
         patch(
             "source.gui.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
         patch("source.gui.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
     ):
-
         built_window = InvoiceDiscoveryWindow(
             parent=MagicMock(),
             title="Discover Invoices",
@@ -118,9 +114,7 @@ def test_close_button_is_wired_to_destroy(window):
     """
 
     # Find the Close button's construction call and confirm its command is destroy
-    close_call = next(
-        c for c in window.button_cls.call_args_list if c.kwargs.get("text") == "Close"
-    )
+    close_call = next(c for c in window.button_cls.call_args_list if c.kwargs.get("text") == "Close")
     assert close_call.kwargs["command"] == window.window.destroy
 
 
@@ -155,9 +149,7 @@ def test_handle_browse_adds_selected_files(mock_ask, _mock_default_dir, window):
 
 @patch.object(InvoiceDiscoveryWindow, "_default_browse_dir", return_value="/downloads")
 @patch("source.gui.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
-def test_handle_browse_cancel_leaves_selection_untouched(
-    mock_ask, _mock_default_dir, window
-):
+def test_handle_browse_cancel_leaves_selection_untouched(mock_ask, _mock_default_dir, window):
     """
     Verifies that cancelling the file dialog (empty selection) does not change the
     pending list or update the selection display.

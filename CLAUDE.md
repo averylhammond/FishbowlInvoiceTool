@@ -46,14 +46,17 @@ infrastructure and GUI package both depend on is
   `pytest tests/test_processor_utilities.py::test_search_text_by_re_order_number_correct_format`
 - Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/` — the 90% gate is
   `fail_under` in `pyproject.toml`, so it applies locally too
+- Lint: `ruff check .` (add `--fix` to apply the safe fixes, `--statistics` for a summary)
+- Format: `ruff format .` (`--check` to verify without writing, as CI does)
 - Package a release: `./scripts/package_release.sh false` (pass `true` to also bundle sample
   invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
   with Inno Setup installed it also builds `release/FishbowlInvoiceTool_Setup.exe`.
 
 ## CI
 
-Four workflows in `.github/workflows/`: unit tests and code coverage on `ubuntu-latest`,
-integration tests and releases on `windows-latest`. Coverage is gated at **90%**. The integration
+Five workflows in `.github/workflows/`: unit tests, code coverage and lint on `ubuntu-latest`,
+integration tests and releases on `windows-latest`. Coverage is gated at **90%**, and the lint
+job fails on any `ruff check` finding or formatting difference. The integration
 check diffs `logs/results.txt` against the submodule's `canonical_correct_results.txt`, so any
 change to parsing or output formatting breaks it until that canonical file is updated.
 
@@ -119,16 +122,23 @@ Two responsibilities worth knowing before touching them:
 - Add type hints and concise docstrings in the existing style (see any method in
   `source/InvoiceProcessor.py` for the expected `Args:`/`Returns:` format), and add tests in
   `tests/` for any new branch or utility function in the same change.
-- **Every `def` in `source/` is fully annotated**: every parameter, and a return type on every
-  function including `-> None`. Spell container types out — `list[str]`, `dict[str, str]` — since
-  a bare `list` tells a reader (and a type checker) nothing. **The annotation is the only place a
-  type is written**: under `source/`, an `Args:` entry is `name: description` and a `Returns:`
+- **Every `def` in `source/` is fully annotated.** `ANN` enforces that an annotation is
+  *present* (and is switched off for `tests/` in `per-file-ignores`); the rest is on you.
+  Spell container types out — `list[str]`, `dict[str, str]` — since a bare `list` tells a reader
+  (and a type checker) nothing, and no lint rule checks that. **The annotation is the only place
+  a type is written**: under `source/`, an `Args:` entry is `name: description` and a `Returns:`
   block is the description alone, with no parenthesized or prefixed type repeating the signature.
   Under `tests/` the docstring type stays, since fixture and mock parameters are unannotated —
   see `.claude/rules/tests.md`.
-- **Imports are grouped stdlib / third-party / first-party**, one blank line between groups,
-  alphabetized within each. `fishbowl_common` is third party — it is installed from a pinned git
-  tag — so it never sits among the `source.*` imports.
+- **Import grouping and ordering are enforced, not remembered.** `ruff check --fix` applies
+  them; `[tool.ruff.lint.isort]` in `pyproject.toml` is the statement of intent, including that
+  `fishbowl_common` is third party (it is installed from a pinned git tag) and never sits among
+  the `source.*` imports.
+- **Style is the linter's job.** Line length, quoting, spacing and the rest live in
+  `[tool.ruff]`; run `ruff format` rather than matching the surrounding file by eye. Where a
+  rule is suppressed, the reason sits beside it — in `pyproject.toml` for a policy, or in a
+  comment at the site for a one-off. A rationale comment must not begin with `# noqa`, or ruff
+  reads it as a second directive and reports it unused via `RUF100`.
 
 ## Git Workflow (when working on a GitHub issue)
 

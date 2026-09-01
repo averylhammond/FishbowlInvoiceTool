@@ -1,25 +1,26 @@
 import tkinter as tk
-import pytest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch, call, MagicMock
+from unittest.mock import MagicMock, call, patch
 
-from source.Invoice import Invoice
-from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
+import pytest
 from fishbowl_common import UpdateCheckResult
 from fishbowl_common.gui import (
     DARK,
-    LIGHT,
     DEFAULT_FONT_FAMILY,
     DEFAULT_FONT_SIZE,
+    LIGHT,
 )
+
 from source.constants import (
     APP_NAME,
-    VERSION,
+    COST_CRITERIA_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
-    COST_CRITERIA_PATH,
+    VERSION,
 )
+from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
+from source.Invoice import Invoice
 
 
 ###############################################################################
@@ -85,11 +86,8 @@ def display(request):
             "source.gui.InvoiceAppDisplay.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
-        patch(
-            "source.gui.InvoiceAppDisplay.Tooltip", side_effect=_distinct_widget
-        ) as mock_tooltip_cls,
+        patch("source.gui.InvoiceAppDisplay.Tooltip", side_effect=_distinct_widget) as mock_tooltip_cls,
     ):
-
         # The callbacks the controller would normally supply; mocks are sufficient
         callback = MagicMock()
         read_file_callback = MagicMock()
@@ -272,10 +270,7 @@ def test_build_widgets_attaches_button_tooltips(display):
     """
 
     # Map each widget a tooltip was attached to -> the tip text it was given
-    tooltip_targets = {
-        call.kwargs["widget"]: call.kwargs["text"]
-        for call in display.tooltip_cls.call_args_list
-    }
+    tooltip_targets = {call.kwargs["widget"]: call.kwargs["text"] for call in display.tooltip_cls.call_args_list}
 
     # Every action button receives a non-empty tooltip
     for button in (
@@ -353,9 +348,7 @@ def test_display_invoice_output_overwrites_by_default(display):
 
     # The box is cleared, then the formatted invoice is inserted
     display.display.output_box.delete.assert_called_once_with(1.0, tk.END)
-    display.display.output_box.insert.assert_called_once_with(
-        tk.END, "formatted invoice"
-    )
+    display.display.output_box.insert.assert_called_once_with(tk.END, "formatted invoice")
 
 
 def test_display_invoice_output_appends_when_requested(display):
@@ -374,9 +367,7 @@ def test_display_invoice_output_appends_when_requested(display):
 
     # A separating newline and the formatted invoice are inserted, nothing cleared
     display.display.output_box.delete.assert_not_called()
-    display.display.output_box.insert.assert_has_calls(
-        [call(tk.END, "\n"), call(tk.END, "formatted invoice")]
-    )
+    display.display.output_box.insert.assert_has_calls([call(tk.END, "\n"), call(tk.END, "formatted invoice")])
 
 
 ###############################################################################
@@ -420,9 +411,7 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_popup, display):
     display.display.handle_process_invoice()
 
     # The callback processes the single invoice without appending (as a Path), no error shown
-    display.process_callback.assert_called_once_with(
-        Path("C:/invoices/order.pdf"), append_output=False
-    )
+    display.process_callback.assert_called_once_with(Path("C:/invoices/order.pdf"), append_output=False)
     mock_show_popup.assert_not_called()
 
 
@@ -462,9 +451,7 @@ def test_handle_process_all_invoices_processes_each(mock_invoices_dir, display):
 
 @patch.object(InvoiceAppDisplay, "show_popup")
 @patch("source.gui.InvoiceAppDisplay.INVOICES_DIR")
-def test_handle_process_all_invoices_error_shows_popup(
-    mock_invoices_dir, mock_show_popup, display
-):
+def test_handle_process_all_invoices_error_shows_popup(mock_invoices_dir, mock_show_popup, display):
     """
     Verifies that handle_process_all_invoices shows an error popup when iterating
     the invoices directory raises an exception.
@@ -476,9 +463,7 @@ def test_handle_process_all_invoices_error_shows_popup(
     """
 
     # Resolving/iterating the invoices directory fails
-    mock_invoices_dir.resolve.return_value.iterdir.side_effect = OSError(
-        "directory unavailable"
-    )
+    mock_invoices_dir.resolve.return_value.iterdir.side_effect = OSError("directory unavailable")
 
     display.display.handle_process_all_invoices()
 
@@ -867,9 +852,7 @@ def test_show_update_available_suppressed_in_integration_mode(mock_window_cls, d
 
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.RESULTS_LOG_PATH")
-def test_handle_results_log_opens_when_present(
-    mock_results_path, mock_window_cls, display
-):
+def test_handle_results_log_opens_when_present(mock_results_path, mock_window_cls, display):
     """
     Verifies that handle_results_log opens a read-only viewer window when the
     results log file exists.
@@ -894,9 +877,7 @@ def test_handle_results_log_opens_when_present(
 @patch.object(InvoiceAppDisplay, "show_popup")
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.RESULTS_LOG_PATH")
-def test_handle_results_log_missing_shows_error(
-    mock_results_path, mock_window_cls, mock_show_popup, display
-):
+def test_handle_results_log_missing_shows_error(mock_results_path, mock_window_cls, mock_show_popup, display):
     """
     Verifies that handle_results_log shows an error popup (and opens nothing) when
     the results log file does not exist yet.
@@ -920,9 +901,7 @@ def test_handle_results_log_missing_shows_error(
 
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.DEBUG_LOG_PATH")
-def test_handle_debug_log_opens_when_present(
-    mock_debug_path, mock_window_cls, display
-):
+def test_handle_debug_log_opens_when_present(mock_debug_path, mock_window_cls, display):
     """
     Verifies that handle_debug_log opens a read-only viewer window when the debug
     log file exists.
@@ -947,9 +926,7 @@ def test_handle_debug_log_opens_when_present(
 @patch.object(InvoiceAppDisplay, "show_popup")
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.DEBUG_LOG_PATH")
-def test_handle_debug_log_missing_shows_error(
-    mock_debug_path, mock_window_cls, mock_show_popup, display
-):
+def test_handle_debug_log_missing_shows_error(mock_debug_path, mock_window_cls, mock_show_popup, display):
     """
     Verifies that handle_debug_log shows an error popup (and opens nothing) when
     the debug log file does not exist yet.
@@ -976,9 +953,7 @@ def test_handle_debug_log_missing_shows_error(
 ###############################################################################
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.USER_GUIDE_PATH")
-def test_handle_open_user_guide_opens_when_present(
-    mock_guide_path, mock_window_cls, display
-):
+def test_handle_open_user_guide_opens_when_present(mock_guide_path, mock_window_cls, display):
     """
     Verifies that handle_open_user_guide opens a read-only viewer window titled
     "User Guide" showing the bundled guide file when it exists.
@@ -1007,9 +982,7 @@ def test_handle_open_user_guide_opens_when_present(
 @patch.object(InvoiceAppDisplay, "show_popup")
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.USER_GUIDE_PATH")
-def test_handle_open_user_guide_missing_shows_error(
-    mock_guide_path, mock_window_cls, mock_show_popup, display
-):
+def test_handle_open_user_guide_missing_shows_error(mock_guide_path, mock_window_cls, mock_show_popup, display):
     """
     Verifies that handle_open_user_guide shows an error popup (and opens nothing)
     when the bundled user guide file is not present.
@@ -1082,9 +1055,7 @@ def test_apply_font_family_updates_state_and_widgets(display):
 
     # The active font family is updated and applied to the widgets
     assert display.display.current_font_family == "Arial"
-    display.display.title_label.configure.assert_called_once_with(
-        font=("Arial", DEFAULT_FONT_SIZE, "bold")
-    )
+    display.display.title_label.configure.assert_called_once_with(font=("Arial", DEFAULT_FONT_SIZE, "bold"))
 
     # The chosen font family is persisted so it can be restored on next launch
     display.save_settings_callback.assert_called_once_with("font_family", "Arial")
@@ -1106,9 +1077,7 @@ def test_apply_font_size_updates_state_and_widgets(display):
 
     # The active font size is updated and applied to the widgets
     assert display.display.current_font_size == 20
-    display.display.output_box.configure.assert_called_once_with(
-        font=(DEFAULT_FONT_FAMILY, 20, "bold")
-    )
+    display.display.output_box.configure.assert_called_once_with(font=(DEFAULT_FONT_FAMILY, 20, "bold"))
 
     # The chosen size is persisted as a string so it can be restored on next launch
     display.save_settings_callback.assert_called_once_with("font_size", "20")

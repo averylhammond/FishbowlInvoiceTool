@@ -1,7 +1,8 @@
 import tkinter as tk
+from collections.abc import Callable
 from pathlib import Path
 from tkinter import filedialog, scrolledtext
-from typing import Callable, Protocol
+from typing import Protocol
 
 from fishbowl_common import ArgumentProvider, UpdateCheckResult
 from fishbowl_common.gui import (
@@ -47,7 +48,6 @@ from source.Invoice import Invoice
 # rather than a Callable so append_output keeps its name: the call sites below pass
 # it by keyword, which Callable[[Path, bool], None] cannot express.
 class ProcessInvoiceCallback(Protocol):
-
     def __call__(self, invoice_filepath: Path, append_output: bool) -> None:
         """
         Processes one invoice PDF and displays its cost breakdown.
@@ -62,7 +62,6 @@ class ProcessInvoiceCallback(Protocol):
 # Invoice App Display class to own the GUI for selecting and processing invoices
 # This implementation uses tkinter for the GUI
 class InvoiceAppDisplay(tk.Tk):
-
     ###########################################################################
     ###                   InvoiceAppDisplay -> __init__()                   ###
     ###########################################################################
@@ -150,12 +149,8 @@ class InvoiceAppDisplay(tk.Tk):
         # so every widget is created already using the restored theme and font.
         settings = settings or {}
         self.current_theme = THEME_BY_NAME.get(settings.get(SETTING_KEY_THEME), DARK)
-        self.current_font_family = settings.get(
-            SETTING_KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY
-        )
-        self.current_font_size = self._parse_font_size(
-            settings.get(SETTING_KEY_FONT_SIZE)
-        )
+        self.current_font_family = settings.get(SETTING_KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY)
+        self.current_font_size = self._parse_font_size(settings.get(SETTING_KEY_FONT_SIZE))
 
         # Tkinter Widgets. Declared without a value rather than as `| None = None`:
         # build_widgets() is the last statement in this constructor and creates
@@ -216,12 +211,8 @@ class InvoiceAppDisplay(tk.Tk):
         # Edit dropdown
         #  -> Cost Criteria option to open the cost criteria config file in the default text editor for user editing
         self.edit_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.edit_menu.add_command(
-            label="Cost Criteria", command=self.handle_cost_criteria
-        )
-        self.edit_menu.add_command(
-            label="Payment Terms", command=self.handle_payment_terms
-        )
+        self.edit_menu.add_command(label="Cost Criteria", command=self.handle_cost_criteria)
+        self.edit_menu.add_command(label="Payment Terms", command=self.handle_payment_terms)
         self.edit_menu.add_command(label="Sales Reps", command=self.handle_sales_reps)
         self.menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
 
@@ -273,15 +264,9 @@ class InvoiceAppDisplay(tk.Tk):
         #  -> What's New option to re-read the bundled patch notes at any time
         self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.help_menu.add_command(label="About", command=self.handle_about)
-        self.help_menu.add_command(
-            label="Check for Updates", command=self.handle_check_for_updates
-        )
-        self.help_menu.add_command(
-            label="Open User Guide", command=self.handle_open_user_guide
-        )
-        self.help_menu.add_command(
-            label="What's New", command=self.handle_view_patch_notes
-        )
+        self.help_menu.add_command(label="Check for Updates", command=self.handle_check_for_updates)
+        self.help_menu.add_command(label="Open User Guide", command=self.handle_open_user_guide)
+        self.help_menu.add_command(label="What's New", command=self.handle_view_patch_notes)
         self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
 
         # Configure the menu bar
@@ -493,9 +478,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###            InvoiceAppDisplay -> display_invoice_output()            ###
     ###########################################################################
-    def display_invoice_output(
-        self, invoice: Invoice, append_output: bool = False
-    ) -> None:
+    def display_invoice_output(self, invoice: Invoice, append_output: bool = False) -> None:
         """
         Displays the calculated totals of the invoice in the output box
 
@@ -554,11 +537,15 @@ class InvoiceAppDisplay(tk.Tk):
         try:
             # Loop through all invoice files in the invoices directory and process each one
             for file_path in INVOICES_DIR.resolve().iterdir():
-
                 # Process each invoice, appending output to the results.txt file and output widget
                 self.process_callback(file_path, append_output=True)
 
-        except Exception as e:
+        # BLE001 is suppressed rather than satisfied: this is the GUI's outer
+        # boundary over a directory of arbitrary user-supplied PDFs. A parse
+        # failure must reach the user as a popup rather than an unhandled crash,
+        # so the catch stays broad here even though every handler beneath this
+        # layer is narrow.
+        except Exception as e:  # noqa: BLE001
             self.show_popup(
                 title="Processing Error",
                 message=f"An error occurred while processing invoices: {e}",
@@ -701,9 +688,7 @@ class InvoiceAppDisplay(tk.Tk):
     def show_update_available(
         self,
         result: UpdateCheckResult,
-        start_install: (
-            Callable[[Callable[[int, int], None], Callable[[bool], None]], None] | None
-        ) = None,
+        start_install: (Callable[[Callable[[int, int], None], Callable[[bool], None]], None] | None) = None,
     ) -> None:
         """
         Notifies the user that a newer release is available by opening a themed
@@ -892,9 +877,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.configure(bg=theme.bg_main)
         self.title_label.configure(bg=theme.bg_main, fg=theme.label_fg)
         self.file_frame.configure(bg=theme.bg_main)
-        self.file_entry.configure(
-            bg=theme.bg_entry, fg=theme.bg_main, insertbackground=theme.fg_text
-        )
+        self.file_entry.configure(bg=theme.bg_entry, fg=theme.bg_main, insertbackground=theme.fg_text)
         self.browse_button.configure(
             bg=theme.button_bg,
             fg=theme.button_fg,
@@ -926,9 +909,7 @@ class InvoiceAppDisplay(tk.Tk):
             activeforeground=theme.fg_text,
         )
         self.output_label.configure(bg=theme.bg_main, fg=theme.label_fg)
-        self.output_box.configure(
-            bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text
-        )
+        self.output_box.configure(bg=theme.bg_entry, fg=theme.fg_text, insertbackground=theme.fg_text)
 
         # Keep the hover tooltips consistent with the new theme
         self._refresh_tooltips()

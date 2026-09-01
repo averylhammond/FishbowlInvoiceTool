@@ -1,8 +1,7 @@
-import pytest
 from decimal import Decimal
-from source.Invoice import Invoice
 
 from source.constants import DECIMAL_ZERO
+from source.Invoice import Invoice
 
 
 ###############################################################################

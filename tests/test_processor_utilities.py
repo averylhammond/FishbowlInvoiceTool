@@ -1,5 +1,6 @@
-import pytest
 from decimal import Decimal
+
+from source.constants import DECIMAL_ZERO
 from source.processor_utilities import (
     find_currency_values,
     find_payment_terms,
@@ -7,8 +8,6 @@ from source.processor_utilities import (
     search_payment_line,
     search_text_by_re,
 )
-
-from source.constants import DECIMAL_ZERO
 
 
 ###############################################################################
@@ -109,10 +108,7 @@ def test_search_text_by_re_customer_name_correct_format():
 
     # Verify the invoice date can be extracted
     text = "CORRECT CUSTOMER NAME FORMAT - Customer: FishbowlInvoiceProcessor"
-    assert (
-        search_text_by_re(text=text, regex=regex)
-        == "Customer: FishbowlInvoiceProcessor"
-    )
+    assert search_text_by_re(text=text, regex=regex) == "Customer: FishbowlInvoiceProcessor"
 
 
 def test_search_text_by_re_customer_name_wrong_format():
@@ -139,10 +135,7 @@ def test_search_text_by_re_customer_name_wrong_format():
     # SPECIAL CASE
     # Verify that characters after the name are still matched
     text = "WRONG CUSTOMER NAME FORMAT BUT STILL MATCHES - Customer: FishbowlInvoiceProcessor - afterwards"
-    assert (
-        search_text_by_re(text=text, regex=regex)
-        == "Customer: FishbowlInvoiceProcessor - afterwards"
-    )
+    assert search_text_by_re(text=text, regex=regex) == "Customer: FishbowlInvoiceProcessor - afterwards"
 
 
 def test_search_text_by_re_po_number_correct_format():
@@ -166,10 +159,7 @@ def test_search_text_by_re_po_number_correct_format():
     # This requires special handling in the function that calls search_text_by_re
     # in order to retrieve the PO number from the string
     text = "CORRECT PO NUMBER FORMAT - PO Number: N12345 - ADDITIONAL TEXT"
-    assert (
-        search_text_by_re(text=text, regex=regex)
-        == "PO Number: N12345 - ADDITIONAL TEXT"
-    )
+    assert search_text_by_re(text=text, regex=regex) == "PO Number: N12345 - ADDITIONAL TEXT"
 
 
 def test_search_text_by_re_po_number_wrong_format():
@@ -308,9 +298,7 @@ def test_find_payment_terms_correct_format():
 
     # Verify the correct payment term is found in the searched text
     text = "Text containing payment_term_1 inside of it"
-    assert (
-        find_payment_terms(text=text, payment_terms=payment_terms) == "payment_term_1"
-    )
+    assert find_payment_terms(text=text, payment_terms=payment_terms) == "payment_term_1"
 
 
 def test_find_payment_terms_wrong_format():

@@ -1,6 +1,6 @@
 import shutil
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pypdf
 
@@ -17,13 +17,10 @@ from source.Invoice import Invoice
 
 # InvoiceAppFileIO class to handle all file input/output operations
 class InvoiceAppFileIO:
-
     ###########################################################################
     ###                   InvoiceAppFileIO -> __init__()                    ###
     ###########################################################################
-    def __init__(
-        self, report_error: Callable[[str, str], None] = lambda *_: None
-    ) -> None:
+    def __init__(self, report_error: Callable[[str, str], None] = lambda *_: None) -> None:
         """
         Initializes the InvoiceAppFileIO object
 
@@ -106,7 +103,7 @@ class InvoiceAppFileIO:
         try:
             # Ensure the log directory exists, then append the contents
             DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            with open(file=DEBUG_LOG_PATH, mode="a") as f:
+            with DEBUG_LOG_PATH.open(mode="a") as f:
                 f.write(contents + "\n")
 
         except OSError as error:
@@ -118,9 +115,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###         InvoiceAppFileIO -> print_invoice_to_output_file()          ###
     ###########################################################################
-    def print_invoice_to_output_file(
-        self, invoice: Invoice, append_output: bool = False
-    ) -> None:
+    def print_invoice_to_output_file(self, invoice: Invoice, append_output: bool = False) -> None:
         """
         Writes each field of the invoice object to results.txt
 
@@ -131,15 +126,12 @@ class InvoiceAppFileIO:
         """
 
         # If appending output, use "a" for the file open call, otherwise use "w"
-        if append_output:
-            write_or_append = "a"
-        else:
-            write_or_append = "w"
+        write_or_append = "a" if append_output else "w"
 
         try:
             # Ensure the log directory exists, then write the invoice contents
             RESULTS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            with open(file=RESULTS_LOG_PATH, mode=write_or_append) as f:
+            with RESULTS_LOG_PATH.open(mode=write_or_append) as f:
                 f.write(invoice.to_formatted_string())
 
         except OSError as error:
@@ -165,7 +157,7 @@ class InvoiceAppFileIO:
 
         try:
             # Open the file for reading and return its full contents
-            with open(file=file_path, mode="r") as f:
+            with file_path.open() as f:
                 return f.read()
 
         except OSError as error:
@@ -191,7 +183,7 @@ class InvoiceAppFileIO:
         try:
             # Ensure the parent directory exists, then overwrite the file contents
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(file=file_path, mode="w") as f:
+            with file_path.open(mode="w") as f:
                 f.write(contents)
 
         except OSError as error:
@@ -226,14 +218,15 @@ class InvoiceAppFileIO:
                 text = page.extract_text()
                 pages.append(text)
 
-            return pages
-
         except (OSError, pypdf.errors.PdfReadError) as error:
             self.report_error(
                 "File Error",
                 f"Could not read the invoice PDF at {invoice_filepath}: {error}",
             )
             return []
+
+        else:
+            return pages
 
     ###########################################################################
     ###               InvoiceAppFileIO -> copy_invoice_file()               ###
@@ -272,7 +265,6 @@ class InvoiceAppFileIO:
 
             # copy2 preserves metadata (timestamps) and works across platforms
             shutil.copy2(source_path, destination_path)
-            return "copied"
 
         except (OSError, shutil.SameFileError) as error:
             self.report_error(
@@ -280,6 +272,9 @@ class InvoiceAppFileIO:
                 f"Could not copy the invoice from {source_path} to {destination_path}: {error}",
             )
             return "error"
+
+        else:
+            return "copied"
 
     ###########################################################################
     ###            InvoiceAppFileIO -> parse_sales_reps_config()            ###
@@ -298,13 +293,11 @@ class InvoiceAppFileIO:
 
         try:
             # Open sales rep config file for reading
-            with open(file=SALES_REPS_PATH, mode="r") as f:
-
+            with SALES_REPS_PATH.open() as f:
                 # Search through text file, only take non-comment entries
-                for line in f:
-
+                for raw_line in f:
                     # Strip whitespace from the line
-                    line = line.strip()
+                    line = raw_line.strip()
 
                     # Skip empty lines or comment lines
                     if not line or line[0] == "*":
@@ -340,13 +333,11 @@ class InvoiceAppFileIO:
 
         try:
             # Open payment terms config file for reading
-            with open(file=PAYMENT_TERMS_PATH, mode="r") as f:
-
+            with PAYMENT_TERMS_PATH.open() as f:
                 # Search through text file, only take non-comment entries
-                for line in f:
-
+                for raw_line in f:
                     # Strip whitespace from the line
-                    line = line.strip()
+                    line = raw_line.strip()
 
                     # Ignore line if empty or comment line
                     if not line or line[0] == "*":
@@ -390,9 +381,7 @@ class InvoiceAppFileIO:
 
         # If the category cannot be read, print it to the debug file
         else:
-            self.print_to_debug_file(
-                f"Unknown category read out of Cost Criteria configuration file: {category}"
-            )
+            self.print_to_debug_file(f"Unknown category read out of Cost Criteria configuration file: {category}")
 
     ###########################################################################
     ###           InvoiceAppFileIO -> parse_cost_criteria_file()            ###
@@ -413,17 +402,14 @@ class InvoiceAppFileIO:
 
         try:
             # Open cost criteria config file for reading
-            with open(file=COST_CRITERIA_PATH, mode="r") as f:
-
-                # Default to empty strings
-                line = ""
+            with COST_CRITERIA_PATH.open() as f:
+                # Holds the most recent category header until the next one is read
                 category = ""
 
                 # Search through text file, only take non-comment entries
-                for line in f:
-
+                for raw_line in f:
                     # Strip trailing whitespace from line, and skip comment lines
-                    line = line.strip()
+                    line = raw_line.strip()
                     if not line or line[0] == "*":
                         continue
 

@@ -1,7 +1,7 @@
 import tkinter as tk
+from collections.abc import Callable
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext
-from typing import Callable
 
 from fishbowl_common.gui import Theme, ThemedSubwindow, Tooltip
 
@@ -14,7 +14,6 @@ from fishbowl_common.gui import Theme, ThemedSubwindow, Tooltip
 # Theme/font snapshotting and centering over the parent are handled by
 # ThemedSubwindow.
 class InvoiceDiscoveryWindow(ThemedSubwindow):
-
     ###########################################################################
     ###                 InvoiceDiscoveryWindow -> __init__()                ###
     ###########################################################################
@@ -229,9 +228,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
             self.pending_files.append(Path(file_path))
 
         # Update the selection display to reflect the pending files
-        self.selection_var.set(
-            ", ".join(path.name for path in self.pending_files)
-        )
+        self.selection_var.set(", ".join(path.name for path in self.pending_files))
 
     ###########################################################################
     ###                 InvoiceDiscoveryWindow -> handle_copy()             ###
@@ -250,7 +247,6 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
             return
 
         for source_path in self.pending_files:
-
             # Attempt the copy without overwriting first
             result = self.copy_callback(source_path, False)
 
