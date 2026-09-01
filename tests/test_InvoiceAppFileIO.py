@@ -301,13 +301,13 @@ def test_read_invoice_file_extracts_each_page(mock_reader, file_io):
     "source.InvoiceAppFileIO.pypdf.PdfReader",
     side_effect=OSError("file not found"),
 )
-def test_read_invoice_file_reports_and_returns_empty_on_error(mock_reader, file_io):
+def test_read_invoice_file_reports_and_returns_empty_on_error(_mock_reader, file_io):
     """
     Tests that read_invoice_file() fails gracefully, surfacing the failure through
     the error reporter and returning an empty list when the PDF cannot be read.
 
     Args:
-        mock_reader (unittest.mock.MagicMock): Mocks pypdf.PdfReader to raise
+        _mock_reader (unittest.mock.MagicMock): Mocks pypdf.PdfReader to raise
         file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
     """
 

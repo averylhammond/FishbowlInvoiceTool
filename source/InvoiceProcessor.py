@@ -70,7 +70,10 @@ class InvoiceProcessor:
         """
 
         if invoice is None:
-            raise ValueError("Cannot parse a None invoice object")
+            # TRY003 is suppressed rather than satisfied: a dedicated exception
+            # class for one internal guard against a programming error is more
+            # indirection than a single call site earns.
+            raise ValueError("Cannot parse a None invoice object")  # noqa: TRY003
 
         # Get the first page of the invoice
         first_page = invoice.page_contents[0]
@@ -265,13 +268,8 @@ class InvoiceProcessor:
         # Check if the line contains any of the labor criteria
         for criteria in self.labor_criteria:
             if criteria in line:
-                # If the line contains any of the labor exclusions, return False
-                for exclusion in self.labor_exclusions:
-                    if exclusion in line:
-                        return False
-
-                # If the line does not contain any of the exclusions, return True
-                return True
+                # A matched line still is not labor if it names an exclusion
+                return all(exclusion not in line for exclusion in self.labor_exclusions)
 
         # If no labor criteria was found, return False
         return False
@@ -292,11 +290,7 @@ class InvoiceProcessor:
         """
 
         # Check if the line contains any of the shipping criteria
-        for criteria in self.shipping_criteria:
-            if criteria in line:
-                return True
-
-        return False
+        return any(criteria in line for criteria in self.shipping_criteria)
 
     ###########################################################################
     ###                InvoiceProcessor -> process_invoice()                ###
@@ -316,12 +310,13 @@ class InvoiceProcessor:
         for page in invoice.page_contents:
             # At this point, can disregard everything before the purchase table
             # Trim off everything before purchase table (before the line Ordered Total Price)
+            table_text = page
             if len(page[(page.find("Ordered Total Price")) :]) > 1:
-                page = page[(page.find("Ordered Total Price")) :]
+                table_text = page[(page.find("Ordered Total Price")) :]
 
             # Loop through each line in the table. Some table entries may have multiple lines that need
             # to be processed
-            for line in page.splitlines():
+            for line in table_text.splitlines():
                 # Check if at beginning of the line in the table. If so, process this payment item
                 if line.startswith(f"{next_line_num} "):
                     self.process_payment_line(

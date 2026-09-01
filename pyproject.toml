@@ -72,9 +72,15 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Test parameters are deliberately unannotated -- the docstring's Args: entry carries the
-# type instead. See .claude/rules/tests.md.
-"tests/**" = ["ANN"]
+"tests/**" = [
+    # Test parameters are deliberately unannotated -- the docstring's Args: entry carries
+    # the type instead. See .claude/rules/tests.md.
+    "ANN",
+    # An assertion's expected value is meant to be a literal spelled out at the assertion.
+    # Hoisting `assert len(widgets) == 18` to a named constant hides the number the test
+    # exists to pin.
+    "PLR2004",
+]
 
 [tool.ruff.lint.isort]
 # CLAUDE.md: fishbowl_common is third party, installed from a pinned git tag, and never

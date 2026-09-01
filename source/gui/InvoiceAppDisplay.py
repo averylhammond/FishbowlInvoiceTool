@@ -186,7 +186,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                InvoiceAppDisplay -> build_widgets()                 ###
     ###########################################################################
-    def build_widgets(self) -> None:
+    def build_widgets(self) -> None:  # noqa: PLR0915
         """
         Creates the GUI widgets for the application
         This includes a title label, file selection entry, browse button, and action buttons
@@ -540,7 +540,12 @@ class InvoiceAppDisplay(tk.Tk):
                 # Process each invoice, appending output to the results.txt file and output widget
                 self.process_callback(file_path, append_output=True)
 
-        except Exception as e:
+        # BLE001 is suppressed rather than satisfied: this is the GUI's outer
+        # boundary over a directory of arbitrary user-supplied PDFs. A parse
+        # failure must reach the user as a popup rather than an unhandled crash,
+        # so the catch stays broad here even though every handler beneath this
+        # layer is narrow.
+        except Exception as e:  # noqa: BLE001
             self.show_popup(
                 title="Processing Error",
                 message=f"An error occurred while processing invoices: {e}",

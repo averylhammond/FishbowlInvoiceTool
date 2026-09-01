@@ -126,10 +126,7 @@ class InvoiceAppFileIO:
         """
 
         # If appending output, use "a" for the file open call, otherwise use "w"
-        if append_output:
-            write_or_append = "a"
-        else:
-            write_or_append = "w"
+        write_or_append = "a" if append_output else "w"
 
         try:
             # Ensure the log directory exists, then write the invoice contents
@@ -221,14 +218,15 @@ class InvoiceAppFileIO:
                 text = page.extract_text()
                 pages.append(text)
 
-            return pages
-
         except (OSError, pypdf.errors.PdfReadError) as error:
             self.report_error(
                 "File Error",
                 f"Could not read the invoice PDF at {invoice_filepath}: {error}",
             )
             return []
+
+        else:
+            return pages
 
     ###########################################################################
     ###               InvoiceAppFileIO -> copy_invoice_file()               ###
@@ -267,7 +265,6 @@ class InvoiceAppFileIO:
 
             # copy2 preserves metadata (timestamps) and works across platforms
             shutil.copy2(source_path, destination_path)
-            return "copied"
 
         except (OSError, shutil.SameFileError) as error:
             self.report_error(
@@ -275,6 +272,9 @@ class InvoiceAppFileIO:
                 f"Could not copy the invoice from {source_path} to {destination_path}: {error}",
             )
             return "error"
+
+        else:
+            return "copied"
 
     ###########################################################################
     ###            InvoiceAppFileIO -> parse_sales_reps_config()            ###
@@ -295,9 +295,9 @@ class InvoiceAppFileIO:
             # Open sales rep config file for reading
             with SALES_REPS_PATH.open() as f:
                 # Search through text file, only take non-comment entries
-                for line in f:
+                for raw_line in f:
                     # Strip whitespace from the line
-                    line = line.strip()
+                    line = raw_line.strip()
 
                     # Skip empty lines or comment lines
                     if not line or line[0] == "*":
@@ -335,9 +335,9 @@ class InvoiceAppFileIO:
             # Open payment terms config file for reading
             with PAYMENT_TERMS_PATH.open() as f:
                 # Search through text file, only take non-comment entries
-                for line in f:
+                for raw_line in f:
                     # Strip whitespace from the line
-                    line = line.strip()
+                    line = raw_line.strip()
 
                     # Ignore line if empty or comment line
                     if not line or line[0] == "*":
@@ -403,14 +403,13 @@ class InvoiceAppFileIO:
         try:
             # Open cost criteria config file for reading
             with COST_CRITERIA_PATH.open() as f:
-                # Default to empty strings
-                line = ""
+                # Holds the most recent category header until the next one is read
                 category = ""
 
                 # Search through text file, only take non-comment entries
-                for line in f:
+                for raw_line in f:
                     # Strip trailing whitespace from line, and skip comment lines
-                    line = line.strip()
+                    line = raw_line.strip()
                     if not line or line[0] == "*":
                         continue
 

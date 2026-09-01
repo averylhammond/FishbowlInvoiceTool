@@ -184,7 +184,7 @@ def test_process_payment_line_skips_subtotal_line(invoice_processor, invoice):
 
 @patch(
     "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
+    side_effect=Decimal,
 )
 def test_process_payment_line_labor_cost(_mock_format_currency, invoice_processor, invoice):
     """
@@ -226,7 +226,7 @@ def test_process_payment_line_labor_cost(_mock_format_currency, invoice_processo
 
 @patch(
     "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
+    side_effect=Decimal,
 )
 def test_process_payment_line_shipping_cost(_mock_format_currency, invoice_processor, invoice):
     """
@@ -268,7 +268,7 @@ def test_process_payment_line_shipping_cost(_mock_format_currency, invoice_proce
 
 @patch(
     "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
+    side_effect=Decimal,
 )
 def test_process_payment_line_material_cost(_mock_format_currency, invoice_processor, invoice):
     """
@@ -342,7 +342,7 @@ def test_process_payment_line_skips_if_no_cost_found(invoice_processor, invoice)
 @patch("source.InvoiceProcessor.search_payment_line")
 @patch(
     "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
+    side_effect=Decimal,
 )
 def test_find_ea_cost_returns_first_valid_cost(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
@@ -370,7 +370,7 @@ def test_find_ea_cost_returns_first_valid_cost(_mock_format_currency, mock_searc
 @patch("source.InvoiceProcessor.search_payment_line")
 @patch(
     "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
+    side_effect=Decimal,
 )
 def test_find_ea_cost_returns_zero_when_no_match(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
@@ -402,7 +402,7 @@ def test_find_ea_cost_returns_zero_when_no_match(_mock_format_currency, mock_sea
 @patch("source.InvoiceProcessor.search_payment_line")
 @patch(
     "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
+    side_effect=Decimal,
 )
 def test_find_hr_cost_returns_first_valid_cost(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
@@ -430,7 +430,7 @@ def test_find_hr_cost_returns_first_valid_cost(_mock_format_currency, mock_searc
 @patch("source.InvoiceProcessor.search_payment_line")
 @patch(
     "source.InvoiceProcessor.format_currency",
-    side_effect=lambda value: Decimal(value),
+    side_effect=Decimal,
 )
 def test_find_hr_cost_returns_zero_when_no_match(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
