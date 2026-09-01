@@ -78,9 +78,7 @@ def test_populate_invoice_raises_on_none(invoice_processor):
 
     # Call populate_invoice() with Invoice=None
     with pytest.raises(ValueError) as exception:
-        invoice_processor.populate_invoice(
-            invoice=None, sales_reps={}, payment_terms=[]
-        )
+        invoice_processor.populate_invoice(invoice=None, sales_reps={}, payment_terms=[])
 
     # Ensure that an exception is raised with the correct error message
     assert "Cannot parse a None invoice object" in str(exception)
@@ -142,15 +140,11 @@ def test_populate_invoice_populates_fields(
 
     # Verify that find_payment_terms() was called once, since the payment terms
     # are on the first page
-    mock_find_payment_terms.assert_called_once_with(
-        text=invoice.page_contents[0], payment_terms=payment_terms
-    )
+    mock_find_payment_terms.assert_called_once_with(text=invoice.page_contents[0], payment_terms=payment_terms)
 
     # Verify that find_sales_rep() was called once, since the sales rep is on
     # the first page
-    mock_find_sales_rep.assert_called_once_with(
-        text=invoice.page_contents[0], sales_reps=sales_reps
-    )
+    mock_find_sales_rep.assert_called_once_with(text=invoice.page_contents[0], sales_reps=sales_reps)
 
 
 ###############################################################################
@@ -191,9 +185,7 @@ def test_process_payment_line_skips_subtotal_line(invoice_processor, invoice):
     "source.InvoiceProcessor.format_currency",
     side_effect=lambda value: Decimal(value),
 )
-def test_process_payment_line_labor_cost(
-    _mock_format_currency, invoice_processor, invoice
-):
+def test_process_payment_line_labor_cost(_mock_format_currency, invoice_processor, invoice):
     """
     Verifies that a payment line with labor criteria updates the invoice's labor cost
     and subtotal correctly
@@ -210,9 +202,7 @@ def test_process_payment_line_labor_cost(
 
     # Mock functions to determine this is a labor cost
     invoice_processor.search_for_labor_criteria = MagicMock(return_value=True)
-    invoice_processor.search_for_shipping_criteria = MagicMock(
-        return_value=False
-    )
+    invoice_processor.search_for_shipping_criteria = MagicMock(return_value=False)
 
     # Call process_payment_line() with a labor cost line
     invoice_processor.process_payment_line(
@@ -230,21 +220,14 @@ def test_process_payment_line_labor_cost(
     invoice_processor.file_io_controller.print_to_debug_file.assert_called_once()
 
     # Verify the contents of the debug print
-    assert (
-        "LABOR COST"
-        in invoice_processor.file_io_controller.print_to_debug_file.call_args[
-            1
-        ]["contents"]
-    )
+    assert "LABOR COST" in invoice_processor.file_io_controller.print_to_debug_file.call_args[1]["contents"]
 
 
 @patch(
     "source.InvoiceProcessor.format_currency",
     side_effect=lambda value: Decimal(value),
 )
-def test_process_payment_line_shipping_cost(
-    _mock_format_currency, invoice_processor, invoice
-):
+def test_process_payment_line_shipping_cost(_mock_format_currency, invoice_processor, invoice):
     """
     Verifies that a payment line with shipping criteria updates the invoice's shipping cost
     and subtotal correctly
@@ -261,9 +244,7 @@ def test_process_payment_line_shipping_cost(
 
     # Mock functions to determine this is a shipping cost
     invoice_processor.search_for_labor_criteria = MagicMock(return_value=False)
-    invoice_processor.search_for_shipping_criteria = MagicMock(
-        return_value=True
-    )
+    invoice_processor.search_for_shipping_criteria = MagicMock(return_value=True)
 
     # Call process_payment_line() with a shipping cost line
     invoice_processor.process_payment_line(
@@ -281,21 +262,14 @@ def test_process_payment_line_shipping_cost(
     invoice_processor.file_io_controller.print_to_debug_file.assert_called_once()
 
     # Verify the contents of the debug print
-    assert (
-        "SHIPPING COST"
-        in invoice_processor.file_io_controller.print_to_debug_file.call_args[
-            1
-        ]["contents"]
-    )
+    assert "SHIPPING COST" in invoice_processor.file_io_controller.print_to_debug_file.call_args[1]["contents"]
 
 
 @patch(
     "source.InvoiceProcessor.format_currency",
     side_effect=lambda value: Decimal(value),
 )
-def test_process_payment_line_material_cost(
-    _mock_format_currency, invoice_processor, invoice
-):
+def test_process_payment_line_material_cost(_mock_format_currency, invoice_processor, invoice):
     """
     Verifies that a payment line not matching labor or shipping is categorized as material cost
 
@@ -311,9 +285,7 @@ def test_process_payment_line_material_cost(
 
     # Mock functions to determine this is neither a labor or shipping cost
     invoice_processor.search_for_labor_criteria = MagicMock(return_value=False)
-    invoice_processor.search_for_shipping_criteria = MagicMock(
-        return_value=False
-    )
+    invoice_processor.search_for_shipping_criteria = MagicMock(return_value=False)
 
     # Call process_payment_line()
     invoice_processor.process_payment_line(
@@ -332,17 +304,10 @@ def test_process_payment_line_material_cost(
     invoice_processor.file_io_controller.print_to_debug_file.assert_called_once()
 
     # Verify the contents of the debug print
-    assert (
-        "MATERIAL COST"
-        in invoice_processor.file_io_controller.print_to_debug_file.call_args[
-            1
-        ]["contents"]
-    )
+    assert "MATERIAL COST" in invoice_processor.file_io_controller.print_to_debug_file.call_args[1]["contents"]
 
 
-def test_process_payment_line_skips_if_no_cost_found(
-    invoice_processor, invoice
-):
+def test_process_payment_line_skips_if_no_cost_found(invoice_processor, invoice):
     """
     Verifies that process_payment_line returns early if no valid cost is found
 
@@ -378,9 +343,7 @@ def test_process_payment_line_skips_if_no_cost_found(
     "source.InvoiceProcessor.format_currency",
     side_effect=lambda value: Decimal(value),
 )
-def test_find_ea_cost_returns_first_valid_cost(
-    _mock_format_currency, mock_search_payment_line, invoice_processor
-):
+def test_find_ea_cost_returns_first_valid_cost(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
     Verifies that find_ea_cost() returns the first valid quantity cost found in the payment lines
 
@@ -408,9 +371,7 @@ def test_find_ea_cost_returns_first_valid_cost(
     "source.InvoiceProcessor.format_currency",
     side_effect=lambda value: Decimal(value),
 )
-def test_find_ea_cost_returns_zero_when_no_match(
-    _mock_format_currency, mock_search_payment_line, invoice_processor
-):
+def test_find_ea_cost_returns_zero_when_no_match(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
     Verifies that find_ea_cost() returns the first valid quantity cost found in the payment lines
 
@@ -442,9 +403,7 @@ def test_find_ea_cost_returns_zero_when_no_match(
     "source.InvoiceProcessor.format_currency",
     side_effect=lambda value: Decimal(value),
 )
-def test_find_hr_cost_returns_first_valid_cost(
-    _mock_format_currency, mock_search_payment_line, invoice_processor
-):
+def test_find_hr_cost_returns_first_valid_cost(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
     Verifies that find_hr_cost() returns the first valid hourly cost found in the payment lines
 
@@ -472,9 +431,7 @@ def test_find_hr_cost_returns_first_valid_cost(
     "source.InvoiceProcessor.format_currency",
     side_effect=lambda value: Decimal(value),
 )
-def test_find_hr_cost_returns_zero_when_no_match(
-    _mock_format_currency, mock_search_payment_line, invoice_processor
-):
+def test_find_hr_cost_returns_zero_when_no_match(_mock_format_currency, mock_search_payment_line, invoice_processor):
     """
     Verifies that find_hr_cost() returns the first valid hourly cost found in the payment lines
 
@@ -516,14 +473,7 @@ def test_process_end_of_invoice_sets_values(invoice_processor, invoice):
 
     # Simulated end-of-invoice text. The footer's labels are emitted before its
     # amounts, so the label is followed by the subtotal, the sales tax and the total
-    text = (
-        "Some other content\n"
-        "Total:Subtotal:\n"
-        "Sales Tax:$100.00\n"
-        "$8.50\n"
-        "$108.50\n"
-        "Page 1 of 2"
-    )
+    text = "Some other content\nTotal:Subtotal:\nSales Tax:$100.00\n$8.50\n$108.50\nPage 1 of 2"
 
     # Call the method with a known start point
     invoice_processor.process_end_of_invoice(
@@ -543,9 +493,7 @@ def test_process_end_of_invoice_sets_values(invoice_processor, invoice):
     invoice_processor.file_io_controller.report_error.assert_not_called()
 
 
-def test_process_end_of_invoice_ignores_unexpected_extra_line(
-    invoice_processor, invoice
-):
+def test_process_end_of_invoice_ignores_unexpected_extra_line(invoice_processor, invoice):
     """
     Verifies that an unexpected extra line in the footer does not shift which amounts
     are read, which reading them by line index would have done
@@ -558,14 +506,7 @@ def test_process_end_of_invoice_ignores_unexpected_extra_line(
     invoice.subtotal = Decimal("100.00")
 
     # Footer carrying an extra line between the marker and the labelled amounts
-    text = (
-        "Total:Subtotal:\n"
-        "Discount:\n"
-        "Sales Tax:$100.00\n"
-        "$8.50\n"
-        "$108.50\n"
-        "Page 1 of 2"
-    )
+    text = "Total:Subtotal:\nDiscount:\nSales Tax:$100.00\n$8.50\n$108.50\nPage 1 of 2"
 
     invoice_processor.process_end_of_invoice(
         text=text,
@@ -579,9 +520,7 @@ def test_process_end_of_invoice_ignores_unexpected_extra_line(
     invoice_processor.file_io_controller.report_error.assert_not_called()
 
 
-def test_process_end_of_invoice_reports_on_non_numeric_total(
-    invoice_processor, invoice
-):
+def test_process_end_of_invoice_reports_on_non_numeric_total(invoice_processor, invoice):
     """
     Verifies that a footer whose listed total is not a number is reported rather than
     raising, and that the unreadable amounts are left at zero
@@ -594,13 +533,7 @@ def test_process_end_of_invoice_reports_on_non_numeric_total(
     invoice.subtotal = Decimal("100.00")
 
     # Footer whose listed total is not a number
-    text = (
-        "Total:Subtotal:\n"
-        "Sales Tax:$100.00\n"
-        "$8.50\n"
-        "$SEE ATTACHED\n"
-        "Page 1 of 2"
-    )
+    text = "Total:Subtotal:\nSales Tax:$100.00\n$8.50\n$SEE ATTACHED\nPage 1 of 2"
 
     invoice_processor.process_end_of_invoice(
         text=text,
@@ -619,9 +552,7 @@ def test_process_end_of_invoice_reports_on_non_numeric_total(
     invoice_processor.file_io_controller.report_error.assert_called_once()
 
 
-def test_process_end_of_invoice_reports_on_missing_label(
-    invoice_processor, invoice
-):
+def test_process_end_of_invoice_reports_on_missing_label(invoice_processor, invoice):
     """
     Verifies that a footer with no sales tax label is reported rather than having its
     amounts read from wherever they happen to fall
@@ -738,9 +669,7 @@ def test_search_for_shipping_criteria_false(
 ###############################################################################
 @patch.object(InvoiceProcessor, "process_payment_line")
 @patch.object(InvoiceProcessor, "process_end_of_invoice")
-def test_process_invoice_calls_internal_methods(
-    mock_process_end, mock_process_line, invoice_processor, invoice
-):
+def test_process_invoice_calls_internal_methods(mock_process_end, mock_process_line, invoice_processor, invoice):
     """
     Verifies that process_invoice() calls process_payment_line and process_end_of_invoice
     with correct arguments and expected number of times

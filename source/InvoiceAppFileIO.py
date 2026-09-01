@@ -17,13 +17,10 @@ from source.Invoice import Invoice
 
 # InvoiceAppFileIO class to handle all file input/output operations
 class InvoiceAppFileIO:
-
     ###########################################################################
     ###                   InvoiceAppFileIO -> __init__()                    ###
     ###########################################################################
-    def __init__(
-        self, report_error: Callable[[str, str], None] = lambda *_: None
-    ) -> None:
+    def __init__(self, report_error: Callable[[str, str], None] = lambda *_: None) -> None:
         """
         Initializes the InvoiceAppFileIO object
 
@@ -118,9 +115,7 @@ class InvoiceAppFileIO:
     ###########################################################################
     ###         InvoiceAppFileIO -> print_invoice_to_output_file()          ###
     ###########################################################################
-    def print_invoice_to_output_file(
-        self, invoice: Invoice, append_output: bool = False
-    ) -> None:
+    def print_invoice_to_output_file(self, invoice: Invoice, append_output: bool = False) -> None:
         """
         Writes each field of the invoice object to results.txt
 
@@ -299,10 +294,8 @@ class InvoiceAppFileIO:
         try:
             # Open sales rep config file for reading
             with open(file=SALES_REPS_PATH, mode="r") as f:
-
                 # Search through text file, only take non-comment entries
                 for line in f:
-
                     # Strip whitespace from the line
                     line = line.strip()
 
@@ -341,10 +334,8 @@ class InvoiceAppFileIO:
         try:
             # Open payment terms config file for reading
             with open(file=PAYMENT_TERMS_PATH, mode="r") as f:
-
                 # Search through text file, only take non-comment entries
                 for line in f:
-
                     # Strip whitespace from the line
                     line = line.strip()
 
@@ -390,9 +381,7 @@ class InvoiceAppFileIO:
 
         # If the category cannot be read, print it to the debug file
         else:
-            self.print_to_debug_file(
-                f"Unknown category read out of Cost Criteria configuration file: {category}"
-            )
+            self.print_to_debug_file(f"Unknown category read out of Cost Criteria configuration file: {category}")
 
     ###########################################################################
     ###           InvoiceAppFileIO -> parse_cost_criteria_file()            ###
@@ -414,14 +403,12 @@ class InvoiceAppFileIO:
         try:
             # Open cost criteria config file for reading
             with open(file=COST_CRITERIA_PATH, mode="r") as f:
-
                 # Default to empty strings
                 line = ""
                 category = ""
 
                 # Search through text file, only take non-comment entries
                 for line in f:
-
                     # Strip trailing whitespace from line, and skip comment lines
                     line = line.strip()
                     if not line or line[0] == "*":

@@ -31,7 +31,6 @@ FOOTER_VALUE_COUNT = 3
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
 class InvoiceProcessor:
-
     ###########################################################################
     ###                   InvoiceProcessor -> __init__()                    ###
     ###########################################################################
@@ -60,9 +59,7 @@ class InvoiceProcessor:
     ###########################################################################
     ###               InvoiceProcessor -> populate_invoice()                ###
     ###########################################################################
-    def populate_invoice(
-        self, invoice: Invoice, sales_reps: dict[str, str], payment_terms: list[str]
-    ) -> None:
+    def populate_invoice(self, invoice: Invoice, sales_reps: dict[str, str], payment_terms: list[str]) -> None:
         """
         Initializes all fields of an invoice object that appear on the first page of the invoice PDF
 
@@ -79,36 +76,24 @@ class InvoiceProcessor:
         first_page = invoice.page_contents[0]
 
         # Parse the first page to get the invoice attributes
-        invoice.order_number = search_text_by_re(
-            text=first_page, regex=r"S(\d{5})"
-        )
-        invoice.date = search_text_by_re(
-            text=first_page, regex=r"\d{2}/\d{2}/\d{4}"
-        )
+        invoice.order_number = search_text_by_re(text=first_page, regex=r"S(\d{5})")
+        invoice.date = search_text_by_re(text=first_page, regex=r"\d{2}/\d{2}/\d{4}")
 
         # Customer name will also match "Customer: " to the string, so trim it off
-        invoice.customer_name = search_text_by_re(
-            text=first_page, regex=r"Customer: .+"
-        ).replace("Customer: ", "")
+        invoice.customer_name = search_text_by_re(text=first_page, regex=r"Customer: .+").replace("Customer: ", "")
 
         # PO Number will also match "PO Number: " to the string, so trim it off
         # It will also match other strings, so need to take the last element only
-        invoice.po_number = (
-            search_text_by_re(text=first_page, regex=r"PO Number: .+S")[:-1]
-        ).replace("PO Number: ", "")
-        invoice.payment_terms = find_payment_terms(
-            text=first_page, payment_terms=payment_terms
+        invoice.po_number = (search_text_by_re(text=first_page, regex=r"PO Number: .+S")[:-1]).replace(
+            "PO Number: ", ""
         )
-        invoice.sales_rep = find_sales_rep(
-            text=first_page, sales_reps=sales_reps
-        )
+        invoice.payment_terms = find_payment_terms(text=first_page, payment_terms=payment_terms)
+        invoice.sales_rep = find_sales_rep(text=first_page, sales_reps=sales_reps)
 
     ###########################################################################
     ###             InvoiceProcessor -> process_payment_line()              ###
     ###########################################################################
-    def process_payment_line(
-        self, text: str, line: str, invoice: Invoice, curr_line_num: int
-    ) -> None:
+    def process_payment_line(self, text: str, line: str, invoice: Invoice, curr_line_num: int) -> None:
         """
         Takes a given line from the payment table and processes it.
         This includes reading the entire row, determining if the payment line refers to a labor,
@@ -128,7 +113,7 @@ class InvoiceProcessor:
         # Only take the current payment line, remove everything before line,
         # and everything right after the next payment line
         text = text[(text.find(line)) :]
-        text = text[: text.find(f"\n{curr_line_num+1} ")]
+        text = text[: text.find(f"\n{curr_line_num + 1} ")]
 
         # If the cost is listed as a quantity or hourly rate, find the cost
         ea_cost = self.find_ea_cost(payment_lines=text)
@@ -223,9 +208,7 @@ class InvoiceProcessor:
     ###########################################################################
     ###            InvoiceProcessor -> process_end_of_invoice()             ###
     ###########################################################################
-    def process_end_of_invoice(
-        self, text: str, starting_line: str, invoice: Invoice
-    ) -> None:
+    def process_end_of_invoice(self, text: str, starting_line: str, invoice: Invoice) -> None:
         """
         Takes the ending of the invoice starting at "Total:subtotal" and searches for
         the sales tax and the listed total on the invoice
@@ -242,11 +225,7 @@ class InvoiceProcessor:
         # Anchor on the footer's last label, so the amounts are located by what
         # precedes them rather than by their line number
         label_index = text.find(FOOTER_VALUE_LABEL)
-        values = (
-            find_currency_values(text=text[label_index:])[:FOOTER_VALUE_COUNT]
-            if label_index != -1
-            else []
-        )
+        values = find_currency_values(text=text[label_index:])[:FOOTER_VALUE_COUNT] if label_index != -1 else []
 
         # A footer missing its label, or listing fewer amounts than expected, means
         # the invoice cannot be read. Report it and leave the amounts at zero rather
@@ -266,9 +245,7 @@ class InvoiceProcessor:
             invoice.listed_total = values[2]
 
         # Calculate the total of all processed listed costs
-        invoice.total = format_currency(
-            value=invoice.subtotal
-        ) + format_currency(value=invoice.sales_tax)
+        invoice.total = format_currency(value=invoice.subtotal) + format_currency(value=invoice.sales_tax)
 
     ###########################################################################
     ###           InvoiceProcessor -> search_for_labor_criteria()           ###
@@ -288,7 +265,6 @@ class InvoiceProcessor:
         # Check if the line contains any of the labor criteria
         for criteria in self.labor_criteria:
             if criteria in line:
-
                 # If the line contains any of the labor exclusions, return False
                 for exclusion in self.labor_exclusions:
                     if exclusion in line:
@@ -338,7 +314,6 @@ class InvoiceProcessor:
 
         # Loop through each page to read purchase table
         for page in invoice.page_contents:
-
             # At this point, can disregard everything before the purchase table
             # Trim off everything before purchase table (before the line Ordered Total Price)
             if len(page[(page.find("Ordered Total Price")) :]) > 1:
@@ -347,7 +322,6 @@ class InvoiceProcessor:
             # Loop through each line in the table. Some table entries may have multiple lines that need
             # to be processed
             for line in page.splitlines():
-
                 # Check if at beginning of the line in the table. If so, process this payment item
                 if line.startswith(f"{next_line_num} "):
                     self.process_payment_line(
@@ -360,6 +334,4 @@ class InvoiceProcessor:
 
                 # "Total:Subtotal" is the beginning of the end of the invoice
                 if "Total:Subtotal" in line:
-                    self.process_end_of_invoice(
-                        text=page, starting_line=line, invoice=invoice
-                    )
+                    self.process_end_of_invoice(text=page, starting_line=line, invoice=invoice)

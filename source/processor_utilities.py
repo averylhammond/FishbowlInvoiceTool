@@ -45,7 +45,6 @@ def search_payment_line(line: str, regex: str) -> Decimal:
     res = search(pattern=regex, string=line)
 
     if res:
-
         # Get the matched regex string, match is a list of words from the match
         match = res.group().split()
 
@@ -67,10 +66,7 @@ def find_currency_values(text: str) -> list[Decimal]:
     """
 
     # Strip the thousands separators before converting, since Decimal() rejects them
-    return [
-        format_currency(value=match.replace(",", ""))
-        for match in findall(pattern=CURRENCY_PATTERN, string=text)
-    ]
+    return [format_currency(value=match.replace(",", "")) for match in findall(pattern=CURRENCY_PATTERN, string=text)]
 
 
 def find_payment_terms(text: str, payment_terms: list[str]) -> str:

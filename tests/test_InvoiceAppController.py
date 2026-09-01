@@ -47,7 +47,6 @@ def controller():
         patch("source.InvoiceAppController.PatchNotes") as mock_patch_notes_cls,
         patch("source.InvoiceAppController.Invoice") as mock_invoice_cls,
     ):
-
         # Grab the instance each patched class returns when constructed
         mock_arg_provider = mock_arg_provider_cls.return_value
         mock_file_io = mock_file_io_cls.return_value
@@ -109,9 +108,7 @@ def test_init_constructs_and_wires_collaborators(controller):
     """
 
     # Each collaborator should have been constructed exactly once
-    controller.arg_provider_cls.assert_called_once_with(
-        description="Fishbowl invoice cost-breakdown processor"
-    )
+    controller.arg_provider_cls.assert_called_once_with(description="Fishbowl invoice cost-breakdown processor")
     controller.file_io_cls.assert_called_once_with()
 
     # The processor is wired with the file_io controller and the criteria pulled
@@ -273,9 +270,7 @@ def test_start_application_checks_for_patch_notes(controller):
 
     controller.arg_provider.integration_test_mode = False
 
-    with patch.object(
-        controller.controller, "show_patch_notes_if_updated"
-    ) as mock_show_patch_notes:
+    with patch.object(controller.controller, "show_patch_notes_if_updated") as mock_show_patch_notes:
         controller.controller.start_application()
 
     mock_show_patch_notes.assert_called_once_with({"theme": "Ocean"})
@@ -347,16 +342,12 @@ def test_show_patch_notes_if_updated_shows_the_notes_after_an_update(controller)
 
     controller.patch_notes.notes_since.return_value = NOTES
 
-    controller.controller.show_patch_notes_if_updated(
-        {SETTING_KEY_LAST_SEEN_VERSION: "4.0.0"}
-    )
+    controller.controller.show_patch_notes_if_updated({SETTING_KEY_LAST_SEEN_VERSION: "4.0.0"})
 
     # The whole range is requested, not just the version landed on, so a skipped
     # release is still announced
     controller.patch_notes.notes_since.assert_called_once_with(VERSION, "4.0.0")
-    controller.settings_repo.save_setting.assert_called_once_with(
-        key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION
-    )
+    controller.settings_repo.save_setting.assert_called_once_with(key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION)
 
     # Opened through after() rather than inline: the shared window centers itself
     # over the main window, whose geometry is not known until it has been mapped
@@ -382,9 +373,7 @@ def test_show_patch_notes_if_updated_shows_nothing_on_a_fresh_install(controller
 
     controller.controller.show_patch_notes_if_updated({})
 
-    controller.settings_repo.save_setting.assert_called_once_with(
-        key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION
-    )
+    controller.settings_repo.save_setting.assert_called_once_with(key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION)
     controller.patch_notes.notes_since.assert_not_called()
     controller.display.after.assert_not_called()
 
@@ -398,9 +387,7 @@ def test_show_patch_notes_if_updated_shows_nothing_on_an_ordinary_relaunch(contr
         controller (pytest.fixture): Provides the controller and its mocks
     """
 
-    controller.controller.show_patch_notes_if_updated(
-        {SETTING_KEY_LAST_SEEN_VERSION: VERSION}
-    )
+    controller.controller.show_patch_notes_if_updated({SETTING_KEY_LAST_SEEN_VERSION: VERSION})
 
     controller.patch_notes.notes_since.assert_not_called()
     controller.display.after.assert_not_called()
@@ -416,13 +403,9 @@ def test_show_patch_notes_if_updated_shows_nothing_after_a_downgrade(controller)
         controller (pytest.fixture): Provides the controller and its mocks
     """
 
-    controller.controller.show_patch_notes_if_updated(
-        {SETTING_KEY_LAST_SEEN_VERSION: "99.0.0"}
-    )
+    controller.controller.show_patch_notes_if_updated({SETTING_KEY_LAST_SEEN_VERSION: "99.0.0"})
 
-    controller.settings_repo.save_setting.assert_called_once_with(
-        key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION
-    )
+    controller.settings_repo.save_setting.assert_called_once_with(key=SETTING_KEY_LAST_SEEN_VERSION, value=VERSION)
     controller.patch_notes.notes_since.assert_not_called()
     controller.display.after.assert_not_called()
 
@@ -439,9 +422,7 @@ def test_show_patch_notes_if_updated_shows_nothing_when_there_are_no_notes(contr
 
     controller.patch_notes.notes_since.return_value = ""
 
-    controller.controller.show_patch_notes_if_updated(
-        {SETTING_KEY_LAST_SEEN_VERSION: "4.0.0"}
-    )
+    controller.controller.show_patch_notes_if_updated({SETTING_KEY_LAST_SEEN_VERSION: "4.0.0"})
 
     controller.display.after.assert_not_called()
 
@@ -465,9 +446,7 @@ def test_handle_view_patch_notes_shows_every_version_up_to_this_one(controller):
 
     # No lower bound, so every section up to the running version is shown
     controller.patch_notes.notes_since.assert_called_once_with(VERSION, None)
-    controller.display.show_patch_notes.assert_called_once_with(
-        APP_NAME, VERSION, NOTES
-    )
+    controller.display.show_patch_notes.assert_called_once_with(APP_NAME, VERSION, NOTES)
 
 
 def test_handle_view_patch_notes_reports_when_there_are_no_notes(controller):
@@ -506,9 +485,7 @@ def test_handle_process_invoice_no_pages_shows_error_and_returns(controller):
     # The PDF read returns no pages
     controller.file_io.read_invoice_file.return_value = []
 
-    controller.controller.handle_process_invoice(
-        invoice_filepath="missing.pdf", append_output=False
-    )
+    controller.controller.handle_process_invoice(invoice_filepath="missing.pdf", append_output=False)
 
     # An error popup is shown and processing stops before populating the invoice
     controller.display.show_popup.assert_called_once()
@@ -528,9 +505,7 @@ def test_handle_process_invoice_first_page_none_shows_error_and_returns(controll
     # The PDF read returns a page list whose first page failed to parse
     controller.file_io.read_invoice_file.return_value = [None]
 
-    controller.controller.handle_process_invoice(
-        invoice_filepath="bad.pdf", append_output=False
-    )
+    controller.controller.handle_process_invoice(invoice_filepath="bad.pdf", append_output=False)
 
     # An error popup is shown and processing stops before populating the invoice
     controller.display.show_popup.assert_called_once()
@@ -550,9 +525,7 @@ def test_handle_process_invoice_no_text_shows_error_and_returns(controller):
     # The PDF read returns pages, but every one of them extracted as blank
     controller.file_io.read_invoice_file.return_value = ["", "   \n", ""]
 
-    controller.controller.handle_process_invoice(
-        invoice_filepath="scanned.pdf", append_output=False
-    )
+    controller.controller.handle_process_invoice(invoice_filepath="scanned.pdf", append_output=False)
 
     # An error popup is shown and processing stops before populating the invoice,
     # so no all-zero result is displayed or written to the results file
@@ -578,14 +551,10 @@ def test_handle_process_invoice_text_on_later_page_is_processed(controller):
     controller.invoice.total = Decimal("10.00")
     controller.invoice.listed_total = Decimal("10.00")
 
-    controller.controller.handle_process_invoice(
-        invoice_filepath="invoice.pdf", append_output=False
-    )
+    controller.controller.handle_process_invoice(invoice_filepath="invoice.pdf", append_output=False)
 
     # The invoice is processed as normal, with no popup shown
-    controller.processor.process_invoice.assert_called_once_with(
-        invoice=controller.invoice
-    )
+    controller.processor.process_invoice.assert_called_once_with(invoice=controller.invoice)
     controller.display.show_popup.assert_not_called()
 
 
@@ -604,9 +573,7 @@ def test_handle_process_invoice_full_flow_totals_match(controller):
     controller.invoice.total = Decimal("10.00")
     controller.invoice.listed_total = Decimal("10.00")
 
-    controller.controller.handle_process_invoice(
-        invoice_filepath="invoice.pdf", append_output=True
-    )
+    controller.controller.handle_process_invoice(invoice_filepath="invoice.pdf", append_output=True)
 
     # The processor is asked to populate and process the invoice
     controller.processor.populate_invoice.assert_called_once_with(
@@ -614,14 +581,10 @@ def test_handle_process_invoice_full_flow_totals_match(controller):
         sales_reps=controller.controller.sales_reps,
         payment_terms=controller.controller.payment_terms,
     )
-    controller.processor.process_invoice.assert_called_once_with(
-        invoice=controller.invoice
-    )
+    controller.processor.process_invoice.assert_called_once_with(invoice=controller.invoice)
 
     # The output is displayed and written, honoring the append_output flag
-    controller.display.display_invoice_output.assert_called_once_with(
-        invoice=controller.invoice, append_output=True
-    )
+    controller.display.display_invoice_output.assert_called_once_with(invoice=controller.invoice, append_output=True)
     controller.file_io.print_invoice_to_output_file.assert_called_once_with(
         invoice=controller.invoice, append_output=True
     )
@@ -644,9 +607,7 @@ def test_handle_process_invoice_total_mismatch_shows_popup(controller):
     controller.invoice.total = Decimal("10.00")
     controller.invoice.listed_total = Decimal("9.99")
 
-    controller.controller.handle_process_invoice(
-        invoice_filepath="invoice.pdf", append_output=False
-    )
+    controller.controller.handle_process_invoice(invoice_filepath="invoice.pdf", append_output=False)
 
     # A mismatch popup is shown, and the output is still written
     controller.display.show_popup.assert_called_once()
@@ -673,9 +634,7 @@ def test_handle_save_config_cost_criteria_writes_and_reparses(controller):
     controller.controller.handle_save_config(COST_CRITERIA_PATH, "new criteria")
 
     # The contents are written, then the cost criteria are reloaded
-    controller.file_io.write_text_file.assert_called_once_with(
-        file_path=COST_CRITERIA_PATH, contents="new criteria"
-    )
+    controller.file_io.write_text_file.assert_called_once_with(file_path=COST_CRITERIA_PATH, contents="new criteria")
     controller.file_io.parse_cost_criteria_file.assert_called_once_with()
 
 
@@ -695,9 +654,7 @@ def test_handle_save_config_payment_terms_writes_and_reloads(controller):
     controller.controller.handle_save_config(PAYMENT_TERMS_PATH, "Net 60")
 
     # The contents are written and the reloaded terms are stored on the controller
-    controller.file_io.write_text_file.assert_called_once_with(
-        file_path=PAYMENT_TERMS_PATH, contents="Net 60"
-    )
+    controller.file_io.write_text_file.assert_called_once_with(file_path=PAYMENT_TERMS_PATH, contents="Net 60")
     controller.file_io.parse_payment_terms_config.assert_called_once_with()
     assert controller.controller.payment_terms == ["Net 60"]
 
@@ -718,9 +675,7 @@ def test_handle_save_config_sales_reps_writes_and_reloads(controller):
     controller.controller.handle_save_config(SALES_REPS_PATH, "REP2=New Rep")
 
     # The contents are written and the reloaded reps are stored on the controller
-    controller.file_io.write_text_file.assert_called_once_with(
-        file_path=SALES_REPS_PATH, contents="REP2=New Rep"
-    )
+    controller.file_io.write_text_file.assert_called_once_with(file_path=SALES_REPS_PATH, contents="REP2=New Rep")
     controller.file_io.parse_sales_reps_config.assert_called_once_with()
     assert controller.controller.sales_reps == {"REP2": "New Rep"}
 
@@ -742,9 +697,7 @@ def test_handle_save_config_unknown_path_writes_without_reparsing(controller):
     controller.controller.handle_save_config(Path("logs/results.txt"), "data")
 
     # The file is written, but no config is reloaded
-    controller.file_io.write_text_file.assert_called_once_with(
-        file_path=Path("logs/results.txt"), contents="data"
-    )
+    controller.file_io.write_text_file.assert_called_once_with(file_path=Path("logs/results.txt"), contents="data")
     controller.file_io.parse_cost_criteria_file.assert_not_called()
     controller.file_io.parse_payment_terms_config.assert_not_called()
     controller.file_io.parse_sales_reps_config.assert_not_called()
@@ -765,6 +718,4 @@ def test_handle_save_setting_delegates_to_repository(controller):
     controller.controller.handle_save_setting("theme", "Forest")
 
     # The setting is persisted through the settings repository
-    controller.settings_repo.save_setting.assert_called_once_with(
-        key="theme", value="Forest"
-    )
+    controller.settings_repo.save_setting.assert_called_once_with(key="theme", value="Forest")

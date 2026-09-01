@@ -10,7 +10,6 @@ from source.constants import DECIMAL_ZERO
 # may also supply any subset of fields up front, e.g. Invoice(customer_name="Alice", total=Decimal("385.00")).
 @dataclass
 class Invoice:
-
     # fmt:off
     customer_name: str          = ""                                 # Name of customer on invoice
     date: str                   = ""                                 # Date of invoice

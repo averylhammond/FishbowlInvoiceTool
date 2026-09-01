@@ -201,9 +201,7 @@ def test_print_to_debug_file_reports_on_error(mock_debug_path, _mock_file, file_
 ###############################################################################
 @patch("builtins.open", new_callable=mock_open)
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
-def test_print_invoice_to_output_file_overwrites_by_default(
-    mock_results_path, mock_file, file_io
-):
+def test_print_invoice_to_output_file_overwrites_by_default(mock_results_path, mock_file, file_io):
     """
     Tests that print_invoice_to_output_file() ensures the log directory exists,
     opens the results log in write mode (overwriting) by default, and writes the
@@ -229,9 +227,7 @@ def test_print_invoice_to_output_file_overwrites_by_default(
 
 @patch("builtins.open", new_callable=mock_open)
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
-def test_print_invoice_to_output_file_appends_when_requested(
-    mock_results_path, mock_file, file_io
-):
+def test_print_invoice_to_output_file_appends_when_requested(mock_results_path, mock_file, file_io):
     """
     Tests that print_invoice_to_output_file() opens the results log in append mode
     when append_output is True and writes the invoice's formatted string.
@@ -255,9 +251,7 @@ def test_print_invoice_to_output_file_appends_when_requested(
 
 @patch("builtins.open", side_effect=OSError("disk full"))
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
-def test_print_invoice_to_output_file_reports_on_error(
-    mock_results_path, _mock_file, file_io
-):
+def test_print_invoice_to_output_file_reports_on_error(mock_results_path, _mock_file, file_io):
     """
     Tests that print_invoice_to_output_file() fails gracefully, surfacing the
     failure through the error reporter instead of raising when the write fails.
@@ -329,9 +323,7 @@ def test_read_invoice_file_reports_and_returns_empty_on_error(mock_reader, file_
 ###############################################################################
 @patch("source.InvoiceAppFileIO.shutil.copy2")
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_copies_new_file(
-    mock_invoices_dir, mock_copy2, file_io
-):
+def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() ensures the Invoices/ directory exists and
     copies the file when no same-named file is already present, returning
@@ -357,9 +349,7 @@ def test_copy_invoice_file_copies_new_file(
 
 @patch("source.InvoiceAppFileIO.shutil.copy2")
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_exists_without_overwrite(
-    mock_invoices_dir, mock_copy2, file_io
-):
+def test_copy_invoice_file_exists_without_overwrite(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() does not overwrite an existing same-named file
     when overwrite is False, returning "exists" without copying.
@@ -383,9 +373,7 @@ def test_copy_invoice_file_exists_without_overwrite(
 
 @patch("source.InvoiceAppFileIO.shutil.copy2")
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_overwrites_when_confirmed(
-    mock_invoices_dir, mock_copy2, file_io
-):
+def test_copy_invoice_file_overwrites_when_confirmed(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() overwrites an existing same-named file when
     overwrite is True, copying the file and returning "copied".
@@ -409,9 +397,7 @@ def test_copy_invoice_file_overwrites_when_confirmed(
 
 @patch("source.InvoiceAppFileIO.shutil.copy2", side_effect=OSError("disk full"))
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
-def test_copy_invoice_file_reports_and_returns_error_on_failure(
-    mock_invoices_dir, _mock_copy2, file_io
-):
+def test_copy_invoice_file_reports_and_returns_error_on_failure(mock_invoices_dir, _mock_copy2, file_io):
     """
     Tests that copy_invoice_file() fails gracefully, surfacing the failure through
     the error reporter and returning "error" when the copy cannot be completed.
@@ -665,9 +651,7 @@ Ship criterion Y
 """,
 )
 @patch.object(InvoiceAppFileIO, "add_cost_criteria_field")
-def test_parse_cost_criteria_file_calls_add_cost_criteria_field(
-    mock_add_field, mock_file, file_io
-):
+def test_parse_cost_criteria_file_calls_add_cost_criteria_field(mock_add_field, mock_file, file_io):
     """
     Tests that parse_cost_criteria_file() reads the file correctly and
     calls add_cost_criteria_field() with the expected arguments.
