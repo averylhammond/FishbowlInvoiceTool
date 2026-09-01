@@ -23,3 +23,67 @@ omit = [
 # The 90% gate. Kept here rather than on the CI command line so a local `pytest --cov`
 # enforces exactly what code-coverage.yml does.
 fail_under = 90
+
+[tool.ruff]
+line-length = 120
+# CI pins 3.11.9 and fishbowl-common requires >=3.11. There is no [project] table here for
+# ruff to infer a target from, so it is stated: without it, UP proposes syntax 3.11 lacks.
+target-version = "py311"
+# ruff respects .gitignore, but neither of these is ignored: fishbowl-common/ is an
+# untracked local clone of the sibling package, and automated-invoice-testing is the
+# private submodule. Linting either would be wrong, and the latter would put customer-data
+# paths into a CI log.
+extend-exclude = ["fishbowl-common", "automated-invoice-testing", "release"]
+
+[tool.ruff.format]
+# skip-magic-trailing-comma is deliberately left at its default of false. A trailing comma
+# is an authoring signal that a construct stays exploded, and honoring it keeps "add one
+# import" a one-line diff rather than a whole-line rewrite.
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "C4",  # flake8-comprehensions
+    "BLE", # flake8-blind-except
+    "ANN", # flake8-annotations
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "TRY", # tryceratops
+    "PL",  # pylint
+    "N",   # pep8-naming
+    "RUF", # ruff-specific
+]
+ignore = [
+    # Documented by ruff as conflicting with its own formatter.
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    # Each single-class module is named after its class (InvoiceProcessor.py), and tests/
+    # mirrors that (test_InvoiceProcessor.py) per .claude/rules/tests.md. Renaming six
+    # modules and their tests is not in scope for adopting a linter.
+    "N999",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test parameters are deliberately unannotated -- the docstring's Args: entry carries the
+# type instead. See .claude/rules/tests.md.
+"tests/**" = ["ANN"]
+
+[tool.ruff.lint.isort]
+# CLAUDE.md: fishbowl_common is third party, installed from a pinned git tag, and never
+# grouped among the source.* imports. Both are stated explicitly so the untracked
+# fishbowl-common/ clone in the working tree cannot flip its classification.
+known-first-party = ["source"]
+known-third-party = ["fishbowl_common"]
+
+[tool.ruff.lint.pylint]
+# CLAUDE.md requires narrow dependencies be injected one at a time rather than passing a
+# god object, which puts InvoiceAppDisplay.__init__ at 10 parameters by design.
+max-args = 10
