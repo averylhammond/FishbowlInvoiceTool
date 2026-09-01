@@ -75,6 +75,12 @@ Rules for this class:
   constructor and creates every one of them, so nothing can observe one unset and no method guards
   against `None`. A new widget goes in that block *and* in `build_widgets()`. `InvoiceDiscoveryWindow`
   follows the same rule.
+- **`# fmt:off` stops the formatter, not the linter.** `ruff format` honors it (including this
+  repo's no-space spelling), so the aligned blocks survive untouched — but `ruff check` still
+  reads every line inside one. An aligned line over the 120-column limit needs an explicit
+  `# noqa: E501`, as the three template lines in `Invoice.py` carry. `build_widgets()` likewise
+  carries `# noqa: PLR0915`: it is a flat run of widget construction, and splitting it to satisfy
+  the statement count would scatter the layout without simplifying anything.
 - **`process_callback` is typed by the `ProcessInvoiceCallback` Protocol**, not a `Callable`: the
   call sites pass `append_output` by keyword, which `Callable[[Path, bool], None]` cannot express.
   The other callbacks are called positionally and stay plain `Callable`s.
