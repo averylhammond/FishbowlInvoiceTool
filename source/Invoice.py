@@ -20,11 +20,14 @@ class Invoice:
     labor_cost: Decimal         = DECIMAL_ZERO                       # Total cost of labor
     material_cost: Decimal      = DECIMAL_ZERO                       # Total cost of material
     shipping_cost: Decimal      = DECIMAL_ZERO                       # Total cost of shipping
-    subtotal: Decimal           = DECIMAL_ZERO                       # subtotal, from summing labor_cost, material_cost, and shipping_cost  # noqa: E501
+    subtotal: Decimal           = DECIMAL_ZERO                       # subtotal, from summing labor_cost,
+                                                                     # material_cost, and shipping_cost
     sales_tax: Decimal          = DECIMAL_ZERO                       # Additional sales tax
     total: Decimal              = DECIMAL_ZERO                       # Calculated as subtotal plus sales_tax
-    listed_total: Decimal       = DECIMAL_ZERO                       # Total as listed on the invoice, to compare to the calculated total  # noqa: E501
-    page_contents: list[str]    = field(default_factory=list)        # List of strings, each string is the text from a page of the invoice PDF  # noqa: E501
+    listed_total: Decimal       = DECIMAL_ZERO                       # Total as listed on the invoice, to compare
+                                                                     # to the calculated total
+    page_contents: list[str]    = field(default_factory=list)        # List of strings, each string is the text
+                                                                     # from a page of the invoice PDF
     # fmt:on
 
     ###########################################################################

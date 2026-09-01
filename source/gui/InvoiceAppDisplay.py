@@ -186,7 +186,7 @@ class InvoiceAppDisplay(tk.Tk):
     ###########################################################################
     ###                InvoiceAppDisplay -> build_widgets()                 ###
     ###########################################################################
-    def build_widgets(self) -> None:  # noqa: PLR0915
+    def build_widgets(self) -> None:
         """
         Creates the GUI widgets for the application
         This includes a title label, file selection entry, browse button, and action buttons

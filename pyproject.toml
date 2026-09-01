@@ -67,8 +67,14 @@ ignore = [
     "E117",
     # Each single-class module is named after its class (InvoiceProcessor.py), and tests/
     # mirrors that (test_InvoiceProcessor.py) per .claude/rules/tests.md. Renaming six
-    # modules and their tests is not in scope for adopting a linter.
+    # modules and their tests is not in scope for adopting a linter. Tracked in #147.
     "N999",
+    # Widget construction is a flat run of tk.Widget(...) calls -- one statement per widget,
+    # in the order they appear in the window. build_widgets() is over the default limit of 50
+    # only because the window has that many widgets, and splitting it on a statement count
+    # would scatter the layout without simplifying anything. Whether that method should be
+    # split for its own sake is a design question, tracked in #145, not a lint finding.
+    "PLR0915",
 ]
 
 [tool.ruff.lint.per-file-ignores]
