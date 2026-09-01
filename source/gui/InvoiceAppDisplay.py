@@ -1,7 +1,8 @@
 import tkinter as tk
+from collections.abc import Callable
 from pathlib import Path
 from tkinter import filedialog, scrolledtext
-from typing import Callable, Protocol
+from typing import Protocol
 
 from fishbowl_common import ArgumentProvider, UpdateCheckResult
 from fishbowl_common.gui import (

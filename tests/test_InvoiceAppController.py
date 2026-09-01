@@ -1,10 +1,10 @@
-import pytest
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from decimal import Decimal
 
-from source.InvoiceAppController import InvoiceAppController
+import pytest
+
 from source.constants import (
     APP_NAME,
     COST_CRITERIA_PATH,
@@ -17,6 +17,7 @@ from source.constants import (
     SETTINGS_DB_PATH,
     VERSION,
 )
+from source.InvoiceAppController import InvoiceAppController
 
 
 ###############################################################################

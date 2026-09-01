@@ -1,5 +1,6 @@
-import pytest
 from decimal import Decimal
+
+from source.constants import DECIMAL_ZERO
 from source.processor_utilities import (
     find_currency_values,
     find_payment_terms,
@@ -7,8 +8,6 @@ from source.processor_utilities import (
     search_payment_line,
     search_text_by_re,
 )
-
-from source.constants import DECIMAL_ZERO
 
 
 ###############################################################################

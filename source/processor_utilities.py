@@ -26,7 +26,7 @@ def search_text_by_re(text: str, regex: str) -> str:
     if res:
         return res.group()
     else:
-        return str()
+        return ""
 
 
 def search_payment_line(line: str, regex: str) -> Decimal:
@@ -90,7 +90,7 @@ def find_payment_terms(text: str, payment_terms: list[str]) -> str:
             return term
 
     # If no payment term was found, return empty string
-    return str()
+    return ""
 
 
 def find_sales_rep(text: str, sales_reps: dict[str, str]) -> str:
@@ -113,7 +113,7 @@ def find_sales_rep(text: str, sales_reps: dict[str, str]) -> str:
         if res:
             return val
 
-    return str()
+    return ""
 
 
 def format_currency(value: str | Decimal) -> Decimal:

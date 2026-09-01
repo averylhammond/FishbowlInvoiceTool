@@ -1,11 +1,12 @@
-import pytest
-from unittest.mock import patch, MagicMock
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
-from source.InvoiceProcessor import InvoiceProcessor
-from source.InvoiceAppFileIO import InvoiceAppFileIO
-from source.Invoice import Invoice
+import pytest
+
 from source.constants import DECIMAL_ZERO
+from source.Invoice import Invoice
+from source.InvoiceAppFileIO import InvoiceAppFileIO
+from source.InvoiceProcessor import InvoiceProcessor
 
 
 ###############################################################################

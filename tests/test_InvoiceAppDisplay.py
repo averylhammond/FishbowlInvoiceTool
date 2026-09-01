@@ -1,25 +1,26 @@
 import tkinter as tk
-import pytest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch, call, MagicMock
+from unittest.mock import MagicMock, call, patch
 
-from source.Invoice import Invoice
-from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
+import pytest
 from fishbowl_common import UpdateCheckResult
 from fishbowl_common.gui import (
     DARK,
-    LIGHT,
     DEFAULT_FONT_FAMILY,
     DEFAULT_FONT_SIZE,
+    LIGHT,
 )
+
 from source.constants import (
     APP_NAME,
-    VERSION,
+    COST_CRITERIA_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
-    COST_CRITERIA_PATH,
+    VERSION,
 )
+from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
+from source.Invoice import Invoice
 
 
 ###############################################################################

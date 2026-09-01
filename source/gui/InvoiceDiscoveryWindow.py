@@ -1,7 +1,7 @@
 import tkinter as tk
+from collections.abc import Callable
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext
-from typing import Callable
 
 from fishbowl_common.gui import Theme, ThemedSubwindow, Tooltip
 

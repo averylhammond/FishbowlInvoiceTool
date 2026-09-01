@@ -1,6 +1,6 @@
 import shutil
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pypdf
 
@@ -103,7 +103,7 @@ class InvoiceAppFileIO:
         try:
             # Ensure the log directory exists, then append the contents
             DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            with open(file=DEBUG_LOG_PATH, mode="a") as f:
+            with DEBUG_LOG_PATH.open(mode="a") as f:
                 f.write(contents + "\n")
 
         except OSError as error:
@@ -134,7 +134,7 @@ class InvoiceAppFileIO:
         try:
             # Ensure the log directory exists, then write the invoice contents
             RESULTS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            with open(file=RESULTS_LOG_PATH, mode=write_or_append) as f:
+            with RESULTS_LOG_PATH.open(mode=write_or_append) as f:
                 f.write(invoice.to_formatted_string())
 
         except OSError as error:
@@ -160,7 +160,7 @@ class InvoiceAppFileIO:
 
         try:
             # Open the file for reading and return its full contents
-            with open(file=file_path, mode="r") as f:
+            with file_path.open() as f:
                 return f.read()
 
         except OSError as error:
@@ -186,7 +186,7 @@ class InvoiceAppFileIO:
         try:
             # Ensure the parent directory exists, then overwrite the file contents
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(file=file_path, mode="w") as f:
+            with file_path.open(mode="w") as f:
                 f.write(contents)
 
         except OSError as error:
@@ -293,7 +293,7 @@ class InvoiceAppFileIO:
 
         try:
             # Open sales rep config file for reading
-            with open(file=SALES_REPS_PATH, mode="r") as f:
+            with SALES_REPS_PATH.open() as f:
                 # Search through text file, only take non-comment entries
                 for line in f:
                     # Strip whitespace from the line
@@ -333,7 +333,7 @@ class InvoiceAppFileIO:
 
         try:
             # Open payment terms config file for reading
-            with open(file=PAYMENT_TERMS_PATH, mode="r") as f:
+            with PAYMENT_TERMS_PATH.open() as f:
                 # Search through text file, only take non-comment entries
                 for line in f:
                     # Strip whitespace from the line
@@ -402,7 +402,7 @@ class InvoiceAppFileIO:
 
         try:
             # Open cost criteria config file for reading
-            with open(file=COST_CRITERIA_PATH, mode="r") as f:
+            with COST_CRITERIA_PATH.open() as f:
                 # Default to empty strings
                 line = ""
                 category = ""
