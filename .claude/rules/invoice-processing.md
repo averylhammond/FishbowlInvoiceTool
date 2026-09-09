@@ -1,9 +1,9 @@
 ---
 paths:
-  - "source/InvoiceProcessor.py"
+  - "source/invoice_processor.py"
   - "source/processor_utilities.py"
-  - "source/InvoiceAppFileIO.py"
-  - "source/Invoice.py"
+  - "source/invoice_app_file_io.py"
+  - "source/invoice.py"
 ---
 
 # Invoice parsing and file I/O

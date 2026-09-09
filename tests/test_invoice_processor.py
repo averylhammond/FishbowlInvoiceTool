@@ -4,9 +4,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from source.constants import DECIMAL_ZERO
-from source.Invoice import Invoice
-from source.InvoiceAppFileIO import InvoiceAppFileIO
-from source.InvoiceProcessor import InvoiceProcessor
+from source.invoice import Invoice
+from source.invoice_app_file_io import InvoiceAppFileIO
+from source.invoice_processor import InvoiceProcessor
 
 
 @pytest.fixture
@@ -79,9 +79,9 @@ def test_populate_invoice_raises_on_none(invoice_processor):
     assert "Cannot parse a None invoice object" in str(exception)
 
 
-@patch("source.InvoiceProcessor.find_sales_rep", return_value="Rep Name")
-@patch("source.InvoiceProcessor.find_payment_terms", return_value="Net 30")
-@patch("source.InvoiceProcessor.search_text_by_re")
+@patch("source.invoice_processor.find_sales_rep", return_value="Rep Name")
+@patch("source.invoice_processor.find_payment_terms", return_value="Net 30")
+@patch("source.invoice_processor.search_text_by_re")
 def test_populate_invoice_populates_fields(
     mock_search_text_by_re,
     mock_find_payment_terms,
@@ -174,7 +174,7 @@ def test_process_payment_line_skips_subtotal_line(invoice_processor, invoice):
 
 
 @patch(
-    "source.InvoiceProcessor.format_currency",
+    "source.invoice_processor.format_currency",
     side_effect=Decimal,
 )
 def test_process_payment_line_labor_cost(_mock_format_currency, invoice_processor, invoice):
@@ -216,7 +216,7 @@ def test_process_payment_line_labor_cost(_mock_format_currency, invoice_processo
 
 
 @patch(
-    "source.InvoiceProcessor.format_currency",
+    "source.invoice_processor.format_currency",
     side_effect=Decimal,
 )
 def test_process_payment_line_shipping_cost(_mock_format_currency, invoice_processor, invoice):
@@ -258,7 +258,7 @@ def test_process_payment_line_shipping_cost(_mock_format_currency, invoice_proce
 
 
 @patch(
-    "source.InvoiceProcessor.format_currency",
+    "source.invoice_processor.format_currency",
     side_effect=Decimal,
 )
 def test_process_payment_line_material_cost(_mock_format_currency, invoice_processor, invoice):
@@ -327,9 +327,9 @@ def test_process_payment_line_skips_if_no_cost_found(invoice_processor, invoice)
     assert invoice.shipping_cost == DECIMAL_ZERO
 
 
-@patch("source.InvoiceProcessor.search_payment_line")
+@patch("source.invoice_processor.search_payment_line")
 @patch(
-    "source.InvoiceProcessor.format_currency",
+    "source.invoice_processor.format_currency",
     side_effect=Decimal,
 )
 def test_find_ea_cost_returns_first_valid_cost(_mock_format_currency, mock_search_payment_line, invoice_processor):
@@ -355,9 +355,9 @@ def test_find_ea_cost_returns_first_valid_cost(_mock_format_currency, mock_searc
     assert cost == Decimal("45.60")
 
 
-@patch("source.InvoiceProcessor.search_payment_line")
+@patch("source.invoice_processor.search_payment_line")
 @patch(
-    "source.InvoiceProcessor.format_currency",
+    "source.invoice_processor.format_currency",
     side_effect=Decimal,
 )
 def test_find_ea_cost_returns_zero_when_no_match(_mock_format_currency, mock_search_payment_line, invoice_processor):
@@ -384,9 +384,9 @@ def test_find_ea_cost_returns_zero_when_no_match(_mock_format_currency, mock_sea
     assert cost == DECIMAL_ZERO
 
 
-@patch("source.InvoiceProcessor.search_payment_line")
+@patch("source.invoice_processor.search_payment_line")
 @patch(
-    "source.InvoiceProcessor.format_currency",
+    "source.invoice_processor.format_currency",
     side_effect=Decimal,
 )
 def test_find_hr_cost_returns_first_valid_cost(_mock_format_currency, mock_search_payment_line, invoice_processor):
@@ -412,9 +412,9 @@ def test_find_hr_cost_returns_first_valid_cost(_mock_format_currency, mock_searc
     assert cost == Decimal("45.60")
 
 
-@patch("source.InvoiceProcessor.search_payment_line")
+@patch("source.invoice_processor.search_payment_line")
 @patch(
-    "source.InvoiceProcessor.format_currency",
+    "source.invoice_processor.format_currency",
     side_effect=Decimal,
 )
 def test_find_hr_cost_returns_zero_when_no_match(_mock_format_currency, mock_search_payment_line, invoice_processor):

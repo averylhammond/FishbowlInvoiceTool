@@ -17,7 +17,7 @@ from source.constants import (
     SETTINGS_DB_PATH,
     VERSION,
 )
-from source.InvoiceAppController import InvoiceAppController
+from source.invoice_app_controller import InvoiceAppController
 
 
 @pytest.fixture
@@ -36,14 +36,14 @@ def controller():
     """
 
     with (
-        patch("source.InvoiceAppController.ArgumentProvider") as mock_arg_provider_cls,
-        patch("source.InvoiceAppController.InvoiceAppFileIO") as mock_file_io_cls,
-        patch("source.InvoiceAppController.InvoiceProcessor") as mock_processor_cls,
-        patch("source.InvoiceAppController.InvoiceAppDisplay") as mock_display_cls,
-        patch("source.InvoiceAppController.SettingsRepository") as mock_settings_repo_cls,
-        patch("source.InvoiceAppController.UpdateCoordinator") as mock_coordinator_cls,
-        patch("source.InvoiceAppController.PatchNotes") as mock_patch_notes_cls,
-        patch("source.InvoiceAppController.Invoice") as mock_invoice_cls,
+        patch("source.invoice_app_controller.ArgumentProvider") as mock_arg_provider_cls,
+        patch("source.invoice_app_controller.InvoiceAppFileIO") as mock_file_io_cls,
+        patch("source.invoice_app_controller.InvoiceProcessor") as mock_processor_cls,
+        patch("source.invoice_app_controller.InvoiceAppDisplay") as mock_display_cls,
+        patch("source.invoice_app_controller.SettingsRepository") as mock_settings_repo_cls,
+        patch("source.invoice_app_controller.UpdateCoordinator") as mock_coordinator_cls,
+        patch("source.invoice_app_controller.PatchNotes") as mock_patch_notes_cls,
+        patch("source.invoice_app_controller.Invoice") as mock_invoice_cls,
     ):
         # Grab the instance each patched class returns when constructed
         mock_arg_provider = mock_arg_provider_cls.return_value

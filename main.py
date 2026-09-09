@@ -3,7 +3,7 @@ Entry point to the application. Initializes the InvoiceAppController and starts
 the application.
 """
 
-from source.InvoiceAppController import InvoiceAppController
+from source.invoice_app_controller import InvoiceAppController
 
 # Entry Point
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ paths:
 
 # Unit testing conventions
 
-Unit tests live in `tests/`, one `tests/test_<ModuleName>.py` per module under `source/`. That
+Unit tests live in `tests/`, one `tests/test_<module_name>.py` per module under `source/`. That
 name matches pytest's default `python_files` pattern, so a bare `pytest` collects the whole
 suite and the jobs in `.github/workflows/` invoke it as `pytest tests/` with no glob.
 `tests/__init__.py` is empty but load-bearing: with it present, pytest's prepend import mode puts
@@ -15,8 +15,8 @@ measures `./source` and omits `main.py`, `tests/`, the venvs, both `__init__.py`
 `source/constants.py`, and whose `fail_under = 90` is the gate CI relies on. The two `__init__.py`
 files are empty and `constants.py` holds no logic, so none of them has behaviour to measure.
 
-`tests/test_InvoiceProcessor.py` (a class with injected collaborators) and
-`tests/test_InvoiceAppDisplay.py` (the widget-patching fixture) are the two reference
+`tests/test_invoice_processor.py` (a class with injected collaborators) and
+`tests/test_invoice_app_display.py` (the widget-patching fixture) are the two reference
 implementations — mirror them rather than inventing new patterns.
 
 ## Test one object in isolation
@@ -27,12 +27,12 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
 
 - **Mock injected collaborators with `MagicMock(spec=Collaborator)`** and pass them into the
   constructor. See the `mock_file_io` and `invoice_processor` fixtures in
-  `tests/test_InvoiceProcessor.py`, where `InvoiceProcessor` is built with a
+  `tests/test_invoice_processor.py`, where `InvoiceProcessor` is built with a
   `MagicMock(spec=InvoiceAppFileIO)` so no real file I/O occurs. The `spec=` argument keeps the
   mock honest — it only allows attributes and methods the real class defines.
 - **Mock module-level dependencies with `@patch` / `mock_open`.** For classes that call `os`,
   `open`, or pypdf directly, patch those calls instead of touching the real filesystem — see
-  `tests/test_InvoiceAppFileIO.py` (e.g. `@patch("os.remove")`,
+  `tests/test_invoice_app_file_io.py` (e.g. `@patch("os.remove")`,
   `@patch("os.path.exists", ...)`, `mock_open`).
 - **Construct the unit under test in a pytest fixture** (e.g. the `file_io` fixture) so each test
   starts from a clean, identically-configured object.
@@ -85,7 +85,7 @@ needs a differently-constructed object its arguments through indirect parametriz
 `_build_window(...)`-style helper. The helper form left this repo with the shared subwindow
 classes; do not reintroduce it. A fixture that patches widget classes `yield`s from **inside** its
 `with` block, so the patches stay live for the test body and the patched classes themselves can be
-asserted against — see `button_cls` in `tests/test_InvoiceDiscoveryWindow.py`.
+asserted against — see `button_cls` in `tests/test_invoice_discovery_window.py`.
 
 **Do not add tests here for anything owned by `fishbowl-common`.** Its classes and windows
 (`ThemedSubwindow`, `MessageWindow`, `AboutWindow`, `FileEditorWindow`, `UpdateWindow`,
