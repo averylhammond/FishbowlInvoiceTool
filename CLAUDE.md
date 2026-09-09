@@ -134,10 +134,6 @@ Two responsibilities worth knowing before touching them:
   them; `[tool.ruff.lint.isort]` in `pyproject.toml` is the statement of intent, including that
   `fishbowl_common` is third party (it is installed from a pinned git tag) and never sits among
   the `source.*` imports.
-- **No banner comment blocks above a `def`.** The `###`-bordered headers that used to name each
-  method were removed from every file under `source/` and `tests/`, and are not to come back. The
-  signature and the docstring under it already say what the banner said, without a second name to
-  re-center by hand on every rename.
 - **Style is the linter's job.** Line length, quoting, spacing and the rest live in
   `[tool.ruff]`; run `ruff format` rather than matching the surrounding file by eye. Where a
   rule is suppressed, the reason sits beside it — in `pyproject.toml` for a policy, or in a

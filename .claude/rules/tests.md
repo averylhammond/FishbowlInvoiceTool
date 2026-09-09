@@ -65,9 +65,7 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
 Give each test a docstring describing what it verifies, with an `Args:` block documenting each
 mock/fixture parameter. Keep the tests grouped by ordering alone: the fixtures first, then the
 helpers, then the tests for each method in the order the source module defines them. **No banner
-comment blocks** — the `###`-bordered headers that used to separate those groups were removed
-everywhere, in both `tests/` and `source/`, and are not to come back. The function names and the
-order carry the structure.
+comment blocks** — the function names and the order carry the structure.
 
 **Import the names under test explicitly — never `from <module> import *`.** A wildcard
 import binds whatever the module happens to export, so a name deleted or renamed in `source/`
