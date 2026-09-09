@@ -9,9 +9,6 @@ from fishbowl_common.gui import DARK, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
 
 
-###############################################################################
-###                  InvoiceDiscoveryWindow -> Test Helpers                 ###
-###############################################################################
 def _distinct_widget(*_args, **_kwargs):
     """
     Side effect for patched tkinter widget classes that returns a fresh
@@ -23,9 +20,6 @@ def _distinct_widget(*_args, **_kwargs):
     return MagicMock()
 
 
-###############################################################################
-###                  InvoiceDiscoveryWindow -> Test Fixture                 ###
-###############################################################################
 @pytest.fixture
 def window(request):
     """
@@ -82,9 +76,6 @@ def window(request):
         )
 
 
-###############################################################################
-###             Tests InvoiceDiscoveryWindow -> build_widgets()             ###
-###############################################################################
 def test_build_widgets_creates_widgets_and_disables_status_box(window):
     """
     Verifies that build_widgets constructs the action buttons and the status box,
@@ -118,9 +109,6 @@ def test_close_button_is_wired_to_destroy(window):
     assert close_call.kwargs["command"] == window.window.destroy
 
 
-###############################################################################
-###               Tests InvoiceDiscoveryWindow -> handle_browse()           ###
-###############################################################################
 @patch.object(InvoiceDiscoveryWindow, "_default_browse_dir", return_value="/downloads")
 @patch("source.gui.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
 def test_handle_browse_adds_selected_files(mock_ask, _mock_default_dir, window):
@@ -170,9 +158,6 @@ def test_handle_browse_cancel_leaves_selection_untouched(mock_ask, _mock_default
     window.window.selection_var.set.assert_not_called()
 
 
-###############################################################################
-###                Tests InvoiceDiscoveryWindow -> handle_copy()            ###
-###############################################################################
 @pytest.mark.parametrize("window", [{"return_value": "copied"}], indirect=True)
 def test_handle_copy_copies_each_pending_file(window):
     """
@@ -277,9 +262,6 @@ def test_handle_copy_skips_when_overwrite_declined(mock_askyesno, window):
     window.copy_callback.assert_called_once_with(Path("a.pdf"), False)
 
 
-###############################################################################
-###            Tests InvoiceDiscoveryWindow -> _default_browse_dir()        ###
-###############################################################################
 @patch("source.gui.InvoiceDiscoveryWindow.Path")
 def test_default_browse_dir_prefers_downloads(mock_path, window):
     """

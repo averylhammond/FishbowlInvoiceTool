@@ -7,9 +7,6 @@ from source.Invoice import Invoice
 from source.InvoiceAppFileIO import InvoiceAppFileIO
 
 
-###############################################################################
-###                      InvoiceAppFileIO -> Test Fixture                   ###
-###############################################################################
 @pytest.fixture
 def file_io():
     """
@@ -21,9 +18,6 @@ def file_io():
     return InvoiceAppFileIO(report_error=MagicMock())
 
 
-###############################################################################
-###              Tests InvoiceAppFileIO -> reset_debug_file()               ###
-###############################################################################
 @patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
 def test_reset_debug_file_file_exists(mock_debug_path, file_io):
     """
@@ -85,9 +79,6 @@ def test_reset_debug_file_reports_on_error(mock_debug_path, file_io):
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###              Tests InvoiceAppFileIO -> reset_results_file()             ###
-###############################################################################
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
 def test_reset_results_file_file_exists(mock_results_path, file_io):
     """
@@ -150,9 +141,6 @@ def test_reset_results_file_reports_on_error(mock_results_path, file_io):
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###             Tests InvoiceAppFileIO -> print_to_debug_file()             ###
-###############################################################################
 @patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
 def test_print_to_debug_file_appends(mock_debug_path, file_io):
     """
@@ -194,9 +182,6 @@ def test_print_to_debug_file_reports_on_error(mock_debug_path, file_io):
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###        Tests InvoiceAppFileIO -> print_invoice_to_output_file()         ###
-###############################################################################
 @patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
 def test_print_invoice_to_output_file_overwrites_by_default(mock_results_path, file_io):
     """
@@ -269,9 +254,6 @@ def test_print_invoice_to_output_file_reports_on_error(mock_results_path, file_i
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###              Tests InvoiceAppFileIO -> read_invoice_file()              ###
-###############################################################################
 @patch("source.InvoiceAppFileIO.pypdf.PdfReader")
 def test_read_invoice_file_extracts_each_page(mock_reader, file_io):
     """
@@ -318,9 +300,6 @@ def test_read_invoice_file_reports_and_returns_empty_on_error(_mock_reader, file
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###              Tests InvoiceAppFileIO -> copy_invoice_file()              ###
-###############################################################################
 @patch("source.InvoiceAppFileIO.shutil.copy2")
 @patch("source.InvoiceAppFileIO.INVOICES_DIR")
 def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_io):
@@ -419,9 +398,6 @@ def test_copy_invoice_file_reports_and_returns_error_on_failure(mock_invoices_di
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###          Tests InvoiceAppFileIO -> parse_sales_reps_config()            ###
-###############################################################################
 @patch(
     "pathlib.Path.open",
     new_callable=mock_open,
@@ -502,9 +478,6 @@ def test_parse_sales_reps_config_reports_on_error(_mock_file, file_io):
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###        Tests InvoiceAppFileIO -> parse_payment_terms_config()           ###
-###############################################################################
 @patch(
     "pathlib.Path.open",
     new_callable=mock_open,
@@ -585,9 +558,6 @@ def test_parse_payment_terms_config_reports_on_error(_mock_file, file_io):
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###          Tests InvoiceAppFileIO -> add_cost_criteria_field()            ###
-###############################################################################
 def test_add_cost_criteria_field_appends_lists(file_io):
     """
     Tests that add_cost_criteria_field() appends lines correctly
@@ -630,9 +600,6 @@ def test_add_cost_criteria_field_unknown_category(mock_debug_print, file_io):
     )
 
 
-###############################################################################
-###          Tests InvoiceAppFileIO -> parse_cost_criteria_file()           ###
-###############################################################################
 @patch(
     "pathlib.Path.open",
     new_callable=mock_open,
@@ -745,9 +712,6 @@ def test_parse_cost_criteria_file_is_idempotent(_mock_file, file_io):
     assert file_io.shipping_criteria is shipping_criteria_ref
 
 
-###############################################################################
-###                Tests InvoiceAppFileIO -> read_text_file()               ###
-###############################################################################
 @patch(
     "pathlib.Path.open",
     new_callable=mock_open,
@@ -788,9 +752,6 @@ def test_read_text_file_reports_on_error(_mock_file, file_io):
     file_io.report_error.assert_called_once()
 
 
-###############################################################################
-###               Tests InvoiceAppFileIO -> write_text_file()               ###
-###############################################################################
 def test_write_text_file_writes_contents(file_io):
     """
     Tests that write_text_file() ensures the parent directory exists and writes

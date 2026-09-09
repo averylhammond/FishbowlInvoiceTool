@@ -10,9 +10,6 @@ from source.processor_utilities import (
 )
 
 
-###############################################################################
-###          Tests for processor_utilities -> search_text_by_re()           ###
-###############################################################################
 def test_search_text_by_re_order_number_correct_format():
     """
     Tests that the function search_text_by_re() can successfully extract an order number
@@ -184,9 +181,6 @@ def test_search_text_by_re_po_number_wrong_format():
     assert search_text_by_re(text=text, regex=regex) == ""
 
 
-###############################################################################
-###        Tests for processor_utilities -> search_payment_line()           ###
-###############################################################################
 def test_search_payment_line_quantity_correct_format():
     """
     Tests that the function search_payment_line() can successfully extract an a quantity
@@ -237,9 +231,6 @@ def test_search_payment_line_quantity_wrong_format():
     assert search_payment_line(line=line, regex=regex) == DECIMAL_ZERO
 
 
-###############################################################################
-###        Tests for processor_utilities -> find_currency_values()          ###
-###############################################################################
 def test_find_currency_values_returns_values_in_order():
     """
     Tests that find_currency_values() returns every currency amount in the text as a
@@ -284,9 +275,6 @@ def test_find_currency_values_no_values_returns_empty_list():
     assert find_currency_values(text="Total:Subtotal:") == []
 
 
-###############################################################################
-###         Tests for processor_utilities -> find_payment_terms()           ###
-###############################################################################
 def test_find_payment_terms_correct_format():
     """
     Tests that the function find_payment_terms() can successfully extract the
@@ -315,9 +303,6 @@ def test_find_payment_terms_wrong_format():
     assert find_payment_terms(text=text, payment_terms=payment_terms) == ""
 
 
-###############################################################################
-###           Tests for processor_utilities -> find_sales_rep()             ###
-###############################################################################
 def test_find_sales_rep_correct_format():
     """
     Tests that the function find_sales_rep() can successfully extract the sales

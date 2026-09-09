@@ -14,9 +14,6 @@ from fishbowl_common.gui import Theme, ThemedSubwindow, Tooltip
 # Theme/font snapshotting and centering over the parent are handled by
 # ThemedSubwindow.
 class InvoiceDiscoveryWindow(ThemedSubwindow):
-    ###########################################################################
-    ###                 InvoiceDiscoveryWindow -> __init__()                ###
-    ###########################################################################
     def __init__(
         self,
         parent: tk.Misc,
@@ -70,9 +67,6 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         # it default to the top-left corner of the screen
         self._center_over_parent()
 
-    ###########################################################################
-    ###              InvoiceDiscoveryWindow -> build_widgets()              ###
-    ###########################################################################
     def build_widgets(self) -> None:
         """
         Creates the instruction label, selection display, action buttons
@@ -187,9 +181,6 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
             self.font_size,
         )
 
-    ###########################################################################
-    ###             InvoiceDiscoveryWindow -> _default_browse_dir()         ###
-    ###########################################################################
     def _default_browse_dir(self) -> str:
         """
         Determines the folder the Browse dialog should open in by default.
@@ -201,9 +192,6 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         downloads = Path.home() / "Downloads"
         return str(downloads if downloads.exists() else Path.home())
 
-    ###########################################################################
-    ###                InvoiceDiscoveryWindow -> handle_browse()            ###
-    ###########################################################################
     def handle_browse(self) -> None:
         """
         On "Browse" press, opens a multi-select file dialog for PDF invoices and
@@ -230,9 +218,6 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         # Update the selection display to reflect the pending files
         self.selection_var.set(", ".join(path.name for path in self.pending_files))
 
-    ###########################################################################
-    ###                 InvoiceDiscoveryWindow -> handle_copy()             ###
-    ###########################################################################
     def handle_copy(self) -> None:
         """
         On "Copy Invoice(s)" press, copies each pending invoice into the
@@ -272,9 +257,6 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         self.pending_files.clear()
         self.selection_var.set("")
 
-    ###########################################################################
-    ###               InvoiceDiscoveryWindow -> _append_status()            ###
-    ###########################################################################
     def _append_status(self, message: str) -> None:
         """
         Appends a status line to the read-only status box, scrolling to show it.

@@ -4,9 +4,6 @@ from source.constants import DECIMAL_ZERO
 from source.Invoice import Invoice
 
 
-###############################################################################
-###                        Tests Invoice -> Constructor                     ###
-###############################################################################
 def test_invoice_initialization():
     """
     Tests that the default initialization of the Invoice() object will correctly
@@ -85,9 +82,6 @@ def test_invoice_default_page_contents_not_shared():
     assert invoice_one.page_contents is not invoice_two.page_contents
 
 
-###############################################################################
-###                  Tests Invoice -> to_formatted_string()                 ###
-###############################################################################
 def test_invoice_to_formatted_string_default():
     """
     Tests that to_formatted_string() will correctly print default values when

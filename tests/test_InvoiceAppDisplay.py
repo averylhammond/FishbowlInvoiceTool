@@ -23,9 +23,6 @@ from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
 from source.Invoice import Invoice
 
 
-###############################################################################
-###                   InvoiceAppDisplay -> Test Helpers                     ###
-###############################################################################
 def _distinct_widget(*_args, **_kwargs):
     """
     Side effect for patched tkinter widget classes that returns a fresh
@@ -37,9 +34,6 @@ def _distinct_widget(*_args, **_kwargs):
     return MagicMock()
 
 
-###############################################################################
-###                   InvoiceAppDisplay -> Test Fixture                     ###
-###############################################################################
 @pytest.fixture
 def display(request):
     """
@@ -129,9 +123,6 @@ def display(request):
         )
 
 
-###############################################################################
-###                Tests InvoiceAppDisplay -> __init__()                    ###
-###############################################################################
 def test_init_sets_window_properties(display):
     """
     Verifies that __init__ applies the window title, resolution, and resizable
@@ -216,9 +207,6 @@ def test_init_non_numeric_font_size_falls_back_to_default(display):
     assert display.display.current_font_size == DEFAULT_FONT_SIZE
 
 
-###############################################################################
-###              Tests InvoiceAppDisplay -> build_widgets()                 ###
-###############################################################################
 def test_build_widgets_creates_all_widgets(display):
     """
     Verifies that build_widgets constructs every widget the display tracks,
@@ -286,9 +274,6 @@ def test_build_widgets_attaches_button_tooltips(display):
     assert len(display.display.tooltips) == 5
 
 
-###############################################################################
-###            Tests InvoiceAppDisplay -> handle_browse_button()            ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.filedialog.askopenfilename")
 def test_handle_browse_button_sets_selected_file(mock_askopenfilename, display):
     """
@@ -329,9 +314,6 @@ def test_handle_browse_button_no_selection(mock_askopenfilename, display):
     display.display.selected_file.set.assert_not_called()
 
 
-###############################################################################
-###           Tests InvoiceAppDisplay -> display_invoice_output()           ###
-###############################################################################
 def test_display_invoice_output_overwrites_by_default(display):
     """
     Verifies that display_invoice_output clears the output box and writes the
@@ -370,9 +352,6 @@ def test_display_invoice_output_appends_when_requested(display):
     display.display.output_box.insert.assert_has_calls([call(tk.END, "\n"), call(tk.END, "formatted invoice")])
 
 
-###############################################################################
-###           Tests InvoiceAppDisplay -> handle_process_invoice()           ###
-###############################################################################
 @patch.object(InvoiceAppDisplay, "show_popup")
 def test_handle_process_invoice_no_file_shows_error(mock_show_popup, display):
     """
@@ -415,9 +394,6 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_popup, display):
     mock_show_popup.assert_not_called()
 
 
-###############################################################################
-###         Tests InvoiceAppDisplay -> handle_process_all_invoices()        ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.INVOICES_DIR")
 def test_handle_process_all_invoices_processes_each(mock_invoices_dir, display):
     """
@@ -471,9 +447,6 @@ def test_handle_process_all_invoices_error_shows_popup(mock_invoices_dir, mock_s
     mock_show_popup.assert_called_once()
 
 
-###############################################################################
-###                 Tests InvoiceAppDisplay -> show_popup()                 ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.MessageWindow")
 def test_show_popup_displays_message(mock_window_cls, display):
     """
@@ -521,9 +494,6 @@ def test_show_popup_suppressed_in_integration_mode(mock_window_cls, display):
     mock_window_cls.assert_not_called()
 
 
-###############################################################################
-###                Tests InvoiceAppDisplay -> handle_clear()                ###
-###############################################################################
 def test_handle_clear_resets_state(display):
     """
     Verifies that handle_clear resets the selected file and clears the output box.
@@ -539,9 +509,6 @@ def test_handle_clear_resets_state(display):
     display.display.output_box.delete.assert_called_once_with(1.0, tk.END)
 
 
-###############################################################################
-###      Tests InvoiceAppDisplay -> handle_*  (open config/log files)       ###
-###############################################################################
 def _assert_editable_window_opened(mock_window_cls, display, config_path):
     """
     Asserts that an editable FileEditorWindow was opened for the given config
@@ -616,9 +583,6 @@ def test_handle_sales_reps_opens_editor(mock_window_cls, display):
     _assert_editable_window_opened(mock_window_cls, display, SALES_REPS_PATH)
 
 
-###############################################################################
-###          Tests InvoiceAppDisplay -> handle_discover_invoices()          ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.InvoiceDiscoveryWindow")
 def test_handle_discover_invoices_opens_window(mock_window_cls, display):
     """
@@ -643,9 +607,6 @@ def test_handle_discover_invoices_opens_window(mock_window_cls, display):
     )
 
 
-###############################################################################
-###                Tests InvoiceAppDisplay -> handle_about()                ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.AboutWindow")
 def test_handle_about_opens_window(mock_window_cls, display):
     """
@@ -673,9 +634,6 @@ def test_handle_about_opens_window(mock_window_cls, display):
     )
 
 
-###############################################################################
-###          Tests InvoiceAppDisplay -> handle_check_for_updates()          ###
-###############################################################################
 def test_handle_check_for_updates_invokes_callback(display):
     """
     Verifies that the Help menu's "Check for Updates" handler invokes the
@@ -690,9 +648,6 @@ def test_handle_check_for_updates_invokes_callback(display):
     display.check_for_updates_callback.assert_called_once_with()
 
 
-###############################################################################
-###          Tests InvoiceAppDisplay -> handle_view_patch_notes()           ###
-###############################################################################
 def test_build_widgets_wires_whats_new_into_the_help_menu(display):
     """
     Verifies that the Help menu offers a "What's New" item wired to the patch
@@ -727,9 +682,6 @@ def test_handle_view_patch_notes_invokes_callback(display):
     display.view_patch_notes_callback.assert_called_once_with()
 
 
-###############################################################################
-###              Tests InvoiceAppDisplay -> show_patch_notes()              ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.PatchNotesWindow")
 def test_show_patch_notes_opens_window(mock_window_cls, display):
     """
@@ -758,9 +710,6 @@ def test_show_patch_notes_opens_window(mock_window_cls, display):
     )
 
 
-###############################################################################
-###           Tests InvoiceAppDisplay -> show_update_available()            ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.UpdateWindow")
 def test_show_update_available_opens_window(mock_window_cls, display):
     """
@@ -948,9 +897,6 @@ def test_handle_debug_log_missing_shows_error(mock_debug_path, mock_window_cls, 
     mock_window_cls.assert_not_called()
 
 
-###############################################################################
-###           Tests InvoiceAppDisplay -> handle_open_user_guide()           ###
-###############################################################################
 @patch("source.gui.InvoiceAppDisplay.FileEditorWindow")
 @patch("source.gui.InvoiceAppDisplay.USER_GUIDE_PATH")
 def test_handle_open_user_guide_opens_when_present(mock_guide_path, mock_window_cls, display):
@@ -1004,9 +950,6 @@ def test_handle_open_user_guide_missing_shows_error(mock_guide_path, mock_window
     mock_window_cls.assert_not_called()
 
 
-###############################################################################
-###                Tests InvoiceAppDisplay -> apply_theme()                 ###
-###############################################################################
 def test_apply_theme_updates_state_and_widgets(display):
     """
     Verifies that apply_theme stores the new theme and reconfigures the window
@@ -1039,9 +982,6 @@ def test_apply_theme_updates_state_and_widgets(display):
         )
 
 
-###############################################################################
-###             Tests InvoiceAppDisplay -> apply_font_family()              ###
-###############################################################################
 def test_apply_font_family_updates_state_and_widgets(display):
     """
     Verifies that apply_font_family stores the chosen family and applies the new
@@ -1061,9 +1001,6 @@ def test_apply_font_family_updates_state_and_widgets(display):
     display.save_settings_callback.assert_called_once_with("font_family", "Arial")
 
 
-###############################################################################
-###              Tests InvoiceAppDisplay -> apply_font_size()               ###
-###############################################################################
 def test_apply_font_size_updates_state_and_widgets(display):
     """
     Verifies that apply_font_size stores the chosen size and applies the new font

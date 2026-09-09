@@ -164,6 +164,6 @@ matching file is opened. Put new detail in the matching rule file rather than gr
 | `rules/invoice-processing.md` | `InvoiceProcessor.py`, `processor_utilities.py`, `InvoiceAppFileIO.py`, `Invoice.py` | The parse pipeline, the `Decimal` rule, config file formats, error-reporting contract |
 | `rules/gui.md` | `source/gui/**` | Window catalogue, menu structure, headless popup gate, theme/font reconfiguration, the `after(0, …)` startup rule |
 | `rules/shared-package.md` | `InvoiceAppController.py`, `constants.py`, `requirements/**` | What each shared class takes by injection, construction order, integration-test gating, patch-notes logic |
-| `rules/tests.md` | `tests/**` | Fixtures, patch targets, the tkinter-free `display` fixture, FIRST, banner and docstring conventions |
+| `rules/tests.md` | `tests/**` | Fixtures, patch targets, the tkinter-free `display` fixture, FIRST, ordering and docstring conventions |
 | `rules/ci.md` | `.github/workflows/**` | Workflow internals, the coverage gate, the two release gates, submodule handling |
 | `rules/packaging.md` | `scripts/**` | `package_release.sh`, and the load-bearing `installer.iss` details the in-app updater depends on |

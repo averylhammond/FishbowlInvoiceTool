@@ -63,14 +63,9 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
 ## Conventions
 
 Give each test a docstring describing what it verifies, with an `Args:` block documenting each
-mock/fixture parameter, and group tests for a given function under the `###`-bordered comment
-banners used throughout `tests/`:
-
-```python
-###############################################################################
-###                  InvoiceAppDisplay -> handle_about()                    ###
-###############################################################################
-```
+mock/fixture parameter. Keep the tests grouped by ordering alone: the fixtures first, then the
+helpers, then the tests for each method in the order the source module defines them. The function
+names and the order carry the structure.
 
 **Import the names under test explicitly — never `from <module> import *`.** A wildcard
 import binds whatever the module happens to export, so a name deleted or renamed in `source/`
