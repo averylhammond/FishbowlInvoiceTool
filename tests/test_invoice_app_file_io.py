@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
 
-from source.Invoice import Invoice
-from source.InvoiceAppFileIO import InvoiceAppFileIO
+from source.invoice import Invoice
+from source.invoice_app_file_io import InvoiceAppFileIO
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def file_io():
     return InvoiceAppFileIO(report_error=MagicMock())
 
 
-@patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
+@patch("source.invoice_app_file_io.DEBUG_LOG_PATH")
 def test_reset_debug_file_file_exists(mock_debug_path, file_io):
     """
     Tests that reset_debug_file() ensures the log directory exists and deletes the
@@ -39,7 +39,7 @@ def test_reset_debug_file_file_exists(mock_debug_path, file_io):
     mock_debug_path.unlink.assert_called_once_with()
 
 
-@patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
+@patch("source.invoice_app_file_io.DEBUG_LOG_PATH")
 def test_reset_debug_file_file_doesnt_exist(mock_debug_path, file_io):
     """
     Tests that reset_debug_file() does not delete the debug log file when it does
@@ -60,7 +60,7 @@ def test_reset_debug_file_file_doesnt_exist(mock_debug_path, file_io):
     mock_debug_path.unlink.assert_not_called()
 
 
-@patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
+@patch("source.invoice_app_file_io.DEBUG_LOG_PATH")
 def test_reset_debug_file_reports_on_error(mock_debug_path, file_io):
     """
     Tests that reset_debug_file() fails gracefully, surfacing the failure through
@@ -79,7 +79,7 @@ def test_reset_debug_file_reports_on_error(mock_debug_path, file_io):
     file_io.report_error.assert_called_once()
 
 
-@patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
+@patch("source.invoice_app_file_io.RESULTS_LOG_PATH")
 def test_reset_results_file_file_exists(mock_results_path, file_io):
     """
     Tests that reset_results_file() ensures the log directory exists and deletes
@@ -100,7 +100,7 @@ def test_reset_results_file_file_exists(mock_results_path, file_io):
     mock_results_path.unlink.assert_called_once_with()
 
 
-@patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
+@patch("source.invoice_app_file_io.RESULTS_LOG_PATH")
 def test_reset_results_file_file_doesnt_exist(mock_results_path, file_io):
     """
     Tests that reset_results_file() does not delete the results log file when it
@@ -121,7 +121,7 @@ def test_reset_results_file_file_doesnt_exist(mock_results_path, file_io):
     mock_results_path.unlink.assert_not_called()
 
 
-@patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
+@patch("source.invoice_app_file_io.RESULTS_LOG_PATH")
 def test_reset_results_file_reports_on_error(mock_results_path, file_io):
     """
     Tests that reset_results_file() fails gracefully, surfacing the failure through
@@ -141,7 +141,7 @@ def test_reset_results_file_reports_on_error(mock_results_path, file_io):
     file_io.report_error.assert_called_once()
 
 
-@patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
+@patch("source.invoice_app_file_io.DEBUG_LOG_PATH")
 def test_print_to_debug_file_appends(mock_debug_path, file_io):
     """
     Tests that print_to_debug_file() ensures the log directory exists, opens the
@@ -164,7 +164,7 @@ def test_print_to_debug_file_appends(mock_debug_path, file_io):
     mock_debug_path.open().write.assert_called_once_with("some debug message\n")
 
 
-@patch("source.InvoiceAppFileIO.DEBUG_LOG_PATH")
+@patch("source.invoice_app_file_io.DEBUG_LOG_PATH")
 def test_print_to_debug_file_reports_on_error(mock_debug_path, file_io):
     """
     Tests that print_to_debug_file() fails gracefully, surfacing the failure
@@ -182,7 +182,7 @@ def test_print_to_debug_file_reports_on_error(mock_debug_path, file_io):
     file_io.report_error.assert_called_once()
 
 
-@patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
+@patch("source.invoice_app_file_io.RESULTS_LOG_PATH")
 def test_print_invoice_to_output_file_overwrites_by_default(mock_results_path, file_io):
     """
     Tests that print_invoice_to_output_file() ensures the log directory exists,
@@ -209,7 +209,7 @@ def test_print_invoice_to_output_file_overwrites_by_default(mock_results_path, f
     mock_results_path.open().write.assert_called_once_with("formatted invoice")
 
 
-@patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
+@patch("source.invoice_app_file_io.RESULTS_LOG_PATH")
 def test_print_invoice_to_output_file_appends_when_requested(mock_results_path, file_io):
     """
     Tests that print_invoice_to_output_file() opens the results log in append mode
@@ -234,7 +234,7 @@ def test_print_invoice_to_output_file_appends_when_requested(mock_results_path, 
     mock_results_path.open().write.assert_called_once_with("formatted invoice")
 
 
-@patch("source.InvoiceAppFileIO.RESULTS_LOG_PATH")
+@patch("source.invoice_app_file_io.RESULTS_LOG_PATH")
 def test_print_invoice_to_output_file_reports_on_error(mock_results_path, file_io):
     """
     Tests that print_invoice_to_output_file() fails gracefully, surfacing the
@@ -254,7 +254,7 @@ def test_print_invoice_to_output_file_reports_on_error(mock_results_path, file_i
     file_io.report_error.assert_called_once()
 
 
-@patch("source.InvoiceAppFileIO.pypdf.PdfReader")
+@patch("source.invoice_app_file_io.pypdf.PdfReader")
 def test_read_invoice_file_extracts_each_page(mock_reader, file_io):
     """
     Tests that read_invoice_file() returns the extracted text of each page in the
@@ -280,7 +280,7 @@ def test_read_invoice_file_extracts_each_page(mock_reader, file_io):
 
 
 @patch(
-    "source.InvoiceAppFileIO.pypdf.PdfReader",
+    "source.invoice_app_file_io.pypdf.PdfReader",
     side_effect=OSError("file not found"),
 )
 def test_read_invoice_file_reports_and_returns_empty_on_error(_mock_reader, file_io):
@@ -300,8 +300,8 @@ def test_read_invoice_file_reports_and_returns_empty_on_error(_mock_reader, file
     file_io.report_error.assert_called_once()
 
 
-@patch("source.InvoiceAppFileIO.shutil.copy2")
-@patch("source.InvoiceAppFileIO.INVOICES_DIR")
+@patch("source.invoice_app_file_io.shutil.copy2")
+@patch("source.invoice_app_file_io.INVOICES_DIR")
 def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() ensures the Invoices/ directory exists and
@@ -326,8 +326,8 @@ def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_i
     assert result == "copied"
 
 
-@patch("source.InvoiceAppFileIO.shutil.copy2")
-@patch("source.InvoiceAppFileIO.INVOICES_DIR")
+@patch("source.invoice_app_file_io.shutil.copy2")
+@patch("source.invoice_app_file_io.INVOICES_DIR")
 def test_copy_invoice_file_exists_without_overwrite(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() does not overwrite an existing same-named file
@@ -350,8 +350,8 @@ def test_copy_invoice_file_exists_without_overwrite(mock_invoices_dir, mock_copy
     assert result == "exists"
 
 
-@patch("source.InvoiceAppFileIO.shutil.copy2")
-@patch("source.InvoiceAppFileIO.INVOICES_DIR")
+@patch("source.invoice_app_file_io.shutil.copy2")
+@patch("source.invoice_app_file_io.INVOICES_DIR")
 def test_copy_invoice_file_overwrites_when_confirmed(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() overwrites an existing same-named file when
@@ -374,8 +374,8 @@ def test_copy_invoice_file_overwrites_when_confirmed(mock_invoices_dir, mock_cop
     assert result == "copied"
 
 
-@patch("source.InvoiceAppFileIO.shutil.copy2", side_effect=OSError("disk full"))
-@patch("source.InvoiceAppFileIO.INVOICES_DIR")
+@patch("source.invoice_app_file_io.shutil.copy2", side_effect=OSError("disk full"))
+@patch("source.invoice_app_file_io.INVOICES_DIR")
 def test_copy_invoice_file_reports_and_returns_error_on_failure(mock_invoices_dir, _mock_copy2, file_io):
     """
     Tests that copy_invoice_file() fails gracefully, surfacing the failure through

@@ -37,8 +37,8 @@ from source.constants import (
     USER_GUIDE_PATH,
     VERSION,
 )
-from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
-from source.Invoice import Invoice
+from source.gui.invoice_discovery_window import InvoiceDiscoveryWindow
+from source.invoice import Invoice
 
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
 #              pop up windows when Fishbowl invoices present rounding errors

@@ -78,7 +78,7 @@ Rules for this class:
 - **`# fmt:off` stops the formatter, not the linter.** `ruff format` honors it (including this
   repo's no-space spelling), so the aligned blocks survive untouched — but `ruff check` still
   reads every line inside one. An aligned line over the 120-column limit is wrapped onto a second
-  comment line at the same column, as three of the field comments in `Invoice.py` are — not
+  comment line at the same column, as three of the field comments in `invoice.py` are — not
   suppressed with `# noqa: E501`.
 - **`PLR0915` is off repo-wide**, in `pyproject.toml` rather than at `build_widgets()`: widget
   construction is one statement per widget, so the count tracks how many widgets the window has

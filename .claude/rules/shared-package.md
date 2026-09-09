@@ -1,6 +1,6 @@
 ---
 paths:
-  - "source/InvoiceAppController.py"
+  - "source/invoice_app_controller.py"
   - "source/constants.py"
   - "requirements/**"
 ---

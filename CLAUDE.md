@@ -41,7 +41,7 @@ infrastructure and GUI package both depend on is
 - Run the app headless (processes all invoices in `Invoices/` and writes `logs/results.txt`, no
   GUI): `python main.py --integration-test`
 - Run all unit tests: `pytest tests/`
-- Run a single test file: `pytest tests/test_Invoice.py`
+- Run a single test file: `pytest tests/test_invoice.py`
 - Run a single test:
   `pytest tests/test_processor_utilities.py::test_search_text_by_re_order_number_correct_format`
 - Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/` — the 90% gate is
@@ -71,14 +71,14 @@ matching `vX.Y.Z` tag.** Details in `.claude/rules/ci.md`.
 
 | Module | Owns |
 | --- | --- |
-| `source/InvoiceAppController.py` | Entry-point glue: builds the collaborators, loads configs, orchestrates `handle_process_invoice()` (read PDF → populate → process → display → warn on total mismatch → write `logs/results.txt`) |
-| `source/InvoiceAppFileIO.py` | All file I/O: invoice PDFs via pypdf (one string per page), the `logs/` files, copying invoices in, and parsing the three `Configs/` files |
-| `source/InvoiceProcessor.py` | Parsing: `populate_invoice()` for header fields, `process_invoice()` for the line-item table, `process_end_of_invoice()` for tax and listed total |
+| `source/invoice_app_controller.py` | Entry-point glue: builds the collaborators, loads configs, orchestrates `handle_process_invoice()` (read PDF → populate → process → display → warn on total mismatch → write `logs/results.txt`) |
+| `source/invoice_app_file_io.py` | All file I/O: invoice PDFs via pypdf (one string per page), the `logs/` files, copying invoices in, and parsing the three `Configs/` files |
+| `source/invoice_processor.py` | Parsing: `populate_invoice()` for header fields, `process_invoice()` for the line-item table, `process_end_of_invoice()` for tax and listed total |
 | `source/processor_utilities.py` | Shared parsing helpers (`search_text_by_re`, `find_sales_rep`, `format_currency`, …) |
-| `source/Invoice.py` | Plain data holder for one invoice, plus `to_formatted_string()` |
+| `source/invoice.py` | Plain data holder for one invoice, plus `to_formatted_string()` |
 | `source/constants.py` | Paths, `APP_NAME`/`VERSION`/`GITHUB_REPO`, setting keys, `DECIMAL_ZERO` |
-| `source/gui/InvoiceAppDisplay.py` | The `tk.Tk` root: main window and the File/Edit/View/Preferences/Help menu bar |
-| `source/gui/InvoiceDiscoveryWindow.py` | Copying downloaded invoice PDFs into `Invoices/` without leaving the app |
+| `source/gui/invoice_app_display.py` | The `tk.Tk` root: main window and the File/Edit/View/Preferences/Help menu bar |
+| `source/gui/invoice_discovery_window.py` | Copying downloaded invoice PDFs into `Invoices/` without leaving the app |
 
 **Everything else is `fishbowl-common`, taken as a pinned git tag.** From the headless half:
 `ArgumentProvider`, `SettingsRepository`, `UpdateCoordinator`, `PatchNotes`, `compare_versions()`.
@@ -120,7 +120,7 @@ Two responsibilities worth knowing before touching them:
   adding a themed window or widget helper, check `fishbowl_common.gui` — anything both Fishbowl
   tools need belongs there rather than in `source/gui/`.
 - Add type hints and concise docstrings in the existing style (see any method in
-  `source/InvoiceProcessor.py` for the expected `Args:`/`Returns:` format), and add tests in
+  `source/invoice_processor.py` for the expected `Args:`/`Returns:` format), and add tests in
   `tests/` for any new branch or utility function in the same change.
 - **Every `def` in `source/` is fully annotated.** `ANN` enforces that an annotation is
   *present* (and is switched off for `tests/` in `per-file-ignores`); the rest is on you.
@@ -129,6 +129,10 @@ Two responsibilities worth knowing before touching them:
   a type is written**: under `source/`, an `Args:` entry is `name: description` and a `Returns:`
   block is the description alone, with no parenthesized or prefixed type repeating the signature.
   Under `tests/` the docstring type stays, since fixture and mock parameters are unannotated —
+  see `.claude/rules/tests.md`.
+- **Modules are `snake_case`; the classes inside them stay `PascalCase`.** `N999` enforces the
+  filename, so `InvoiceProcessor` lives in `source/invoice_processor.py` and is imported as
+  `from source.invoice_processor import InvoiceProcessor`. `tests/` mirrors the module name —
   see `.claude/rules/tests.md`.
 - **Import grouping and ordering are enforced, not remembered.** `ruff check --fix` applies
   them; `[tool.ruff.lint.isort]` in `pyproject.toml` is the statement of intent, including that
@@ -161,9 +165,9 @@ matching file is opened. Put new detail in the matching rule file rather than gr
 
 | File | Loads when you touch | Carries |
 | --- | --- | --- |
-| `rules/invoice-processing.md` | `InvoiceProcessor.py`, `processor_utilities.py`, `InvoiceAppFileIO.py`, `Invoice.py` | The parse pipeline, the `Decimal` rule, config file formats, error-reporting contract |
+| `rules/invoice-processing.md` | `invoice_processor.py`, `processor_utilities.py`, `invoice_app_file_io.py`, `invoice.py` | The parse pipeline, the `Decimal` rule, config file formats, error-reporting contract |
 | `rules/gui.md` | `source/gui/**` | Window catalogue, menu structure, headless popup gate, theme/font reconfiguration, the `after(0, …)` startup rule |
-| `rules/shared-package.md` | `InvoiceAppController.py`, `constants.py`, `requirements/**` | What each shared class takes by injection, construction order, integration-test gating, patch-notes logic |
+| `rules/shared-package.md` | `invoice_app_controller.py`, `constants.py`, `requirements/**` | What each shared class takes by injection, construction order, integration-test gating, patch-notes logic |
 | `rules/tests.md` | `tests/**` | Fixtures, patch targets, the tkinter-free `display` fixture, FIRST, ordering and docstring conventions |
 | `rules/ci.md` | `.github/workflows/**` | Workflow internals, the coverage gate, the two release gates, submodule handling |
 | `rules/packaging.md` | `scripts/**` | `package_release.sh`, and the load-bearing `installer.iss` details the in-app updater depends on |

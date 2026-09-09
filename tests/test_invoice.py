@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from source.constants import DECIMAL_ZERO
-from source.Invoice import Invoice
+from source.invoice import Invoice
 
 
 def test_invoice_initialization():

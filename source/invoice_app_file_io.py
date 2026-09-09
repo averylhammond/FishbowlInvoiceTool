@@ -12,7 +12,7 @@ from source.constants import (
     RESULTS_LOG_PATH,
     SALES_REPS_PATH,
 )
-from source.Invoice import Invoice
+from source.invoice import Invoice
 
 
 # InvoiceAppFileIO class to handle all file input/output operations

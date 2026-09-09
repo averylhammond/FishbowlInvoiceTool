@@ -65,10 +65,6 @@ ignore = [
     "E111",
     "E114",
     "E117",
-    # Each single-class module is named after its class (InvoiceProcessor.py), and tests/
-    # mirrors that (test_InvoiceProcessor.py) per .claude/rules/tests.md. Renaming six
-    # modules and their tests is not in scope for adopting a linter. Tracked in #147.
-    "N999",
     # Widget construction is a flat run of tk.Widget(...) calls -- one statement per widget,
     # in the order they appear in the window. build_widgets() is over the default limit of 50
     # only because the window has that many widgets, and splitting it on a statement count

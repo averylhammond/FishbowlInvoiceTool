@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 from source.constants import DECIMAL_ZERO
-from source.Invoice import Invoice
-from source.InvoiceAppFileIO import InvoiceAppFileIO
+from source.invoice import Invoice
+from source.invoice_app_file_io import InvoiceAppFileIO
 from source.processor_utilities import (
     find_currency_values,
     find_payment_terms,

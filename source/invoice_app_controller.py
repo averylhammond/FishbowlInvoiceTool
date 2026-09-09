@@ -21,10 +21,10 @@ from source.constants import (
     SETTINGS_DB_PATH,
     VERSION,
 )
-from source.gui.InvoiceAppDisplay import InvoiceAppDisplay
-from source.Invoice import Invoice
-from source.InvoiceAppFileIO import InvoiceAppFileIO
-from source.InvoiceProcessor import InvoiceProcessor
+from source.gui.invoice_app_display import InvoiceAppDisplay
+from source.invoice import Invoice
+from source.invoice_app_file_io import InvoiceAppFileIO
+from source.invoice_processor import InvoiceProcessor
 
 # TODO: See if there is a good logging method to add for debugging
 

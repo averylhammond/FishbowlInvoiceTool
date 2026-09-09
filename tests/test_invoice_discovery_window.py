@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fishbowl_common.gui import DARK, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE
 
-from source.gui.InvoiceDiscoveryWindow import InvoiceDiscoveryWindow
+from source.gui.invoice_discovery_window import InvoiceDiscoveryWindow
 
 
 def _distinct_widget(*_args, **_kwargs):
@@ -49,16 +49,16 @@ def window(request):
         patch.object(InvoiceDiscoveryWindow, "title"),
         patch.object(InvoiceDiscoveryWindow, "configure"),
         patch.object(InvoiceDiscoveryWindow, "_center_over_parent"),
-        patch("source.gui.InvoiceDiscoveryWindow.tk.StringVar", side_effect=_distinct_widget),
-        patch("source.gui.InvoiceDiscoveryWindow.tk.Label", side_effect=_distinct_widget),
-        patch("source.gui.InvoiceDiscoveryWindow.tk.Frame", side_effect=_distinct_widget),
-        patch("source.gui.InvoiceDiscoveryWindow.tk.Entry", side_effect=_distinct_widget),
-        patch("source.gui.InvoiceDiscoveryWindow.tk.Button", side_effect=_distinct_widget) as mock_button,
+        patch("source.gui.invoice_discovery_window.tk.StringVar", side_effect=_distinct_widget),
+        patch("source.gui.invoice_discovery_window.tk.Label", side_effect=_distinct_widget),
+        patch("source.gui.invoice_discovery_window.tk.Frame", side_effect=_distinct_widget),
+        patch("source.gui.invoice_discovery_window.tk.Entry", side_effect=_distinct_widget),
+        patch("source.gui.invoice_discovery_window.tk.Button", side_effect=_distinct_widget) as mock_button,
         patch(
-            "source.gui.InvoiceDiscoveryWindow.scrolledtext.ScrolledText",
+            "source.gui.invoice_discovery_window.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
         ),
-        patch("source.gui.InvoiceDiscoveryWindow.Tooltip", side_effect=_distinct_widget),
+        patch("source.gui.invoice_discovery_window.Tooltip", side_effect=_distinct_widget),
     ):
         built_window = InvoiceDiscoveryWindow(
             parent=MagicMock(),
@@ -110,7 +110,7 @@ def test_close_button_is_wired_to_destroy(window):
 
 
 @patch.object(InvoiceDiscoveryWindow, "_default_browse_dir", return_value="/downloads")
-@patch("source.gui.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
+@patch("source.gui.invoice_discovery_window.filedialog.askopenfilenames")
 def test_handle_browse_adds_selected_files(mock_ask, _mock_default_dir, window):
     """
     Verifies that handle_browse appends the user's selected PDFs to the pending
@@ -136,7 +136,7 @@ def test_handle_browse_adds_selected_files(mock_ask, _mock_default_dir, window):
 
 
 @patch.object(InvoiceDiscoveryWindow, "_default_browse_dir", return_value="/downloads")
-@patch("source.gui.InvoiceDiscoveryWindow.filedialog.askopenfilenames")
+@patch("source.gui.invoice_discovery_window.filedialog.askopenfilenames")
 def test_handle_browse_cancel_leaves_selection_untouched(mock_ask, _mock_default_dir, window):
     """
     Verifies that cancelling the file dialog (empty selection) does not change the
@@ -217,7 +217,7 @@ def test_handle_copy_reports_copy_failure(window):
     assert window.window.pending_files == []
 
 
-@patch("source.gui.InvoiceDiscoveryWindow.messagebox.askyesno", return_value=True)
+@patch("source.gui.invoice_discovery_window.messagebox.askyesno", return_value=True)
 @pytest.mark.parametrize("window", [{"side_effect": ["exists", "copied"]}], indirect=True)
 def test_handle_copy_overwrites_when_confirmed(mock_askyesno, window):
     """
@@ -240,7 +240,7 @@ def test_handle_copy_overwrites_when_confirmed(mock_askyesno, window):
     window.copy_callback.assert_any_call(Path("a.pdf"), True)
 
 
-@patch("source.gui.InvoiceDiscoveryWindow.messagebox.askyesno", return_value=False)
+@patch("source.gui.invoice_discovery_window.messagebox.askyesno", return_value=False)
 @pytest.mark.parametrize("window", [{"return_value": "exists"}], indirect=True)
 def test_handle_copy_skips_when_overwrite_declined(mock_askyesno, window):
     """
@@ -262,7 +262,7 @@ def test_handle_copy_skips_when_overwrite_declined(mock_askyesno, window):
     window.copy_callback.assert_called_once_with(Path("a.pdf"), False)
 
 
-@patch("source.gui.InvoiceDiscoveryWindow.Path")
+@patch("source.gui.invoice_discovery_window.Path")
 def test_default_browse_dir_prefers_downloads(mock_path, window):
     """
     Verifies that _default_browse_dir returns the Downloads folder when it exists.
@@ -279,7 +279,7 @@ def test_default_browse_dir_prefers_downloads(mock_path, window):
     assert window.window._default_browse_dir() == str(downloads)
 
 
-@patch("source.gui.InvoiceDiscoveryWindow.Path")
+@patch("source.gui.invoice_discovery_window.Path")
 def test_default_browse_dir_falls_back_to_home(mock_path, window):
     """
     Verifies that _default_browse_dir falls back to the home folder when the
