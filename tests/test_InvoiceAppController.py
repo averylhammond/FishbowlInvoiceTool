@@ -20,9 +20,6 @@ from source.constants import (
 from source.InvoiceAppController import InvoiceAppController
 
 
-###############################################################################
-###                   InvoiceAppController -> Test Fixture                  ###
-###############################################################################
 @pytest.fixture
 def controller():
     """
@@ -96,9 +93,6 @@ def controller():
         )
 
 
-###############################################################################
-###               Tests InvoiceAppController -> __init__()                  ###
-###############################################################################
 def test_init_constructs_and_wires_collaborators(controller):
     """
     Verifies that __init__ constructs each collaborator and wires the
@@ -230,9 +224,6 @@ def test_init_loads_persisted_settings(controller):
     controller.settings_repo.get_all_settings.assert_called_once_with()
 
 
-###############################################################################
-###            Tests InvoiceAppController -> start_application()            ###
-###############################################################################
 def test_start_application_resets_files_and_starts_gui(controller):
     """
     Verifies that start_application resets the log files and enters the GUI main
@@ -305,9 +296,6 @@ def test_start_application_integration_test_mode_processes_all(controller):
     controller.display.after.assert_not_called()
 
 
-###############################################################################
-###        Tests InvoiceAppController -> handle_check_for_updates()         ###
-###############################################################################
 def test_handle_check_for_updates_starts_manual_check(controller):
     """
     Verifies that the Help menu's on-demand handler runs the check through the
@@ -323,9 +311,6 @@ def test_handle_check_for_updates_starts_manual_check(controller):
     controller.coordinator.start.assert_called_once_with(manual=True)
 
 
-###############################################################################
-###       Tests InvoiceAppController -> show_patch_notes_if_updated()       ###
-###############################################################################
 # Stand-in for what the shared reader returns: one version's section, which the
 # controller passes through untouched
 NOTES = "## 4.1.7\n\n- Added a thing"
@@ -428,9 +413,6 @@ def test_show_patch_notes_if_updated_shows_nothing_when_there_are_no_notes(contr
     controller.display.after.assert_not_called()
 
 
-###############################################################################
-###         Tests InvoiceAppController -> handle_view_patch_notes()         ###
-###############################################################################
 def test_handle_view_patch_notes_shows_every_version_up_to_this_one(controller):
     """
     Verifies that the Help menu's "What's New" shows the notes for every version
@@ -471,9 +453,6 @@ def test_handle_view_patch_notes_reports_when_there_are_no_notes(controller):
     )
 
 
-###############################################################################
-###          Tests InvoiceAppController -> handle_process_invoice()         ###
-###############################################################################
 def test_handle_process_invoice_no_pages_shows_error_and_returns(controller):
     """
     Verifies that handle_process_invoice shows an error popup and returns early
@@ -617,9 +596,6 @@ def test_handle_process_invoice_total_mismatch_shows_popup(controller):
     )
 
 
-###############################################################################
-###            Tests InvoiceAppController -> handle_save_config()           ###
-###############################################################################
 def test_handle_save_config_cost_criteria_writes_and_reparses(controller):
     """
     Verifies that saving the cost criteria config writes the contents to disk and
@@ -704,9 +680,6 @@ def test_handle_save_config_unknown_path_writes_without_reparsing(controller):
     controller.file_io.parse_sales_reps_config.assert_not_called()
 
 
-###############################################################################
-###            Tests InvoiceAppController -> handle_save_setting()          ###
-###############################################################################
 def test_handle_save_setting_delegates_to_repository(controller):
     """
     Verifies that handle_save_setting forwards the key/value to the settings

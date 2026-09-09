@@ -134,6 +134,10 @@ Two responsibilities worth knowing before touching them:
   them; `[tool.ruff.lint.isort]` in `pyproject.toml` is the statement of intent, including that
   `fishbowl_common` is third party (it is installed from a pinned git tag) and never sits among
   the `source.*` imports.
+- **No banner comment blocks above a `def`.** The `###`-bordered headers that used to name each
+  method were removed from every file under `source/` and `tests/`, and are not to come back. The
+  signature and the docstring under it already say what the banner said, without a second name to
+  re-center by hand on every rename.
 - **Style is the linter's job.** Line length, quoting, spacing and the rest live in
   `[tool.ruff]`; run `ruff format` rather than matching the surrounding file by eye. Where a
   rule is suppressed, the reason sits beside it — in `pyproject.toml` for a policy, or in a
@@ -164,6 +168,6 @@ matching file is opened. Put new detail in the matching rule file rather than gr
 | `rules/invoice-processing.md` | `InvoiceProcessor.py`, `processor_utilities.py`, `InvoiceAppFileIO.py`, `Invoice.py` | The parse pipeline, the `Decimal` rule, config file formats, error-reporting contract |
 | `rules/gui.md` | `source/gui/**` | Window catalogue, menu structure, headless popup gate, theme/font reconfiguration, the `after(0, …)` startup rule |
 | `rules/shared-package.md` | `InvoiceAppController.py`, `constants.py`, `requirements/**` | What each shared class takes by injection, construction order, integration-test gating, patch-notes logic |
-| `rules/tests.md` | `tests/**` | Fixtures, patch targets, the tkinter-free `display` fixture, FIRST, banner and docstring conventions |
+| `rules/tests.md` | `tests/**` | Fixtures, patch targets, the tkinter-free `display` fixture, FIRST, ordering and docstring conventions |
 | `rules/ci.md` | `.github/workflows/**` | Workflow internals, the coverage gate, the two release gates, submodule handling |
 | `rules/packaging.md` | `scripts/**` | `package_release.sh`, and the load-bearing `installer.iss` details the in-app updater depends on |

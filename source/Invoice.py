@@ -30,9 +30,6 @@ class Invoice:
                                                                      # from a page of the invoice PDF
     # fmt:on
 
-    ###########################################################################
-    ###                  Invoice -> to_formatted_string()                   ###
-    ###########################################################################
     def to_formatted_string(self) -> str:
         """
         Returns a formatted string to output invoice contents

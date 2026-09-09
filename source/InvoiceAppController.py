@@ -31,9 +31,6 @@ from source.InvoiceProcessor import InvoiceProcessor
 
 # InvoiceAppController class to drive logic for processing invoice PDFs.
 class InvoiceAppController:
-    ###########################################################################
-    ###                 InvoiceAppController -> __init__()                  ###
-    ###########################################################################
     def __init__(self) -> None:
         """
         Initializes the InvoiceAppController object
@@ -116,9 +113,6 @@ class InvoiceAppController:
         # Build sales_rep dictionary containing all possible payment terms that could appear on an invoice
         self.sales_reps = self.file_io_controller.parse_sales_reps_config()
 
-    ###########################################################################
-    ###             InvoiceAppController -> start_application()             ###
-    ###########################################################################
     def start_application(self) -> None:
         """
         Starts the application by entering the tkinter main GUI loop
@@ -152,9 +146,6 @@ class InvoiceAppController:
             # Else, normally start the GUI application
             self.display.mainloop()
 
-    ###########################################################################
-    ###          InvoiceAppController -> handle_check_for_updates()         ###
-    ###########################################################################
     def handle_check_for_updates(self) -> None:
         """
         Runs an on-demand update check, triggered by the Help menu's
@@ -165,9 +156,6 @@ class InvoiceAppController:
 
         self.update_coordinator.start(manual=True)
 
-    ###########################################################################
-    ###         InvoiceAppController -> handle_view_patch_notes()           ###
-    ###########################################################################
     def handle_view_patch_notes(self) -> None:
         """
         Shows the patch notes on demand, triggered by the Help menu's "What's New"
@@ -188,9 +176,6 @@ class InvoiceAppController:
                 message=f"No patch notes found at: {PATCH_NOTES_PATH}.",
             )
 
-    ###########################################################################
-    ###        InvoiceAppController -> show_patch_notes_if_updated()        ###
-    ###########################################################################
     def show_patch_notes_if_updated(self, saved_settings: dict[str, str]) -> None:
         """
         Shows the user what changed when this launch is the first one after an
@@ -227,9 +212,6 @@ class InvoiceAppController:
         # put the notes in the corner of the screen instead of over the app
         self.display.after(0, self.display.show_patch_notes, APP_NAME, VERSION, notes)
 
-    ###########################################################################
-    ###          InvoiceAppController -> handle_process_invoice()           ###
-    ###########################################################################
     def handle_process_invoice(self, invoice_filepath: Path, append_output: bool) -> None:
         """
         Directs components to process the invoice located at invoice_filepath
@@ -311,9 +293,6 @@ class InvoiceAppController:
         # Print completion notice to debug.txt if in debug mode
         self.file_io_controller.print_to_debug_file(contents=f"Processed all sales for invoice: {invoice_filepath}\n")
 
-    ###########################################################################
-    ###            InvoiceAppController -> handle_save_config()             ###
-    ###########################################################################
     def handle_save_config(self, config_path: Path, contents: str) -> None:
         """
         Persists edited config file contents to disk, then re-parses that config
@@ -341,9 +320,6 @@ class InvoiceAppController:
         if reloader:
             reloader()
 
-    ###########################################################################
-    ###            InvoiceAppController -> handle_save_setting()            ###
-    ###########################################################################
     def handle_save_setting(self, key: str, value: str) -> None:
         """
         Persists a single user setting so it is restored on the next launch.
@@ -355,9 +331,6 @@ class InvoiceAppController:
 
         self.settings_repository.save_setting(key=key, value=value)
 
-    ###########################################################################
-    ###           InvoiceAppController -> _reload_cost_criteria()           ###
-    ###########################################################################
     def _reload_cost_criteria(self) -> None:
         """
         Re-parses the cost criteria config into the File IO Controller's criteria
@@ -366,18 +339,12 @@ class InvoiceAppController:
         """
         self.file_io_controller.parse_cost_criteria_file()
 
-    ###########################################################################
-    ###           InvoiceAppController -> _reload_payment_terms()           ###
-    ###########################################################################
     def _reload_payment_terms(self) -> None:
         """
         Re-parses the payment terms config into the controller's payment_terms list
         """
         self.payment_terms = self.file_io_controller.parse_payment_terms_config()
 
-    ###########################################################################
-    ###            InvoiceAppController -> _reload_sales_reps()             ###
-    ###########################################################################
     def _reload_sales_reps(self) -> None:
         """
         Re-parses the sales reps config into the controller's sales_reps dictionary

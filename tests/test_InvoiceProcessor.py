@@ -9,9 +9,6 @@ from source.InvoiceAppFileIO import InvoiceAppFileIO
 from source.InvoiceProcessor import InvoiceProcessor
 
 
-###############################################################################
-###                        InvoiceProcessor -> Test Fixture                 ###
-###############################################################################
 @pytest.fixture
 def mock_file_io():
     """
@@ -66,9 +63,6 @@ def invoice():
     return mock_invoice
 
 
-###############################################################################
-###                Tests InvoiceProcessor -> populate_invoice()             ###
-###############################################################################
 def test_populate_invoice_raises_on_none(invoice_processor):
     """
     Verifies that populate_invoice raises an error if invoice is None
@@ -148,9 +142,6 @@ def test_populate_invoice_populates_fields(
     mock_find_sales_rep.assert_called_once_with(text=invoice.page_contents[0], sales_reps=sales_reps)
 
 
-###############################################################################
-###           Tests InvoiceProcessor -> process_payment_line()              ###
-###############################################################################
 def test_process_payment_line_skips_subtotal_line(invoice_processor, invoice):
     """
     Verifies that the function will not calculate a listed subtotal as a
@@ -336,9 +327,6 @@ def test_process_payment_line_skips_if_no_cost_found(invoice_processor, invoice)
     assert invoice.shipping_cost == DECIMAL_ZERO
 
 
-###############################################################################
-###               Tests InvoiceProcessor -> find_ea_cost()                  ###
-###############################################################################
 @patch("source.InvoiceProcessor.search_payment_line")
 @patch(
     "source.InvoiceProcessor.format_currency",
@@ -396,9 +384,6 @@ def test_find_ea_cost_returns_zero_when_no_match(_mock_format_currency, mock_sea
     assert cost == DECIMAL_ZERO
 
 
-###############################################################################
-###               Tests InvoiceProcessor -> find_hr_cost()                  ###
-###############################################################################
 @patch("source.InvoiceProcessor.search_payment_line")
 @patch(
     "source.InvoiceProcessor.format_currency",
@@ -456,9 +441,6 @@ def test_find_hr_cost_returns_zero_when_no_match(_mock_format_currency, mock_sea
     assert cost == DECIMAL_ZERO
 
 
-###############################################################################
-###           Tests InvoiceProcessor -> process_end_of_invoice()            ###
-###############################################################################
 def test_process_end_of_invoice_sets_values(invoice_processor, invoice):
     """
     Verifies that process_end_of_invoice reads the sales tax and listed total from
@@ -580,9 +562,6 @@ def test_process_end_of_invoice_reports_on_missing_label(invoice_processor, invo
     invoice_processor.file_io_controller.report_error.assert_called_once()
 
 
-###############################################################################
-###         Tests InvoiceProcessor -> search_for_labor_criteria()           ###
-###############################################################################
 def test_search_for_labor_criteria_true(
     invoice_processor,
 ):
@@ -631,9 +610,6 @@ def test_search_for_labor_criteria_exclusion(
     assert invoice_processor.search_for_labor_criteria(line) is False
 
 
-###############################################################################
-###        Tests InvoiceProcessor -> search_for_shipping_criteria()         ###
-###############################################################################
 def test_search_for_shipping_criteria_true(
     invoice_processor,
 ):
@@ -665,9 +641,6 @@ def test_search_for_shipping_criteria_false(
     assert invoice_processor.search_for_shipping_criteria(line) is False
 
 
-###############################################################################
-###               Tests InvoiceProcessor -> process_invoice()               ###
-###############################################################################
 @patch.object(InvoiceProcessor, "process_payment_line")
 @patch.object(InvoiceProcessor, "process_end_of_invoice")
 def test_process_invoice_calls_internal_methods(mock_process_end, mock_process_line, invoice_processor, invoice):
