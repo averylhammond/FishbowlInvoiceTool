@@ -42,6 +42,12 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
   `SimpleNamespace` bundling the display and its mocks, and can be parametrized indirectly to
   supply persisted settings:
   `@pytest.mark.parametrize("display", [{"theme": "Light"}], indirect=True)`.
+- **Never start a real thread.** The controller's process callbacks start a worker, so their
+  tests patch `source.invoice_app_controller.threading.Thread`, pull the job out of its `args` and
+  run it by hand. `process_invoice()` / `process_all_invoices()` are tested directly on the test
+  thread, where `_on_gui_thread()` runs display calls inline, so they assert against the display
+  mock as before. The worker branch of `_on_gui_thread()` is reached by patching
+  `threading.current_thread`.
 - **Name unasserted mock parameters with a leading underscore** (`_mock_os_exists`) and reserve
   plain names (`mock_os_remove`) for mocks you assert against. `ARG001` catches the ones you
   forget, since ruff treats a leading underscore as the marker for a deliberately unused

@@ -87,6 +87,15 @@ Rules for this class:
 - **`process_callback` is typed by the `ProcessInvoiceCallback` Protocol**, not a `Callable`: the
   call sites pass `append_output` by keyword, which `Callable[[Path, bool], None]` cannot express.
   The other callbacks are called positionally and stay plain `Callable`s.
+- **Processing runs on a worker thread, not the GUI thread (#36).** Process This Invoice calls
+  `process_callback` and Process All Invoices calls `process_all_callback`, and both return
+  immediately. The loop over `Invoices/` lives in the controller, not here. While a run is in
+  progress the controller calls **`set_processing(busy)`**, which locks both process buttons
+  (no overlapping runs), Discover Invoices (it copies into the folder being processed) and the
+  Edit menu's three config editors (their Save reloads criteria the run is reading in place).
+  Exit, File, View, Preferences and Help stay live. **Every display method the worker needs
+  reaches this class through the controller's `_on_gui_thread()`, never directly** — Tk is not
+  thread-safe. A new display call made during processing must go the same way.
 
 ## `InvoiceDiscoveryWindow`
 

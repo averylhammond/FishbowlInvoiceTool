@@ -1,7 +1,7 @@
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -123,6 +123,7 @@ def test_init_constructs_and_wires_collaborators(controller):
         title="Invoice Processor",
         window_resolution="750x750",
         process_callback=controller.controller.handle_process_invoice,
+        process_all_callback=controller.controller.handle_process_all_invoices,
         read_file_callback=controller.file_io.read_text_file,
         save_config_callback=controller.controller.handle_save_config,
         save_settings_callback=controller.controller.handle_save_setting,
@@ -162,9 +163,16 @@ def test_init_wires_error_reporter(controller):
         controller (pytest.fixture): Provides the controller and its mocks
     """
 
-    # The file IO controller and settings repository report errors through the popup
-    assert controller.file_io.report_error is controller.display.show_popup
+    # The settings repository reports errors straight through the popup, since
+    # it only ever fails on the GUI thread
     assert controller.settings_repo.report_error is controller.display.show_popup
+
+    # The file IO controller can also fail on the processing worker, so its
+    # reporter is routed through the GUI-thread helper; on this thread it lands
+    # on the popup inline
+    controller.file_io.report_error("File Error", "Could not read the file")
+    controller.display.show_popup.assert_called_once_with("File Error", "Could not read the file")
+    controller.display.after.assert_not_called()
 
 
 def test_init_builds_the_update_coordinator(controller):
@@ -235,7 +243,8 @@ def test_start_application_resets_files_and_starts_gui(controller):
 
     controller.arg_provider.integration_test_mode = False
 
-    controller.controller.start_application()
+    with patch.object(controller.controller, "process_all_invoices") as mock_process_all:
+        controller.controller.start_application()
 
     # Log files are reset before the application starts
     controller.file_io.reset_debug_file.assert_called_once_with()
@@ -247,7 +256,7 @@ def test_start_application_resets_files_and_starts_gui(controller):
 
     # The GUI main loop is started, and invoices are not processed directly
     controller.display.mainloop.assert_called_once_with()
-    controller.display.handle_process_all_invoices.assert_not_called()
+    mock_process_all.assert_not_called()
 
 
 def test_start_application_checks_for_patch_notes(controller):
@@ -280,10 +289,14 @@ def test_start_application_integration_test_mode_processes_all(controller):
 
     controller.arg_provider.integration_test_mode = True
 
-    controller.controller.start_application()
+    with patch.object(controller.controller, "process_all_invoices") as mock_process_all:
+        controller.controller.start_application()
 
-    # All invoices are processed directly, and the GUI loop is never entered
-    controller.display.handle_process_all_invoices.assert_called_once_with()
+    # All invoices are processed directly on this thread rather than a worker,
+    # since no main loop runs to drain what a worker would post, and the GUI loop
+    # is never entered
+    mock_process_all.assert_called_once_with()
+    controller.display.set_processing.assert_not_called()
     controller.display.mainloop.assert_not_called()
 
     # The update check is never started in integration test mode
@@ -453,9 +466,202 @@ def test_handle_view_patch_notes_reports_when_there_are_no_notes(controller):
     )
 
 
-def test_handle_process_invoice_no_pages_shows_error_and_returns(controller):
+def test_handle_process_invoice_runs_on_a_worker_thread(controller):
     """
-    Verifies that handle_process_invoice shows an error popup and returns early
+    Verifies that the display's process callback hands the invoice to a
+    background thread rather than processing it inline, and that the job it hands
+    over processes that invoice with the requested append flag.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    with (
+        patch("source.invoice_app_controller.threading.Thread") as mock_thread_cls,
+        patch.object(controller.controller, "process_invoice") as mock_process_invoice,
+    ):
+        controller.controller.handle_process_invoice(invoice_filepath=Path("invoice.pdf"), append_output=False)
+
+        mock_process_invoice.assert_not_called()
+        mock_thread_cls.return_value.start.assert_called_once_with()
+
+        # Run the job the thread was handed, as the worker would
+        mock_thread_cls.call_args.kwargs["args"][0]()
+
+    mock_process_invoice.assert_called_once_with(Path("invoice.pdf"), False)
+
+
+def test_handle_process_all_invoices_runs_on_a_worker_thread(controller):
+    """
+    Verifies that the display's process-all callback hands the same loop the
+    headless run uses to a background thread rather than running it inline.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    with (
+        patch("source.invoice_app_controller.threading.Thread") as mock_thread_cls,
+        patch.object(controller.controller, "process_all_invoices") as mock_process_all,
+    ):
+        controller.controller.handle_process_all_invoices()
+
+        mock_process_all.assert_not_called()
+        mock_thread_cls.return_value.start.assert_called_once_with()
+
+        mock_thread_cls.call_args.kwargs["args"][0]()
+
+    mock_process_all.assert_called_once_with()
+
+
+def test_start_processing_locks_the_controls_before_starting_a_daemon_thread(controller):
+    """
+    Verifies that the processing controls are locked on the GUI thread before the
+    worker starts, so a second click cannot overlap the run, and that the worker
+    is a daemon so exiting mid-run does not hang the application.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    order = MagicMock()
+    work = MagicMock()
+
+    with patch("source.invoice_app_controller.threading.Thread") as mock_thread_cls:
+        order.attach_mock(controller.display.set_processing, "set_processing")
+        order.attach_mock(mock_thread_cls.return_value.start, "start")
+        controller.controller._start_processing(work)
+
+    mock_thread_cls.assert_called_once_with(target=controller.controller._run_processing, args=(work,), daemon=True)
+    assert [c[0] for c in order.mock_calls] == ["set_processing", "start"]
+    controller.display.set_processing.assert_called_once_with(True)
+
+
+def test_run_processing_unlocks_the_controls_once_the_job_finishes(controller):
+    """
+    Verifies that the processing controls are unlocked once the job has finished,
+    and only then, with no error shown.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    order = MagicMock()
+    work = MagicMock()
+    order.attach_mock(work, "work")
+    order.attach_mock(controller.display.set_processing, "set_processing")
+
+    controller.controller._run_processing(work)
+
+    assert order.mock_calls == [call.work(), call.set_processing(False)]
+    controller.display.show_popup.assert_not_called()
+
+
+def test_run_processing_reports_and_unlocks_the_controls_on_error(controller):
+    """
+    Verifies that a job raising an unexpected error still unlocks the processing
+    controls, and tells the user rather than failing silently in the
+    console-less release build.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    controller.controller._run_processing(MagicMock(side_effect=ValueError("bad page")))
+
+    controller.display.show_popup.assert_called_once()
+    assert "bad page" in controller.display.show_popup.call_args.kwargs["message"]
+    controller.display.set_processing.assert_called_once_with(False)
+
+
+def test_on_gui_thread_runs_inline_on_the_gui_thread(controller):
+    """
+    Verifies that a display call made from the GUI thread itself (startup, the
+    headless run) runs immediately rather than waiting on a main loop that may
+    never run.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    func = MagicMock()
+
+    controller.controller._on_gui_thread(func, "a", key="b")
+
+    func.assert_called_once_with("a", key="b")
+    controller.display.after.assert_not_called()
+
+
+def test_on_gui_thread_posts_through_after_from_a_worker(controller):
+    """
+    Verifies that a display call made from the processing worker is handed to the
+    GUI thread through after() rather than touching tkinter from the worker, and
+    that what it posts makes the original call, keyword arguments included.
+
+    Args:
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    func = MagicMock()
+
+    with patch("source.invoice_app_controller.threading.current_thread", return_value=MagicMock()):
+        controller.controller._on_gui_thread(func, "a", key="b")
+
+    func.assert_not_called()
+    controller.display.after.assert_called_once()
+    delay, posted = controller.display.after.call_args.args
+    assert delay == 0
+
+    posted()
+
+    func.assert_called_once_with("a", key="b")
+
+
+@patch("source.invoice_app_controller.INVOICES_DIR")
+def test_process_all_invoices_processes_each(mock_invoices_dir, controller):
+    """
+    Verifies that process_all_invoices iterates the invoices directory and
+    processes each file in order with append_output True.
+
+    Args:
+        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    first_invoice = MagicMock()
+    second_invoice = MagicMock()
+    mock_invoices_dir.resolve.return_value.iterdir.return_value = [first_invoice, second_invoice]
+
+    with patch.object(controller.controller, "process_invoice") as mock_process_invoice:
+        controller.controller.process_all_invoices()
+
+    assert mock_process_invoice.call_args_list == [
+        call(first_invoice, append_output=True),
+        call(second_invoice, append_output=True),
+    ]
+
+
+@patch("source.invoice_app_controller.INVOICES_DIR")
+def test_process_all_invoices_error_shows_popup(mock_invoices_dir, controller):
+    """
+    Verifies that process_all_invoices shows an error popup when iterating the
+    invoices directory raises an exception.
+
+    Args:
+        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
+        controller (pytest.fixture): Provides the controller and its mocks
+    """
+
+    mock_invoices_dir.resolve.return_value.iterdir.side_effect = OSError("directory unavailable")
+
+    controller.controller.process_all_invoices()
+
+    controller.display.show_popup.assert_called_once()
+
+
+def test_process_invoice_no_pages_shows_error_and_returns(controller):
+    """
+    Verifies that process_invoice shows an error popup and returns early
     when the invoice PDF has no pages.
 
     Args:
@@ -465,7 +671,7 @@ def test_handle_process_invoice_no_pages_shows_error_and_returns(controller):
     # The PDF read returns no pages
     controller.file_io.read_invoice_file.return_value = []
 
-    controller.controller.handle_process_invoice(invoice_filepath="missing.pdf", append_output=False)
+    controller.controller.process_invoice(invoice_filepath="missing.pdf", append_output=False)
 
     # An error popup is shown and processing stops before populating the invoice
     controller.display.show_popup.assert_called_once()
@@ -473,9 +679,9 @@ def test_handle_process_invoice_no_pages_shows_error_and_returns(controller):
     controller.processor.process_invoice.assert_not_called()
 
 
-def test_handle_process_invoice_first_page_none_shows_error_and_returns(controller):
+def test_process_invoice_first_page_none_shows_error_and_returns(controller):
     """
-    Verifies that handle_process_invoice shows an error popup and returns early
+    Verifies that process_invoice shows an error popup and returns early
     when the first page of the invoice PDF is None.
 
     Args:
@@ -485,16 +691,16 @@ def test_handle_process_invoice_first_page_none_shows_error_and_returns(controll
     # The PDF read returns a page list whose first page failed to parse
     controller.file_io.read_invoice_file.return_value = [None]
 
-    controller.controller.handle_process_invoice(invoice_filepath="bad.pdf", append_output=False)
+    controller.controller.process_invoice(invoice_filepath="bad.pdf", append_output=False)
 
     # An error popup is shown and processing stops before populating the invoice
     controller.display.show_popup.assert_called_once()
     controller.processor.populate_invoice.assert_not_called()
 
 
-def test_handle_process_invoice_no_text_shows_error_and_returns(controller):
+def test_process_invoice_no_text_shows_error_and_returns(controller):
     """
-    Verifies that handle_process_invoice shows an error popup and returns early
+    Verifies that process_invoice shows an error popup and returns early
     when the invoice PDF has pages but none of them hold any text, as happens
     with a scanned or printed-to-PDF copy that carries no text layer.
 
@@ -505,7 +711,7 @@ def test_handle_process_invoice_no_text_shows_error_and_returns(controller):
     # The PDF read returns pages, but every one of them extracted as blank
     controller.file_io.read_invoice_file.return_value = ["", "   \n", ""]
 
-    controller.controller.handle_process_invoice(invoice_filepath="scanned.pdf", append_output=False)
+    controller.controller.process_invoice(invoice_filepath="scanned.pdf", append_output=False)
 
     # An error popup is shown and processing stops before populating the invoice,
     # so no all-zero result is displayed or written to the results file
@@ -516,9 +722,9 @@ def test_handle_process_invoice_no_text_shows_error_and_returns(controller):
     controller.file_io.print_invoice_to_output_file.assert_not_called()
 
 
-def test_handle_process_invoice_text_on_later_page_is_processed(controller):
+def test_process_invoice_text_on_later_page_is_processed(controller):
     """
-    Verifies that handle_process_invoice processes an invoice whose first page
+    Verifies that process_invoice processes an invoice whose first page
     extracted as blank but which holds text on a later page, so the no-text guard
     rejects only PDFs that are blank throughout.
 
@@ -531,14 +737,14 @@ def test_handle_process_invoice_text_on_later_page_is_processed(controller):
     controller.invoice.total = Decimal("10.00")
     controller.invoice.listed_total = Decimal("10.00")
 
-    controller.controller.handle_process_invoice(invoice_filepath="invoice.pdf", append_output=False)
+    controller.controller.process_invoice(invoice_filepath="invoice.pdf", append_output=False)
 
     # The invoice is processed as normal, with no popup shown
     controller.processor.process_invoice.assert_called_once_with(invoice=controller.invoice)
     controller.display.show_popup.assert_not_called()
 
 
-def test_handle_process_invoice_full_flow_totals_match(controller):
+def test_process_invoice_full_flow_totals_match(controller):
     """
     Verifies the full happy-path flow: when the calculated total matches the
     listed total, the invoice is populated, processed, displayed, and written to
@@ -553,7 +759,7 @@ def test_handle_process_invoice_full_flow_totals_match(controller):
     controller.invoice.total = Decimal("10.00")
     controller.invoice.listed_total = Decimal("10.00")
 
-    controller.controller.handle_process_invoice(invoice_filepath="invoice.pdf", append_output=True)
+    controller.controller.process_invoice(invoice_filepath="invoice.pdf", append_output=True)
 
     # The processor is asked to populate and process the invoice
     controller.processor.populate_invoice.assert_called_once_with(
@@ -573,9 +779,9 @@ def test_handle_process_invoice_full_flow_totals_match(controller):
     controller.display.show_popup.assert_not_called()
 
 
-def test_handle_process_invoice_total_mismatch_shows_popup(controller):
+def test_process_invoice_total_mismatch_shows_popup(controller):
     """
-    Verifies that handle_process_invoice shows a mismatch error popup when the
+    Verifies that process_invoice shows a mismatch error popup when the
     calculated total does not match the listed total, while still writing output.
 
     Args:
@@ -587,7 +793,7 @@ def test_handle_process_invoice_total_mismatch_shows_popup(controller):
     controller.invoice.total = Decimal("10.00")
     controller.invoice.listed_total = Decimal("9.99")
 
-    controller.controller.handle_process_invoice(invoice_filepath="invoice.pdf", append_output=False)
+    controller.controller.process_invoice(invoice_filepath="invoice.pdf", append_output=False)
 
     # A mismatch popup is shown, and the output is still written
     controller.display.show_popup.assert_called_once()

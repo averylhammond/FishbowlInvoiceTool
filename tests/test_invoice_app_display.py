@@ -55,7 +55,7 @@ def display(request):
             mocked Tk methods (`title`, `geometry`, `resizable`, `configure`,
             `config`), the mocked ArgumentProvider instance (`arg_provider`), and
             the callbacks passed at construction (`process_callback`,
-            `read_file_callback`, `save_config_callback`, `save_settings_callback`,
+            `process_all_callback`, `read_file_callback`, `save_config_callback`, `save_settings_callback`,
             `view_patch_notes_callback`).
     """
 
@@ -84,6 +84,7 @@ def display(request):
     ):
         # The callbacks the controller would normally supply; mocks are sufficient
         callback = MagicMock()
+        process_all_callback = MagicMock()
         read_file_callback = MagicMock()
         save_config_callback = MagicMock()
         save_settings_callback = MagicMock()
@@ -93,6 +94,7 @@ def display(request):
 
         built_display = InvoiceAppDisplay(
             process_callback=callback,
+            process_all_callback=process_all_callback,
             read_file_callback=read_file_callback,
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
@@ -113,6 +115,7 @@ def display(request):
             config=mock_config,
             arg_provider=mock_arg_cls.return_value,
             process_callback=callback,
+            process_all_callback=process_all_callback,
             read_file_callback=read_file_callback,
             save_config_callback=save_config_callback,
             save_settings_callback=save_settings_callback,
@@ -154,6 +157,7 @@ def test_init_sets_default_state(display):
 
     # The callbacks and argument provider are stored for later use
     assert display.display.process_callback is display.process_callback
+    assert display.display.process_all_callback is display.process_all_callback
     assert display.display.read_file_callback is display.read_file_callback
     assert display.display.save_config_callback is display.save_config_callback
     assert display.display.save_settings_callback is display.save_settings_callback
@@ -394,57 +398,47 @@ def test_handle_process_invoice_forwards_to_callback(mock_show_popup, display):
     mock_show_popup.assert_not_called()
 
 
-@patch("source.gui.invoice_app_display.INVOICES_DIR")
-def test_handle_process_all_invoices_processes_each(mock_invoices_dir, display):
+def test_handle_process_all_invoices_forwards_to_callback(display):
     """
-    Verifies that handle_process_all_invoices iterates the invoices directory and
-    forwards each file to the process callback with append_output True.
+    Verifies that handle_process_all_invoices forwards the call to the
+    process-all callback, which owns the loop over the Invoices/ folder.
 
     Args:
-        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
         display (pytest.fixture): Provides the display and its mocks
     """
 
-    # The invoices directory yields two invoice files
-    first_invoice = MagicMock()
-    second_invoice = MagicMock()
-    mock_invoices_dir.resolve.return_value.iterdir.return_value = [
-        first_invoice,
-        second_invoice,
+    display.display.handle_process_all_invoices()
+
+    display.process_all_callback.assert_called_once_with()
+    display.process_callback.assert_not_called()
+
+
+@pytest.mark.parametrize(("busy", "state"), [(True, "disabled"), (False, "normal")])
+def test_set_processing_toggles_the_processing_controls(display, busy, state):
+    """
+    Verifies that both process buttons, Discover Invoices and the Edit menu's
+    three config editors are locked while a run is in progress and unlocked once
+    it finishes, while Exit is left alone so the user can always leave.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+        busy (bool): Whether a run is in progress
+        state (str): The Tk state the controls should be set to
+    """
+
+    display.display.exit_button.configure.reset_mock()
+
+    display.display.set_processing(busy)
+
+    display.display.process_invoice_button.configure.assert_called_with(state=state)
+    display.display.process_all_invoices_button.configure.assert_called_with(state=state)
+    display.display.discover_invoices_button.configure.assert_called_with(state=state)
+    assert display.display.edit_menu.entryconfigure.call_args_list == [
+        call("Cost Criteria", state=state),
+        call("Payment Terms", state=state),
+        call("Sales Reps", state=state),
     ]
-
-    display.display.handle_process_all_invoices()
-
-    # Each invoice is processed in order, appending to the running output
-    display.process_callback.assert_has_calls(
-        [
-            call(first_invoice, append_output=True),
-            call(second_invoice, append_output=True),
-        ]
-    )
-    assert display.process_callback.call_count == 2
-
-
-@patch.object(InvoiceAppDisplay, "show_popup")
-@patch("source.gui.invoice_app_display.INVOICES_DIR")
-def test_handle_process_all_invoices_error_shows_popup(mock_invoices_dir, mock_show_popup, display):
-    """
-    Verifies that handle_process_all_invoices shows an error popup when iterating
-    the invoices directory raises an exception.
-
-    Args:
-        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
-        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
-        display (pytest.fixture): Provides the display and its mocks
-    """
-
-    # Resolving/iterating the invoices directory fails
-    mock_invoices_dir.resolve.return_value.iterdir.side_effect = OSError("directory unavailable")
-
-    display.display.handle_process_all_invoices()
-
-    # The failure is surfaced to the user via an error popup
-    mock_show_popup.assert_called_once()
+    display.display.exit_button.configure.assert_not_called()
 
 
 @patch("source.gui.invoice_app_display.MessageWindow")
