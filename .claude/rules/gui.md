@@ -54,9 +54,10 @@ Rules for this class:
   `read_file_callback`, writes through `save_config_callback`, and the version and patch notes
   arrive as arguments from the controller. `handle_view_patch_notes()` just calls
   `view_patch_notes_callback`.
-- **Every popup path checks `argument_provider.integration_test_mode` and returns early.**
-  `show_popup()`, `show_update_available()` and anything else that opens a window must, or a
-  headless CI run blocks forever on a window nobody can close.
+- **It knows nothing about headless mode.** A headless run never constructs it — the controller
+  returns into `run_integration_test()` before importing this module (#84) — so no popup path
+  checks for integration-test mode, and none should. That is also what keeps `show_popup()` and
+  `show_update_available()` identical to the sibling's, as a shared base class needs.
 - **The display's whole share of the in-app update is forwarding a callback.** It never downloads
   or executes anything: `show_update_available()` passes `start_install` straight through to
   `UpdateWindow` as `start_install_callback`. When it is `None` — no matching installer asset, no

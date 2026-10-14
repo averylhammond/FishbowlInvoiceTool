@@ -35,23 +35,29 @@ cannot know it, since each Fishbowl app names its own. It must stay in step with
 
 ## Construction and gating in `InvoiceAppController`
 
-**This controller builds every collaborator, the display included, in `__init__`.** The sibling
-`FishbowlInventoryTool` builds its GUI collaborators inside the non-integration-test branch and
-gets "no database, no window" structurally — **do not copy that placement here.** Because
-everything is built up front, anything that must not happen headlessly is gated **explicitly** on
-`argument_provider.integration_test_mode`, in `start_application()`'s GUI branch:
+**Headless is structural, not gated (#84)** — the same shape as `FishbowlInventoryTool`.
+`__init__` builds only the headless half: `ArgumentProvider`, `InvoiceAppFileIO`,
+`InvoiceProcessor`. `display`, `settings_repository`, `update_coordinator` and `patch_notes`
+start as `None`. `start_application()` checks `integration_test_mode` **first** and returns
+early into `run_integration_test()`. Only after that check does it import `InvoiceAppDisplay`
+(a function-local import; the module-level one is under `TYPE_CHECKING`) and build the
+`SettingsRepository`, the display, the `UpdateCoordinator` and `PatchNotes`. So a headless run
+imports no tkinter, opens no database (no `data/` is left behind), touches no network and reads
+no notes. Keep anything GUI-only below that early return rather than reintroducing a flag check.
 
-- `update_coordinator.start()` — so a headless run performs no network I/O
-- `show_patch_notes_if_updated()` — so it reads no notes and opens no window
+**Configs are parsed in `_prepare_run()`, not `__init__`** — it also resets the log files. Each
+branch calls it **after** wiring `report_error`, so a parse failure reaches the user. In the GUI
+branch the file I/O controller's reporter is `partial(self._on_gui_thread,
+self.display.show_popup)` rather than the bare method, because it also fires on the processing
+worker thread; the settings repository's only fires on the GUI thread and stays direct.
+`run_integration_test()` wires the file I/O reporter to `print` instead.
 
-Constructing `PatchNotes` and `UpdateCoordinator` in `__init__` is fine and deliberate:
-constructing them reads nothing and touches no network; the file is read per call.
-
-Order matters in `__init__`: `report_error` on the file I/O controller and the settings repository
-is wired to `display.show_popup` **before** the config files are parsed, so parse failures reach
-the user. The file I/O controller's is `partial(self._on_gui_thread, self.display.show_popup)`
-rather than the bare method, because it also fires on the processing worker thread; the settings
-repository's only fires on the GUI thread and stays direct.
+**Processing reports through two hooks, never `self.display` directly:** `show_message(title,
+message)` and `show_output(invoice, append_output)`. The GUI branch points them at
+`display.show_popup` / `display.display_invoice_output` through `_on_gui_thread()`. They default
+to **silent no-ops**, and the headless run deliberately keeps that: those messages carry order
+numbers, totals and file paths from the private submodule, which must never reach a CI log.
+Only file I/O errors (paths and OS errors) go to stdout.
 
 ## Processing off the GUI thread (#36)
 
@@ -65,10 +71,13 @@ and in `finally` unlocks the controls.
 The work itself is `process_invoice()` and `process_all_invoices()`. Every display call inside
 them goes through **`_on_gui_thread(func, *args, **kwargs)`**: on the main thread it calls `func`
 inline, and on any other thread it posts `partial(func, …)` through `display.after(0, …)`.
-Running inline on the main thread is what keeps the **headless integration run synchronous and
-unchanged**: `start_application()` calls `process_all_invoices()` directly, on the main thread,
-with no main loop that could ever drain a posted callback. Do not route the headless run through
-the worker.
+The headless run has no display at all, so it never reaches `_on_gui_thread()`: its hooks are
+the silent defaults. It must still stay **synchronous**: `run_integration_test()` calls
+`process_all_invoices()` directly, on the main thread. Do not route it through the worker.
+
+`process_all_invoices()` iterates `file_io_controller.list_invoice_files()`, which owns the
+directory walk, the `.pdf` filter and the **explicit sort by filename**. The integration diff
+depends on that order, and bare `iterdir()` order is not guaranteed across platforms.
 
 ## Patch notes on the first launch after an update
 

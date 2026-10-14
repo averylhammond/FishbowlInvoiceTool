@@ -42,11 +42,18 @@ test depend on the real behavior of another class, the filesystem, a PDF, or the
   `SimpleNamespace` bundling the display and its mocks, and can be parametrized indirectly to
   supply persisted settings:
   `@pytest.mark.parametrize("display", [{"theme": "Light"}], indirect=True)`.
+- **The controller has two fixtures.** `unstarted_controller` is the object as `__init__`
+  leaves it, with no GUI half. Use it for construction, the headless path, and the
+  `assert_not_called()` guards on the display, settings, coordinator and patch-notes classes.
+  `controller` runs the real GUI-mode `start_application()` against the mocks, then clears the
+  recorded calls, so method tests exercise the real wiring. `InvoiceAppDisplay` is patched at
+  its definition site, `source.gui.invoice_app_display.InvoiceAppDisplay`, because the
+  controller imports it inside `start_application()`.
 - **Never start a real thread.** The controller's process callbacks start a worker, so their
   tests patch `source.invoice_app_controller.threading.Thread`, pull the job out of its `args` and
   run it by hand. `process_invoice()` / `process_all_invoices()` are tested directly on the test
   thread, where `_on_gui_thread()` runs display calls inline, so they assert against the display
-  mock as before. The worker branch of `_on_gui_thread()` is reached by patching
+  mock. The worker branch of `_on_gui_thread()` is reached by patching
   `threading.current_thread`.
 - **Name unasserted mock parameters with a leading underscore** (`_mock_os_exists`) and reserve
   plain names (`mock_os_remove`) for mocks you assert against. `ARG001` catches the ones you

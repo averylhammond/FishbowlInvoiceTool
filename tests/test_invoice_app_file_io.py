@@ -300,6 +300,72 @@ def test_read_invoice_file_reports_and_returns_empty_on_error(_mock_reader, file
     file_io.report_error.assert_called_once()
 
 
+@patch("source.invoice_app_file_io.INVOICES_DIR")
+def test_list_invoice_files_returns_only_pdfs(mock_invoices_dir, file_io):
+    """
+    Tests that list_invoice_files() skips anything in the Invoices/ directory that
+    is not a PDF, matching the suffix case-insensitively.
+
+    Args:
+        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    mock_invoices_dir.resolve.return_value.iterdir.return_value = [
+        Path("Invoices/a.pdf"),
+        Path("Invoices/notes.txt"),
+        Path("Invoices/b.PDF"),
+        Path("Invoices/subfolder"),
+    ]
+
+    assert file_io.list_invoice_files() == [Path("Invoices/a.pdf"), Path("Invoices/b.PDF")]
+    file_io.report_error.assert_not_called()
+
+
+@patch("source.invoice_app_file_io.INVOICES_DIR")
+def test_list_invoice_files_sorts_by_filename(mock_invoices_dir, file_io):
+    """
+    Tests that list_invoice_files() returns the PDFs sorted by filename whatever
+    order the directory yields them in, so the integration test's results file is
+    written in the same order on every platform.
+
+    Args:
+        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    mock_invoices_dir.resolve.return_value.iterdir.return_value = [
+        Path("Invoices/c.pdf"),
+        Path("Invoices/B.pdf"),
+        Path("Invoices/a.pdf"),
+    ]
+
+    # Sorted by name exactly, so upper case sorts before lower case
+    assert file_io.list_invoice_files() == [
+        Path("Invoices/B.pdf"),
+        Path("Invoices/a.pdf"),
+        Path("Invoices/c.pdf"),
+    ]
+
+
+@patch("source.invoice_app_file_io.INVOICES_DIR")
+def test_list_invoice_files_reports_and_returns_empty_on_error(mock_invoices_dir, file_io):
+    """
+    Tests that list_invoice_files() fails gracefully, surfacing the failure through
+    the error reporter and returning an empty list when the Invoices/ directory
+    cannot be read.
+
+    Args:
+        mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
+        file_io (pytest.fixture): Test fixture to create the InvoiceAppFileIO object
+    """
+
+    mock_invoices_dir.resolve.return_value.iterdir.side_effect = FileNotFoundError("no such directory")
+
+    assert file_io.list_invoice_files() == []
+    file_io.report_error.assert_called_once()
+
+
 @patch("source.invoice_app_file_io.shutil.copy2")
 @patch("source.invoice_app_file_io.INVOICES_DIR")
 def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_io):

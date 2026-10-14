@@ -102,11 +102,15 @@ it pointed at the old contents after the user saves an edited config.
 
 ## Error reporting
 
-`InvoiceAppFileIO` takes a `report_error(title, message)` callback, defaulting to a no-op and
-wired to `InvoiceAppDisplay.show_popup` by the controller **before** the configs are parsed, so
-parse failures surface. Every read is wrapped in `try/except OSError` and returns an empty
-`dict`/`list` on failure rather than raising — a missing config degrades the run, it does not
-crash it. Keep that shape.
+`InvoiceAppFileIO` takes a `report_error(title, message)` callback, defaulting to a no-op. The
+controller wires it **before** the configs are parsed, so parse failures surface: to
+`InvoiceAppDisplay.show_popup` in the GUI, or to stdout in a headless run. Every read is wrapped
+in `try/except OSError` and returns an empty `dict`/`list` on failure rather than raising — a
+missing config degrades the run, it does not crash it. Keep that shape.
+
+`list_invoice_files()` is the only place that walks `Invoices/`. It returns `*.pdf` (suffix
+matched case-insensitively), **sorted by filename**, so the integration test writes
+`logs/results.txt` in the same order on every platform.
 
 `print_to_debug_file()` and the debug log reset are `__debug__`-gated and vanish from the release
 build (`python -OO`); never let real behavior depend on them running.
