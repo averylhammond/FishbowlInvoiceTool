@@ -59,6 +59,7 @@ PATCH_NOTES_PATH = Path("PATCH_NOTES.md")
 SETTING_KEY_THEME = "theme"
 SETTING_KEY_FONT_FAMILY = "font_family"
 SETTING_KEY_FONT_SIZE = "font_size"
+SETTING_KEY_GEOMETRY = "window_geometry"
 
 # Version the application was running the last time it was launched, compared
 # against VERSION on startup to spot the first launch after an update.

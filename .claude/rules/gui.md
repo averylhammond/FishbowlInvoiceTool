@@ -63,8 +63,15 @@ Rules for this class:
   `UpdateWindow` as `start_install_callback`. When it is `None` — no matching installer asset, no
   checksums asset, or a non-Windows platform — the window falls back to the browser-only "Exit and
   Update" it has always offered. Both routes exit through `close_app_callback`, which is
-  `self.destroy` — `self` is the root, so that closes the app and releases the executable's file
-  lock for the installer.
+  `self.handle_exit` — `self` is the root, so that closes the app and releases the executable's
+  file lock for the installer.
+- **Every way out routes through `handle_exit()`** — the Exit button, File -> Exit, the window's
+  close box (bound with `protocol("WM_DELETE_WINDOW", …)` in `build_widgets()`) and the update
+  window. It saves `winfo_geometry()` under `SETTING_KEY_GEOMETRY`, then calls `destroy()` (never
+  `quit()`, which only ends `mainloop()` and leaves the window alive). Geometry is saved **on
+  exit, deliberately not on `<Configure>`**, so dragging the window does not write to the
+  settings database every frame. On startup `_parse_geometry()` checks the stored value against
+  `GEOMETRY_PATTERN` and falls back to the default, since `geometry()` raises on a corrupt string.
 - **Theme and font changes reconfigure existing widgets in place** (`apply_theme`,
   `apply_font_family`, `apply_font_size`, `_apply_font`, `_refresh_tooltips`) rather than
   rebuilding the window. A new widget must be added to those methods too, or it keeps the old

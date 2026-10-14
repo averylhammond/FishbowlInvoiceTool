@@ -39,7 +39,7 @@ def display(request):
     """
     Builds an InvoiceAppDisplay in complete isolation from tkinter: the real
     Tk.__init__ is neutralized, the inherited Tk methods the constructor calls
-    (title/geometry/resizable/configure/config) are mocked, and every widget
+    (title/geometry/resizable/configure/config/protocol/destroy/winfo_geometry) are mocked, and every widget
     class is replaced so no real window or widgets are created. The patches stay
     active for the duration of each test so methods that reconfigure widgets
     (apply_theme/_apply_font) also run without a real display.
@@ -53,9 +53,9 @@ def display(request):
     Returns:
         types.SimpleNamespace: Holds the constructed display (`display`), the
             mocked Tk methods (`title`, `geometry`, `resizable`, `configure`,
-            `config`), and the callbacks passed at construction (`process_callback`,
+            `config`, `protocol`, `destroy`), and the callbacks passed at construction (`process_callback`,
             `process_all_callback`, `read_file_callback`, `save_config_callback`, `save_settings_callback`,
-            `view_patch_notes_callback`).
+            `view_patch_notes_callback`), and the patched `Button` class (`button_cls`).
     """
 
     # Settings supplied indirectly by a test, or None when not parametrized
@@ -68,12 +68,16 @@ def display(request):
         patch.object(InvoiceAppDisplay, "resizable") as mock_resizable,
         patch.object(InvoiceAppDisplay, "configure") as mock_configure,
         patch.object(InvoiceAppDisplay, "config") as mock_config,
+        patch.object(InvoiceAppDisplay, "protocol") as mock_protocol,
+        patch.object(InvoiceAppDisplay, "destroy") as mock_destroy,
+        # The geometry handle_exit() persists, in the format Tk reports it in
+        patch.object(InvoiceAppDisplay, "winfo_geometry", return_value="780x820+320+180"),
         patch("source.gui.invoice_app_display.tk.StringVar"),
         patch("source.gui.invoice_app_display.tk.Menu", side_effect=_distinct_widget),
         patch("source.gui.invoice_app_display.tk.Label", side_effect=_distinct_widget),
         patch("source.gui.invoice_app_display.tk.Frame", side_effect=_distinct_widget),
         patch("source.gui.invoice_app_display.tk.Entry", side_effect=_distinct_widget),
-        patch("source.gui.invoice_app_display.tk.Button", side_effect=_distinct_widget),
+        patch("source.gui.invoice_app_display.tk.Button", side_effect=_distinct_widget) as mock_button_cls,
         patch(
             "source.gui.invoice_app_display.scrolledtext.ScrolledText",
             side_effect=_distinct_widget,
@@ -111,6 +115,8 @@ def display(request):
             resizable=mock_resizable,
             configure=mock_configure,
             config=mock_config,
+            protocol=mock_protocol,
+            destroy=mock_destroy,
             process_callback=callback,
             process_all_callback=process_all_callback,
             read_file_callback=read_file_callback,
@@ -120,6 +126,7 @@ def display(request):
             check_for_updates_callback=check_for_updates_callback,
             view_patch_notes_callback=view_patch_notes_callback,
             tooltip_cls=mock_tooltip_cls,
+            button_cls=mock_button_cls,
         )
 
 
@@ -697,14 +704,15 @@ def test_show_update_available_opens_window(mock_window_cls, display):
     display.display.show_update_available(result)
 
     # The update window is opened with the result's details and active theme/font,
-    # and is given the root window's destroy as the app-close callback so the app
-    # exits (releasing the exe lock) after the user is sent to the download page
+    # and is given handle_exit as the app-close callback so the app saves its
+    # geometry and exits (releasing the exe lock) after the user is sent to the
+    # download page
     mock_window_cls.assert_called_once_with(
         parent=display.display,
         title="Update Available",
         latest_version="9.9.9",
         release_url="https://example.com/release",
-        close_app_callback=display.display.destroy,
+        close_app_callback=display.display.handle_exit,
         theme=display.display.current_theme,
         font_family=display.display.current_font_family,
         font_size=display.display.current_font_size,
@@ -960,3 +968,72 @@ def test_apply_font_size_updates_state_and_widgets(display):
     # The hover tooltips are restyled to the new font
     for tooltip in display.display.tooltips:
         tooltip.update_style.assert_called_with(DARK, DEFAULT_FONT_FAMILY, 20)
+
+
+@pytest.mark.parametrize(
+    ("display", "expected"),
+    [
+        ({"window_geometry": "800x600"}, "800x600"),
+        ({"window_geometry": "800x600+10+20"}, "800x600+10+20"),
+        ({"window_geometry": "800x600-10-20"}, "800x600-10-20"),
+        ({}, "750x750"),
+        ({"window_geometry": ""}, "750x750"),
+        ({"window_geometry": "garbage"}, "750x750"),
+        ({"window_geometry": "800x"}, "750x750"),
+        ({"window_geometry": "800x600+10"}, "750x750"),
+    ],
+    indirect=["display"],
+)
+def test_init_restores_persisted_geometry_or_falls_back(display, expected):
+    """
+    Verifies that __init__ restores a well-formed persisted window geometry, and
+    falls back to the default resolution without raising when the stored value is
+    missing or corrupt.
+
+    Args:
+        display (pytest.fixture): Provides the display built with the given settings
+        expected (str): The geometry the window should be given
+    """
+
+    display.geometry.assert_called_once_with(expected)
+
+
+def test_handle_exit_persists_the_geometry_then_closes_the_window(display):
+    """
+    Verifies that closing the application saves the window's current size and
+    position before destroying the window, so it reopens where the user left it.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_exit()
+
+    display.save_settings_callback.assert_called_once_with("window_geometry", "780x820+320+180")
+    display.destroy.assert_called_once_with()
+
+
+def test_build_widgets_routes_the_window_close_box_through_handle_exit(display):
+    """
+    Verifies that the window's own close box exits through handle_exit too, since
+    it is the one way out of the application that reaches none of the app's widgets.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.protocol.assert_called_once_with("WM_DELETE_WINDOW", display.display.handle_exit)
+
+
+def test_exit_button_and_file_menu_exit_route_through_handle_exit(display):
+    """
+    Verifies that the Exit button and File -> Exit both close the application
+    through handle_exit, so the geometry is saved whichever one the user takes.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    exit_button_call = next(call for call in display.button_cls.call_args_list if call.kwargs.get("text") == "Exit")
+    assert exit_button_call.kwargs["command"] == display.display.handle_exit
+    display.display.file_menu.add_command.assert_any_call(label="Exit", command=display.display.handle_exit)
