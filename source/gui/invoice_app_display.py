@@ -4,7 +4,7 @@ from pathlib import Path
 from tkinter import filedialog, scrolledtext
 from typing import Protocol
 
-from fishbowl_common import ArgumentProvider, UpdateCheckResult
+from fishbowl_common import UpdateCheckResult
 from fishbowl_common.gui import (
     ALL_THEMES,
     DARK,  # Default theme used by GUI
@@ -105,10 +105,6 @@ class InvoiceAppDisplay(tk.Tk):
         """
 
         super().__init__()
-
-        # Argument provider, needed to check for integration test mode so that popups can be suppressed
-        # to run headless during automated testing
-        self.argument_provider = ArgumentProvider()
 
         # Title applied to the application window
         self.title(title)
@@ -630,11 +626,6 @@ class InvoiceAppDisplay(tk.Tk):
             message: The message to display
         """
 
-        # If in integration test mode, do not show popups since this will be running
-        # in a headless environment, and will halt testing
-        if self.argument_provider.integration_test_mode:
-            return
-
         # Use a themed window (rather than tkinter's native messagebox) so the
         # popup matches the application's styling and centers over the application
         # window instead of the screen
@@ -671,11 +662,6 @@ class InvoiceAppDisplay(tk.Tk):
                 be installed in place, which leaves the window offering only the manual
                 download.
         """
-
-        # If in integration test mode, do not show popups since this will be running
-        # in a headless environment, and will halt testing
-        if self.argument_provider.integration_test_mode:
-            return
 
         UpdateWindow(
             parent=self,

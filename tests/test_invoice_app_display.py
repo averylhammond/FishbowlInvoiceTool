@@ -53,8 +53,7 @@ def display(request):
     Returns:
         types.SimpleNamespace: Holds the constructed display (`display`), the
             mocked Tk methods (`title`, `geometry`, `resizable`, `configure`,
-            `config`), the mocked ArgumentProvider instance (`arg_provider`), and
-            the callbacks passed at construction (`process_callback`,
+            `config`), and the callbacks passed at construction (`process_callback`,
             `process_all_callback`, `read_file_callback`, `save_config_callback`, `save_settings_callback`,
             `view_patch_notes_callback`).
     """
@@ -69,7 +68,6 @@ def display(request):
         patch.object(InvoiceAppDisplay, "resizable") as mock_resizable,
         patch.object(InvoiceAppDisplay, "configure") as mock_configure,
         patch.object(InvoiceAppDisplay, "config") as mock_config,
-        patch("source.gui.invoice_app_display.ArgumentProvider") as mock_arg_cls,
         patch("source.gui.invoice_app_display.tk.StringVar"),
         patch("source.gui.invoice_app_display.tk.Menu", side_effect=_distinct_widget),
         patch("source.gui.invoice_app_display.tk.Label", side_effect=_distinct_widget),
@@ -113,7 +111,6 @@ def display(request):
             resizable=mock_resizable,
             configure=mock_configure,
             config=mock_config,
-            arg_provider=mock_arg_cls.return_value,
             process_callback=callback,
             process_all_callback=process_all_callback,
             read_file_callback=read_file_callback,
@@ -155,14 +152,13 @@ def test_init_sets_default_state(display):
     assert display.display.current_font_family == DEFAULT_FONT_FAMILY
     assert display.display.current_font_size == DEFAULT_FONT_SIZE
 
-    # The callbacks and argument provider are stored for later use
+    # The callbacks are stored for later use
     assert display.display.process_callback is display.process_callback
     assert display.display.process_all_callback is display.process_all_callback
     assert display.display.read_file_callback is display.read_file_callback
     assert display.display.save_config_callback is display.save_config_callback
     assert display.display.save_settings_callback is display.save_settings_callback
     assert display.display.copy_invoice_callback is display.copy_invoice_callback
-    assert display.display.argument_provider is display.arg_provider
 
 
 @pytest.mark.parametrize(
@@ -445,15 +441,12 @@ def test_set_processing_toggles_the_processing_controls(display, busy, state):
 def test_show_popup_displays_message(mock_window_cls, display):
     """
     Verifies that show_popup opens a themed MessageWindow (centered over the
-    application window) when not running in integration test mode.
+    application window).
 
     Args:
         mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
         display (pytest.fixture): Provides the display and its mocks
     """
-
-    # Running with a visible GUI (not headless)
-    display.arg_provider.integration_test_mode = False
 
     display.display.show_popup(title="Some Title", message="Some Message")
 
@@ -466,26 +459,6 @@ def test_show_popup_displays_message(mock_window_cls, display):
         font_family=display.display.current_font_family,
         font_size=display.display.current_font_size,
     )
-
-
-@patch("source.gui.invoice_app_display.MessageWindow")
-def test_show_popup_suppressed_in_integration_mode(mock_window_cls, display):
-    """
-    Verifies that show_popup opens no window when running in integration test
-    (headless) mode so automated runs do not block on a popup.
-
-    Args:
-        mock_window_cls (unittest.mock.MagicMock): Mocks the MessageWindow class
-        display (pytest.fixture): Provides the display and its mocks
-    """
-
-    # Running headless for integration testing
-    display.arg_provider.integration_test_mode = True
-
-    display.display.show_popup(title="Some Title", message="Some Message")
-
-    # No popup is shown in headless mode
-    mock_window_cls.assert_not_called()
 
 
 def test_handle_clear_resets_state(display):
@@ -715,8 +688,6 @@ def test_show_update_available_opens_window(mock_window_cls, display):
         display (pytest.fixture): Provides the display and its mocks
     """
 
-    # Running with a visible GUI (not headless)
-    display.arg_provider.integration_test_mode = False
     result = UpdateCheckResult(
         update_available=True,
         latest_version="9.9.9",
@@ -754,8 +725,6 @@ def test_show_update_available_forwards_the_install_callback(mock_window_cls, di
         display (pytest.fixture): Provides the display and its mocks
     """
 
-    # Running with a visible GUI (not headless)
-    display.arg_provider.integration_test_mode = False
     result = UpdateCheckResult(
         update_available=True,
         latest_version="9.9.9",
@@ -766,31 +735,6 @@ def test_show_update_available_forwards_the_install_callback(mock_window_cls, di
     display.display.show_update_available(result, start_install)
 
     assert mock_window_cls.call_args.kwargs["start_install_callback"] is start_install
-
-
-@patch("source.gui.invoice_app_display.UpdateWindow")
-def test_show_update_available_suppressed_in_integration_mode(mock_window_cls, display):
-    """
-    Verifies that show_update_available opens no window when running in integration
-    test (headless) mode so automated runs do not block on a popup.
-
-    Args:
-        mock_window_cls (unittest.mock.MagicMock): Mocks the UpdateWindow class
-        display (pytest.fixture): Provides the display and its mocks
-    """
-
-    # Running headless for integration testing
-    display.arg_provider.integration_test_mode = True
-    result = UpdateCheckResult(
-        update_available=True,
-        latest_version="9.9.9",
-        release_url="https://example.com/release",
-    )
-
-    display.display.show_update_available(result)
-
-    # No window is opened in headless mode
-    mock_window_cls.assert_not_called()
 
 
 @patch("source.gui.invoice_app_display.FileEditorWindow")

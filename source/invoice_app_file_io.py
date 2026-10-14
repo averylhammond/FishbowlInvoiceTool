@@ -204,6 +204,32 @@ class InvoiceAppFileIO:
         else:
             return pages
 
+    def list_invoice_files(self) -> list[Path]:
+        """
+        Lists the invoice PDFs found in the Invoices/ directory, sorted by filename
+
+        Returns:
+            A sorted list of full Paths to the *.pdf files in the Invoices/ directory, or
+            an empty list if the directory is missing or could not be read
+        """
+
+        try:
+            # Only return PDFs (the directory may hold other files), sorted by name so
+            # the invoices are processed in the same order on every platform. The
+            # integration test diffs logs/results.txt across platforms, and directory
+            # iteration order is not guaranteed to match between them.
+            return sorted(
+                (f for f in INVOICES_DIR.resolve().iterdir() if f.suffix.lower() == ".pdf"),
+                key=lambda f: f.name,
+            )
+
+        except OSError as error:
+            self.report_error(
+                "File Error",
+                f"Could not read the invoices directory at {INVOICES_DIR}: {error}",
+            )
+            return []
+
     def copy_invoice_file(self, source_path: Path, overwrite: bool = False) -> str:
         """
         Copies an invoice PDF into the Invoices/ directory so it is ready for
