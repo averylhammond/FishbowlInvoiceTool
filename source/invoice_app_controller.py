@@ -1,4 +1,7 @@
 # Import necessary classes from modules
+import threading
+from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 from fishbowl_common import (
@@ -14,6 +17,7 @@ from source.constants import (
     COST_CRITERIA_PATH,
     GITHUB_REPO,
     INSTALLER_ASSET_PATTERN,
+    INVOICES_DIR,
     PATCH_NOTES_PATH,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
@@ -70,6 +74,7 @@ class InvoiceAppController:
             title="Invoice Processor",
             window_resolution="750x750",
             process_callback=self.handle_process_invoice,
+            process_all_callback=self.handle_process_all_invoices,
             read_file_callback=self.file_io_controller.read_text_file,
             save_config_callback=self.handle_save_config,
             save_settings_callback=self.handle_save_setting,
@@ -82,8 +87,10 @@ class InvoiceAppController:
         # Wire the GUI's popup into the File IO Controller and Settings Repository
         # so file/database failures surface to the user without coupling those
         # components to the GUI. This must happen before the config files are
-        # parsed below so parse failures can be reported.
-        self.file_io_controller.report_error = self.display.show_popup
+        # parsed below so parse failures can be reported. File IO errors can also
+        # be raised on the processing worker thread, so they go through
+        # _on_gui_thread() rather than straight to the popup.
+        self.file_io_controller.report_error = partial(self._on_gui_thread, self.display.show_popup)
         self.settings_repository.report_error = self.display.show_popup
 
         # Create the Update Coordinator, which owns the background release check
@@ -128,8 +135,10 @@ class InvoiceAppController:
         self.file_io_controller.reset_results_file()
 
         if self.argument_provider.integration_test_mode:
-            # If in integration test mode, process all invoices directly without starting the GUI
-            self.display.handle_process_all_invoices()
+            # If in integration test mode, process all invoices directly without
+            # starting the GUI. Run on this thread rather than a worker: with no
+            # main loop running, nothing would ever drain what the worker posts.
+            self.process_all_invoices()
         else:
             # Kick off a background check for a newer release before entering the
             # GUI loop. Confined to this branch so integration-test mode performs no
@@ -214,6 +223,113 @@ class InvoiceAppController:
 
     def handle_process_invoice(self, invoice_filepath: Path, append_output: bool) -> None:
         """
+        Processes the invoice located at invoice_filepath on a background thread.
+        Wired into the display as its process callback.
+
+        Args:
+            invoice_filepath: The filepath of the invoice PDF to be processed.
+            append_output: Whether to append the Invoice outputs to any existing outputs.
+        """
+
+        self._start_processing(partial(self.process_invoice, invoice_filepath, append_output))
+
+    def handle_process_all_invoices(self) -> None:
+        """
+        Processes every invoice in the Invoices/ folder on a background thread.
+        Wired into the display as its process-all callback.
+        """
+
+        self._start_processing(self.process_all_invoices)
+
+    def _start_processing(self, work: Callable[[], None]) -> None:
+        """
+        Locks the GUI's processing controls and spawns a daemon thread to run a
+        processing job.
+
+        Running on a background thread keeps the window responsive while PDFs are
+        parsed. Daemon, so exiting mid-run does not hang the application waiting
+        on it.
+
+        Args:
+            work: The processing job to run
+        """
+
+        # Locked here, on the GUI thread, so a second click cannot start an
+        # overlapping run before the worker gets going
+        self.display.set_processing(True)
+        threading.Thread(target=self._run_processing, args=(work,), daemon=True).start()
+
+    def _run_processing(self, work: Callable[[], None]) -> None:
+        """
+        Worker-thread body for a processing job. Everything the job shows the user
+        reaches the GUI thread through _on_gui_thread().
+
+        Args:
+            work: The processing job to run
+        """
+
+        try:
+            work()
+
+        # BLE001 is suppressed rather than satisfied: this is the outer boundary
+        # of the worker thread. The release build has no console, so an uncaught
+        # error here would vanish without a trace; it must reach the user as a
+        # popup instead.
+        except Exception as e:  # noqa: BLE001
+            self._on_gui_thread(
+                self.display.show_popup,
+                title="Processing Error",
+                message=f"An error occurred while processing invoices: {e}",
+            )
+        finally:
+            # Unlocked whatever happened, or a failed run would leave the controls
+            # disabled for the rest of the session
+            self._on_gui_thread(self.display.set_processing, False)
+
+    def _on_gui_thread(self, func: Callable[..., object], *args: object, **kwargs: object) -> None:
+        """
+        Runs a display call on the GUI thread, which is the only thread allowed to
+        touch tkinter. Called from the GUI thread itself (startup, headless mode),
+        it runs inline; from the processing worker, it is handed over through
+        display.after().
+
+        Args:
+            func: The display method to call
+            *args: Positional arguments for func
+            **kwargs: Keyword arguments for func
+        """
+
+        if threading.current_thread() is threading.main_thread():
+            func(*args, **kwargs)
+        else:
+            self.display.after(0, partial(func, *args, **kwargs))
+
+    def process_all_invoices(self) -> None:
+        """
+        Processes every invoice PDF in the Invoices/ folder, appending each one's
+        output to the results.txt file and output box. Shared by the GUI's
+        "Process All Invoices" button and the headless integration-test run.
+        """
+
+        try:
+            # Loop through all invoice files in the invoices directory and process each one
+            for file_path in INVOICES_DIR.resolve().iterdir():
+                # Process each invoice, appending output to the results.txt file and output widget
+                self.process_invoice(file_path, append_output=True)
+
+        # BLE001 is suppressed rather than satisfied: this is the outer boundary
+        # over a directory of arbitrary user-supplied PDFs. A parse failure must
+        # reach the user as a popup rather than an unhandled crash, so the catch
+        # stays broad here even though every handler beneath this layer is narrow.
+        except Exception as e:  # noqa: BLE001
+            self._on_gui_thread(
+                self.display.show_popup,
+                title="Processing Error",
+                message=f"An error occurred while processing invoices: {e}",
+            )
+
+    def process_invoice(self, invoice_filepath: Path, append_output: bool) -> None:
+        """
         Directs components to process the invoice located at invoice_filepath
 
         Args:
@@ -230,7 +346,8 @@ class InvoiceAppController:
 
         # If there are no pages in the invoice, show an error and return early
         if not invoice.page_contents or invoice.page_contents[0] is None:
-            self.display.show_popup(
+            self._on_gui_thread(
+                self.display.show_popup,
                 title="Error",
                 message=f"No pages were found in the invoice PDF located at {invoice_filepath}.",
             )
@@ -245,7 +362,8 @@ class InvoiceAppController:
         # (e.g. "Microsoft Print to PDF") looks like: the page is stored as an
         # image, or its text as vector outlines, with no text layer left behind.
         if not any(page and page.strip() for page in invoice.page_contents):
-            self.display.show_popup(
+            self._on_gui_thread(
+                self.display.show_popup,
                 title="No Readable Text",
                 message=(
                     f"No text could be read from the invoice PDF located at {invoice_filepath}. "
@@ -272,14 +390,15 @@ class InvoiceAppController:
         self.invoice_processor.process_invoice(invoice=invoice)
 
         # Display the calculated totals in the GUI
-        self.display.display_invoice_output(invoice=invoice, append_output=append_output)
+        self._on_gui_thread(self.display.display_invoice_output, invoice=invoice, append_output=append_output)
 
         # Invoices generated by Fishbowl are known to have rounding errors, likely due to
         # floating point precision issues, so we need to account for that and let the user
         # know that the generated total may not match the listed total on the invoice.
         # This is done by displaying an error popup window
         if invoice.total != invoice.listed_total:
-            self.display.show_popup(
+            self._on_gui_thread(
+                self.display.show_popup,
                 title="Calculated Total Mismatch",
                 message=(
                     f"The calculated total of ${invoice.total} does not match the listed "

@@ -71,7 +71,7 @@ matching `vX.Y.Z` tag.** Details in `.claude/rules/ci.md`.
 
 | Module | Owns |
 | --- | --- |
-| `source/invoice_app_controller.py` | Entry-point glue: builds the collaborators, loads configs, orchestrates `handle_process_invoice()` (read PDF → populate → process → display → warn on total mismatch → write `logs/results.txt`) |
+| `source/invoice_app_controller.py` | Entry-point glue: builds the collaborators, loads configs, orchestrates `process_invoice()` (read PDF → populate → process → display → warn on total mismatch → write `logs/results.txt`) and the `process_all_invoices()` loop; the GUI runs both on a daemon worker thread that reaches the display only through `_on_gui_thread()` |
 | `source/invoice_app_file_io.py` | All file I/O: invoice PDFs via pypdf (one string per page), the `logs/` files, copying invoices in, and parsing the three `Configs/` files |
 | `source/invoice_processor.py` | Parsing: `populate_invoice()` for header fields, `process_invoice()` for the line-item table, `process_end_of_invoice()` for tax and listed total |
 | `source/processor_utilities.py` | Shared parsing helpers (`search_text_by_re`, `find_sales_rep`, `format_currency`, …) |

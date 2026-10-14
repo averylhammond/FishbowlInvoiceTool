@@ -65,6 +65,7 @@ class InvoiceAppDisplay(tk.Tk):
     def __init__(
         self,
         process_callback: ProcessInvoiceCallback,
+        process_all_callback: Callable[[], None],
         read_file_callback: Callable[[Path], str],
         save_config_callback: Callable[[Path, str], None],
         save_settings_callback: Callable[[str, str], None],
@@ -79,8 +80,10 @@ class InvoiceAppDisplay(tk.Tk):
         Initializes the InvoiceAppDisplay object
 
         Args:
-            process_callback: Callback that processes the selected invoice file and
-                displays its cost breakdown
+            process_callback: Callback that starts processing the selected invoice
+                file in the background and displays its cost breakdown
+            process_all_callback: Callback that starts processing every invoice in
+                the Invoices/ folder in the background
             read_file_callback: Callback that reads a file's full contents, used to
                 populate the native file editor/viewer window
             save_config_callback: Callback that persists edited config contents (and
@@ -121,6 +124,9 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Callback function to process the selected invoice file
         self.process_callback = process_callback
+
+        # Callback function to process every invoice in the Invoices/ folder
+        self.process_all_callback = process_all_callback
 
         # Callback to read a file's contents for the native editor/viewer window
         self.read_file_callback = read_file_callback
@@ -505,27 +511,31 @@ class InvoiceAppDisplay(tk.Tk):
 
     def handle_process_all_invoices(self) -> None:
         """
-        On "Process All Invoices" button press, processes all invoice PDF files in the specified invoices directory
-        by iterating through each file and calling the process_callback function for each one.
-        This will append the output to the results.txt file and output widget.
+        On "Process All Invoices" button press, forwards the call to the
+        process_all_callback function specified during construction, which
+        processes every invoice in the Invoices/ folder
         """
 
-        try:
-            # Loop through all invoice files in the invoices directory and process each one
-            for file_path in INVOICES_DIR.resolve().iterdir():
-                # Process each invoice, appending output to the results.txt file and output widget
-                self.process_callback(file_path, append_output=True)
+        self.process_all_callback()
 
-        # BLE001 is suppressed rather than satisfied: this is the GUI's outer
-        # boundary over a directory of arbitrary user-supplied PDFs. A parse
-        # failure must reach the user as a popup rather than an unhandled crash,
-        # so the catch stays broad here even though every handler beneath this
-        # layer is narrow.
-        except Exception as e:  # noqa: BLE001
-            self.show_popup(
-                title="Processing Error",
-                message=f"An error occurred while processing invoices: {e}",
-            )
+    def set_processing(self, busy: bool) -> None:
+        """
+        Locks the controls that could interfere with a run while one is in
+        progress, and unlocks them once it finishes: both process buttons, so a
+        second click cannot start an overlapping run; Discover Invoices, which
+        copies files into the folder being processed; and the Edit menu's config
+        editors, whose Save reloads criteria the run is reading
+
+        Args:
+            busy: True while a run is in progress, False once it has finished
+        """
+
+        state = "disabled" if busy else "normal"
+        self.process_invoice_button.configure(state=state)
+        self.process_all_invoices_button.configure(state=state)
+        self.discover_invoices_button.configure(state=state)
+        for label in ("Cost Criteria", "Payment Terms", "Sales Reps"):
+            self.edit_menu.entryconfigure(label, state=state)
 
     def handle_discover_invoices(self) -> None:
         """

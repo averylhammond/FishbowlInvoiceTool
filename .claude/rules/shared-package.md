@@ -49,7 +49,26 @@ constructing them reads nothing and touches no network; the file is read per cal
 
 Order matters in `__init__`: `report_error` on the file I/O controller and the settings repository
 is wired to `display.show_popup` **before** the config files are parsed, so parse failures reach
-the user.
+the user. The file I/O controller's is `partial(self._on_gui_thread, self.display.show_popup)`
+rather than the bare method, because it also fires on the processing worker thread; the settings
+repository's only fires on the GUI thread and stays direct.
+
+## Processing off the GUI thread (#36)
+
+The same shape as `UpdateCoordinator`'s check. The display's two process callbacks,
+`handle_process_invoice()` and `handle_process_all_invoices()`, each hand a job to
+`_start_processing()`. That calls `display.set_processing(True)` on the GUI thread and starts a
+`daemon=True` thread on `_run_processing()`. The thread runs the job, turns any unexpected
+exception into a "Processing Error" popup (the `--noconsole` build would otherwise swallow it),
+and in `finally` unlocks the controls.
+
+The work itself is `process_invoice()` and `process_all_invoices()`. Every display call inside
+them goes through **`_on_gui_thread(func, *args, **kwargs)`**: on the main thread it calls `func`
+inline, and on any other thread it posts `partial(func, …)` through `display.after(0, …)`.
+Running inline on the main thread is what keeps the **headless integration run synchronous and
+unchanged**: `start_application()` calls `process_all_invoices()` directly, on the main thread,
+with no main loop that could ever drain a posted callback. Do not route the headless run through
+the worker.
 
 ## Patch notes on the first launch after an update
 
