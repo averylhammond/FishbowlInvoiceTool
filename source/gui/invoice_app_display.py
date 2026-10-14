@@ -1,3 +1,4 @@
+import re
 import tkinter as tk
 from collections.abc import Callable
 from pathlib import Path
@@ -33,12 +34,18 @@ from source.constants import (
     SALES_REPS_PATH,
     SETTING_KEY_FONT_FAMILY,
     SETTING_KEY_FONT_SIZE,
+    SETTING_KEY_GEOMETRY,
     SETTING_KEY_THEME,
     USER_GUIDE_PATH,
     VERSION,
 )
 from source.gui.invoice_discovery_window import InvoiceDiscoveryWindow
 from source.invoice import Invoice
+
+# A tkinter geometry string: a width and height, optionally followed by an x and y
+# screen offset (e.g. "750x750" or "780x820+320+180"). Used to reject a corrupt
+# persisted geometry before it is handed to geometry(), which would raise on it.
+GEOMETRY_PATTERN = re.compile(r"^\d+x\d+([+-]\d+[+-]\d+)?$")
 
 # Future TODO: Add second output window for errors, instead of cluttering the screen with
 #              pop up windows when Fishbowl invoices present rounding errors
@@ -99,18 +106,22 @@ class InvoiceAppDisplay(tk.Tk):
                 the user selects "What's New" from the Help menu
             title: Title of the application window
             window_resolution: Resolution of the application window (e.g., "750x750")
-            settings: Previously persisted settings (theme/font/font-size) used to restore
-                the user's last choices on startup. Missing or unknown values fall back to
-                the application defaults.
+            settings: Previously persisted settings (theme/font/font-size/window geometry)
+                used to restore the user's last choices on startup. Missing or unknown
+                values fall back to the application defaults.
         """
 
         super().__init__()
 
+        # The settings persisted by the last run, or none on a first launch
+        settings = settings or {}
+
         # Title applied to the application window
         self.title(title)
 
-        # Resolution of the application window
-        self.geometry(window_resolution)
+        # Resolution of the application window, restored to the size and position
+        # the user last left it at
+        self.geometry(self._parse_geometry(settings.get(SETTING_KEY_GEOMETRY), window_resolution))
 
         # Allow user to resize window in x and y direction
         self.resizable(True, True)
@@ -146,7 +157,6 @@ class InvoiceAppDisplay(tk.Tk):
         # Restore the user's last-chosen settings, falling back to the defaults
         # for anything missing or unrecognized. These are set before build_widgets()
         # so every widget is created already using the restored theme and font.
-        settings = settings or {}
         self.current_theme = THEME_BY_NAME.get(settings.get(SETTING_KEY_THEME), DARK)
         self.current_font_family = settings.get(SETTING_KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY)
         self.current_font_size = self._parse_font_size(settings.get(SETTING_KEY_FONT_SIZE))
@@ -190,6 +200,10 @@ class InvoiceAppDisplay(tk.Tk):
 
         self.configure(bg=self.current_theme.bg_main)
 
+        # Route the window's own close box through handle_exit too, since it is the
+        # one way out of the application that reaches no widget of ours
+        self.protocol("WM_DELETE_WINDOW", self.handle_exit)
+
         # Menu bar containing dropdowns for File, Edit, and Preferences
         self.menu_bar = tk.Menu(self)
 
@@ -201,7 +215,7 @@ class InvoiceAppDisplay(tk.Tk):
         self.file_menu.add_command(label="Open", command=self.handle_browse_button)
         self.file_menu.add_command(label="Clear", command=self.handle_clear)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Exit", command=self.quit)
+        self.file_menu.add_command(label="Exit", command=self.handle_exit)
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
 
         # Edit dropdown
@@ -328,11 +342,13 @@ class InvoiceAppDisplay(tk.Tk):
 
         # Create button for exiting the application. Placed on its own row below
         # the three action buttons and spanning all three columns so it stays
-        # centered beneath them.
+        # centered beneath them. handle_exit() rather than quit() so the button and
+        # the window's close box behave identically: quit() would only end the main
+        # loop, leaving the window and the interpreter's Tk state alive behind it.
         self.exit_button = tk.Button(
             self.button_frame,
             text="Exit",
-            command=self.quit,
+            command=self.handle_exit,
             bg=self.current_theme.bg_entry,
             fg=self.current_theme.fg_text,
             activebackground=RED,
@@ -668,14 +684,28 @@ class InvoiceAppDisplay(tk.Tk):
             title="Update Available",
             latest_version=result.latest_version,
             release_url=result.release_url,
-            # self is the root tk.Tk, so destroy() exits the whole app, releasing
-            # the executable's file lock so the installer can replace it
-            close_app_callback=self.destroy,
+            # self is the root tk.Tk, so this exits the whole app, releasing the
+            # executable's file lock so the installer can replace it
+            close_app_callback=self.handle_exit,
             theme=self.current_theme,
             font_family=self.current_font_family,
             font_size=self.current_font_size,
             start_install_callback=start_install,
         )
+
+    def handle_exit(self) -> None:
+        """
+        On any request to close the application, persists the window's current size
+        and position so it reopens where the user left it, then closes the window.
+
+        Every way out of the application routes through here (the Exit button, the
+        File menu, the window's close box, and the update window), so the geometry
+        is saved no matter which one the user takes. It is saved here rather than on
+        <Configure> so dragging the window does not write to the database every frame.
+        """
+
+        self.save_settings_callback(SETTING_KEY_GEOMETRY, self.winfo_geometry())
+        self.destroy()
 
     def handle_clear(self) -> None:
         """
@@ -882,6 +912,25 @@ class InvoiceAppDisplay(tk.Tk):
             return int(value)
         except (TypeError, ValueError):
             return DEFAULT_FONT_SIZE
+
+    def _parse_geometry(self, value: str | None, default: str) -> str:
+        """
+        Converts a persisted window geometry into one safe to hand to geometry(),
+        falling back to the default when it is missing or malformed
+
+        Args:
+            value: The raw geometry loaded from settings, or None when no geometry has
+                been persisted yet
+            default: The geometry to use instead when value is unusable
+
+        Returns:
+            The restored geometry, or default if value is missing or does not look like
+            a tkinter geometry string
+        """
+
+        if value and GEOMETRY_PATTERN.match(value):
+            return value
+        return default
 
     def _apply_font(self) -> None:
         """
