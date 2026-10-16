@@ -55,6 +55,6 @@ To see which invoices are in the Invoices folder, press "View" -> "Invoices" to 
 your file explorer.
 
 The output of the processed invoice(s) can be read in the output window below the buttons, or in the
-results file that can be viewed by pressing "View" -> "Results.txt".
+results file that can be viewed by pressing "View" -> "Results Log".
 
 Repeat until all invoices are processed, and then click "Exit" to close the program.
