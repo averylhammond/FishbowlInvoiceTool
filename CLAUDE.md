@@ -81,7 +81,8 @@ matching `vX.Y.Z` tag.** Details in `.claude/rules/ci.md`.
 | `source/gui/invoice_discovery_window.py` | Copying downloaded invoice PDFs into `Invoices/` without leaving the app |
 
 **Everything else is `fishbowl-common`, taken as a pinned git tag.** From the headless half:
-`ArgumentProvider`, `SettingsRepository`, `UpdateCoordinator`, `PatchNotes`, `compare_versions()`.
+`ArgumentProvider`, `SettingsRepository`, `UpdateCoordinator`, `PatchNotes`, `compare_versions()`,
+`open_in_file_explorer()`.
 From `fishbowl_common.gui`: `ThemedSubwindow`, `MessageWindow`, `AboutWindow`, `FileEditorWindow`,
 `UpdateWindow`, `PatchNotesWindow`, `Tooltip`, and the theme/font data. Those two imports are
 deliberately separate — the top-level package stays tkinter-free so a headless run never loads

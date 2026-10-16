@@ -20,6 +20,7 @@ wiring. Definitions and their tests live in that repo; do not duplicate either h
 | `UpdateCoordinator` | `VERSION`, `GITHUB_REPO`, `display`, `INSTALLER_ASSET_PATTERN` as `asset_pattern` |
 | `PatchNotes` | `PATCH_NOTES_PATH` as `notes_path` |
 | `compare_versions()` | — (helper) |
+| `open_in_file_explorer()` | `INVOICES_DIR` (View -> Invoices, in the display) |
 
 `UpdateCoordinator` owns the **whole** update feature: the daemon worker thread, the
 `UpdateChecker` fetch, the `display.after(0, …)` hop back onto the GUI thread, the download,

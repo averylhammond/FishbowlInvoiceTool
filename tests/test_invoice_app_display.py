@@ -15,6 +15,7 @@ from fishbowl_common.gui import (
 from source.constants import (
     APP_NAME,
     COST_CRITERIA_PATH,
+    INVOICES_DIR,
     PAYMENT_TERMS_PATH,
     SALES_REPS_PATH,
     VERSION,
@@ -841,6 +842,67 @@ def test_handle_debug_log_missing_shows_error(mock_debug_path, mock_window_cls, 
     # An error popup is shown and no window is opened
     mock_show_popup.assert_called_once()
     mock_window_cls.assert_not_called()
+
+
+def test_view_menu_offers_invoices(display):
+    """
+    Verifies that the View menu has an Invoices entry wired to
+    handle_open_invoices.
+
+    Args:
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.view_menu.add_command.assert_any_call(
+        label="Invoices", command=display.display.handle_open_invoices
+    )
+
+
+@patch("source.gui.invoice_app_display.filedialog.askopenfilename")
+@patch.object(InvoiceAppDisplay, "show_popup")
+@patch("source.gui.invoice_app_display.open_in_file_explorer", return_value=True)
+def test_handle_open_invoices_opens_the_folder_in_the_file_explorer(
+    mock_open, mock_show_popup, mock_askopenfilename, display
+):
+    """
+    Verifies that handle_open_invoices hands the invoices folder to the shared
+    file explorer launcher, and shows no popup or file dialog when it opens.
+
+    Args:
+        mock_open (unittest.mock.MagicMock): Mocks open_in_file_explorer, reporting success
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
+        mock_askopenfilename (unittest.mock.MagicMock): Mocks the file dialog
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_open_invoices()
+
+    # The folder is opened in the file explorer, with no dialog and no error
+    mock_open.assert_called_once_with(INVOICES_DIR)
+    mock_askopenfilename.assert_not_called()
+    mock_show_popup.assert_not_called()
+
+
+@patch.object(InvoiceAppDisplay, "show_popup")
+@patch("source.gui.invoice_app_display.open_in_file_explorer", return_value=False)
+def test_handle_open_invoices_shows_an_error_when_the_folder_cannot_open(mock_open, mock_show_popup, display):
+    """
+    Verifies that handle_open_invoices shows a "Folder Not Found" popup naming
+    the resolved folder when the launcher reports it could not open it.
+
+    Args:
+        mock_open (unittest.mock.MagicMock): Mocks open_in_file_explorer, reporting failure
+        mock_show_popup (unittest.mock.MagicMock): Mocks show_popup
+        display (pytest.fixture): Provides the display and its mocks
+    """
+
+    display.display.handle_open_invoices()
+
+    # The launcher was tried, and the user is told which folder could not be opened
+    mock_open.assert_called_once_with(INVOICES_DIR)
+    popup_kwargs = mock_show_popup.call_args.kwargs
+    assert popup_kwargs["title"] == "Folder Not Found"
+    assert str(INVOICES_DIR.resolve()) in popup_kwargs["message"]
 
 
 @patch("source.gui.invoice_app_display.FileEditorWindow")

@@ -5,7 +5,7 @@ from pathlib import Path
 from tkinter import filedialog, scrolledtext
 from typing import Protocol
 
-from fishbowl_common import UpdateCheckResult
+from fishbowl_common import UpdateCheckResult, open_in_file_explorer
 from fishbowl_common.gui import (
     ALL_THEMES,
     DARK,  # Default theme used by GUI
@@ -229,10 +229,12 @@ class InvoiceAppDisplay(tk.Tk):
         # View dropdown
         #  -> Results Log option to open the results log file
         #  -> Debug Log option to open the debug log file (only in debug configuration)
+        #  -> Invoices option to open the invoices folder in the file explorer
         self.view_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.view_menu.add_command(label="Results Log", command=self.handle_results_log)
         if __debug__:
             self.view_menu.add_command(label="Debug Log", command=self.handle_debug_log)
+        self.view_menu.add_command(label="Invoices", command=self.handle_open_invoices)
         self.menu_bar.add_cascade(label="View", menu=self.view_menu)
 
         # Preferences dropdown
@@ -776,6 +778,19 @@ class InvoiceAppDisplay(tk.Tk):
                 message=missing_message,
             )
 
+    def _open_folder(self, folder: Path, missing_message: str) -> None:
+        """
+        Opens the given folder in the operating system's file explorer. Shows an
+        error popup with the provided message if the folder cannot be opened.
+
+        Args:
+            folder: The folder to open
+            missing_message: The popup message shown when the folder cannot be opened
+        """
+
+        if not open_in_file_explorer(folder):
+            self.show_popup(title="Folder Not Found", message=missing_message)
+
     def handle_cost_criteria(self) -> None:
         """
         Opens the Cost Criteria config file in a native editor window
@@ -814,6 +829,16 @@ class InvoiceAppDisplay(tk.Tk):
             DEBUG_LOG_PATH,
             "Debug Log",
             f"Log not found at: {DEBUG_LOG_PATH}. Process an invoice to generate the log.",
+        )
+
+    def handle_open_invoices(self) -> None:
+        """
+        Opens the invoices directory in the file explorer. Shows an error popup if
+        it cannot be opened.
+        """
+        self._open_folder(
+            INVOICES_DIR,
+            f"Could not open {INVOICES_DIR.resolve()}. Create it and copy your invoice PDFs into it.",
         )
 
     def apply_theme(self, theme: Theme) -> None:
