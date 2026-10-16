@@ -1,6 +1,6 @@
 name: Unit Test Workflow
 
-# Run the unit tests pipeline on pull requests to main, and all commits on all branches
+# Run the unit tests pipeline on pull requests to main
 on:
   pull_request:
     branches: [ main ]
@@ -8,30 +8,22 @@ on:
 # Allow for the job to be ran manually from the GitHub Actions UI
   workflow_dispatch:
 
-# Define the jobs permissions
-# Let the code coverage job add PR comments with coverage results
+# Read-only access is all this job needs: it only runs pytest.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   test:
 
-    # Specify that all job steps should be run from within the project directory
-    defaults:
-      run:
-        working-directory: ./project_directory
-    
     # Give the job a name to link into the Github Rules UI
     name: Unit Test CI Check
     runs-on: ubuntu-latest
 
-    # Checkout repo
+    # Checkout repo. The unit tests touch no real files, so the private
+    # submodule holding the test data is deliberately not checked out.
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
-      with:
-        path: project_directory
+      uses: actions/checkout@v4
 
     # Set up Python environment
     - name: Set up Python environment
@@ -46,6 +38,6 @@ jobs:
         pip install -r requirements/dev.txt
 
     # Run unit tests with pytest
-    - name: Run tests and code coverage
+    - name: Run unit tests
       run: |
         pytest tests/
