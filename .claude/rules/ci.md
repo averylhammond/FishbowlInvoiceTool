@@ -19,9 +19,10 @@ Five workflows live in `.github/workflows/`. All pin Python **3.11.9** (the cove
 
 Notes that are easy to get wrong:
 
-- **`unit-tests.yml` checks out into `project_directory`** and sets that as the job's
-  `working-directory`, unlike the other three which check out at the root. Paths in that workflow
-  are relative to it.
+- **Only `release.yml` needs a write token** (`contents: write`, to publish the release).
+  `unit-tests.yml`, `lint.yml` and `code-coverage.yml` declare `contents: read` — Codecov posts
+  its PR comments through its own GitHub App, so coverage needs no write token either.
+  `integration-tests.yml` declares no `permissions` block and so gets the repository default.
 - **The coverage gate is `fail_under = 90` in `pyproject.toml`**, not a workflow flag, so a local
   `pytest --cov` enforces it too. It fails the job (and blocks the PR once the check is required
   in branch protection) whenever total coverage drops below 90%. The Codecov
