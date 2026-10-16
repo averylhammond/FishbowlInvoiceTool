@@ -43,7 +43,11 @@ All Invoices / Discover Invoices / Exit buttons over a `ScrolledText` output box
 - **Edit** — Cost Criteria / Payment Terms / Sales Reps, each opening an editable
   `FileEditorWindow` whose Save routes to the controller's `handle_save_config`
 - **View** — Results Log, and **Debug Log only under `__debug__`** (stripped from the release
-  build, which compiles with `python -OO`), both read-only
+  build, which compiles with `python -OO`), both read-only. Invoices opens `INVOICES_DIR` in the
+  OS file explorer through `_open_folder()`, which calls the shared `open_in_file_explorer()` and
+  shows a "Folder Not Found" popup naming the resolved path when it returns `False` — the same
+  shape as FishbowlInventoryTool's Inventories / Turnover Reports (#60), and never a file dialog
+  whose Open button does nothing (#86)
 - **Preferences** — Theme, Font, Font Size cascades built from `ALL_THEMES` / `FONT_FAMILIES` /
   `FONT_SIZES`; each selection persists through `save_settings_callback`
 - **Help** — About, Check for Updates, Open User Guide, What's New

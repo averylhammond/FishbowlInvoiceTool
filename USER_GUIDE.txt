@@ -51,7 +51,10 @@ To process invoices, follow one of the two actions:
 
   - To process all invoices in the Invoices folder, simply click the "Process All Invoices" button.
 
+To see which invoices are in the Invoices folder, press "View" -> "Invoices" to open the folder in
+your file explorer.
+
 The output of the processed invoice(s) can be read in the output window below the buttons, or in the
-results file that can be viewed by pressing "View" -> "Results.txt".
+results file that can be viewed by pressing "View" -> "Results Log".
 
 Repeat until all invoices are processed, and then click "Exit" to close the program.
