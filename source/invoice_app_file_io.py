@@ -12,6 +12,7 @@ from source.constants import (
     RESULTS_LOG_PATH,
     SALES_REPS_PATH,
 )
+from source.cost_criteria import CostCriteria
 from source.invoice import Invoice
 
 
@@ -30,11 +31,6 @@ class InvoiceAppFileIO:
 
         # Callback used to report file I/O failures to the user
         self.report_error = report_error
-
-        # Initialize cost criteria/exclusion lists
-        self.labor_criteria: list[str] = []
-        self.labor_exclusions: list[str] = []
-        self.shipping_criteria: list[str] = []
 
     def reset_debug_file(self) -> None:
         """
@@ -347,45 +343,39 @@ class InvoiceAppFileIO:
 
         return payment_terms
 
-    def add_cost_criteria_field(self, category: str, line: str) -> None:
+    def add_cost_criteria_field(self, entries: dict[str, list[str]], category: str, line: str) -> None:
         """
         Given the current category being read in the cost criteria config file, add the entry
-        to the list of criteria/exclusions
+        to that category's list of criteria/exclusions
 
         Args:
+            entries: The entries gathered so far, keyed by recognized category heading
             category: The category of criteria being parsed
             line: The current line containing the criteria/exclusion
         """
 
-        # If this is a Labor Criteria, add it to the appropriate list
-        if category == "LABOR CRITERIA":
-            self.labor_criteria.append(line)
-
-        # If this is a Labor Exclusion, add it to the appropriate list
-        elif category == "LABOR EXCLUSIONS":
-            self.labor_exclusions.append(line)
-
-        # If this is a Labor Exclusion, add it to the appropriate list
-        elif category == "SHIPPING CRITERIA":
-            self.shipping_criteria.append(line)
+        # If the category is recognized, add the entry to its list
+        if category in entries:
+            entries[category].append(line)
 
         # If the category cannot be read, print it to the debug file
         else:
             self.print_to_debug_file(f"Unknown category read out of Cost Criteria configuration file: {category}")
 
-    def parse_cost_criteria_file(self) -> None:
+    def parse_cost_criteria_file(self) -> CostCriteria:
         """
-        Reads all cost criteria/exclusions from the provided config file and stores them
-        in member variables
+        Reads all cost criteria/exclusions from the provided config file
+
+        Returns:
+            A new CostCriteria holding the parsed entries, empty if the file could not be read
         """
 
-        # Clear the criteria lists in place so re-parsing (e.g. after the user
-        # saves an edited config) replaces the previous contents rather than
-        # appending to them. Clearing in place rather than reassigning keeps the
-        # references held by the InvoiceProcessor pointed at the same lists.
-        self.labor_criteria.clear()
-        self.labor_exclusions.clear()
-        self.shipping_criteria.clear()
+        # The entries for each recognized category heading, filled in as the file is read
+        entries: dict[str, list[str]] = {
+            "LABOR CRITERIA": [],
+            "LABOR EXCLUSIONS": [],
+            "SHIPPING CRITERIA": [],
+        }
 
         try:
             # Open cost criteria config file for reading
@@ -404,10 +394,16 @@ class InvoiceAppFileIO:
                         category = line.rstrip(":").upper()
 
                     else:
-                        self.add_cost_criteria_field(category=category, line=line)
+                        self.add_cost_criteria_field(entries=entries, category=category, line=line)
 
         except OSError as error:
             self.report_error(
                 "Config Error",
                 f"Could not read the cost criteria config at {COST_CRITERIA_PATH}: {error}",
             )
+
+        return CostCriteria(
+            labor=tuple(entries["LABOR CRITERIA"]),
+            labor_exclusions=tuple(entries["LABOR EXCLUSIONS"]),
+            shipping=tuple(entries["SHIPPING CRITERIA"]),
+        )

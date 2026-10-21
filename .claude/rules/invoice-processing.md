@@ -4,6 +4,7 @@ paths:
   - "source/processor_utilities.py"
   - "source/invoice_app_file_io.py"
   - "source/invoice.py"
+  - "source/cost_criteria.py"
 ---
 
 # Invoice parsing and file I/O
@@ -92,13 +93,16 @@ committed to this repo** — they arrive from the `automated-invoice-testing` su
 | --- | --- | --- |
 | `Sales_Reps.txt` | `CODE=Name` per line, split on the first `=` | `dict` |
 | `Payment_Terms.txt` | One term per line | `list` |
-| `Cost_Criteria.txt` | `CATEGORY:` heading lines, then one entry per line beneath | three lists |
+| `Cost_Criteria.txt` | `CATEGORY:` heading lines, then one entry per line beneath | `CostCriteria` |
 
 `Cost_Criteria.txt`'s recognized headings are `LABOR CRITERIA:`, `LABOR EXCLUSIONS:` and
 `SHIPPING CRITERIA:` (upper-cased on read); anything else is reported to the debug log and
-dropped. **`parse_cost_criteria_file()` clears its three lists in place rather than reassigning
-them** — the `InvoiceProcessor` holds references to those same lists, so reassigning would leave
-it pointed at the old contents after the user saves an edited config.
+dropped. **`parse_cost_criteria_file()` returns a new, frozen `CostCriteria` and keeps no criteria
+state of its own.** The controller hands each one to the processor through
+`set_cost_criteria()` — in `_prepare_run()` and again in `_reload_cost_criteria()` after the
+user saves an edited config — so the reload is explicit at the call site. It used to share three
+lists by reference and `.clear()` them in place, which a reassignment would have silently broken
+(#91); do not reintroduce state that two objects alias.
 
 ## Error reporting
 

@@ -17,6 +17,7 @@ from source.constants import (
     SETTINGS_DB_PATH,
     VERSION,
 )
+from source.cost_criteria import CostCriteria
 from source.invoice_app_controller import InvoiceAppController
 
 
@@ -55,13 +56,9 @@ def unstarted_controller():
         mock_file_io = mock_file_io_cls.return_value
         mock_settings_repo = mock_settings_repo_cls.return_value
 
-        # Provide the criteria attributes the controller reads off file_io while
-        # wiring up the InvoiceProcessor during construction
-        mock_file_io.labor_criteria = ["LABOR"]
-        mock_file_io.labor_exclusions = ["NO-LABOR"]
-        mock_file_io.shipping_criteria = ["SHIPPING"]
-
-        # Config parsing return values the controller stores once a run is prepared
+        # Config parsing return values the controller stores, or hands to the
+        # processor, once a run is prepared
+        mock_file_io.parse_cost_criteria_file.return_value = CostCriteria(labor=("LABOR",))
         mock_file_io.parse_payment_terms_config.return_value = ["Net 30"]
         mock_file_io.parse_sales_reps_config.return_value = {"REP1": "Rep Name"}
 
@@ -129,8 +126,8 @@ def controller(unstarted_controller):
 def test_init_constructs_the_headless_collaborators(unstarted_controller):
     """
     Verifies that __init__ constructs the argument provider and file IO
-    controller, and wires the InvoiceProcessor with the file IO controller and
-    the criteria pulled off of it.
+    controller, and wires the InvoiceProcessor with the file IO controller only.
+    Its cost criteria arrive later, from _prepare_run().
 
     Args:
         unstarted_controller (pytest.fixture): Provides the controller and its mocks
@@ -140,12 +137,8 @@ def test_init_constructs_the_headless_collaborators(unstarted_controller):
         description="Fishbowl invoice cost-breakdown processor"
     )
     unstarted_controller.file_io_cls.assert_called_once_with()
-    unstarted_controller.processor_cls.assert_called_once_with(
-        file_io_controller=unstarted_controller.file_io,
-        labor_criteria=["LABOR"],
-        labor_exclusions=["NO-LABOR"],
-        shipping_criteria=["SHIPPING"],
-    )
+    unstarted_controller.processor_cls.assert_called_once_with(file_io_controller=unstarted_controller.file_io)
+    unstarted_controller.processor.set_cost_criteria.assert_not_called()
 
 
 def test_init_builds_none_of_the_gui_half(unstarted_controller):
@@ -426,8 +419,8 @@ def test_run_integration_test_prepares_then_processes_all_inline(unstarted_contr
 def test_prepare_run_resets_files_and_loads_configs(unstarted_controller):
     """
     Verifies that _prepare_run resets the log files, then loads the cost criteria,
-    payment terms and sales reps configs, storing the parsed results on the
-    controller.
+    payment terms and sales reps configs, handing the cost criteria to the
+    processor and storing the rest on the controller.
 
     Args:
         unstarted_controller (pytest.fixture): Provides the controller and its mocks
@@ -438,6 +431,7 @@ def test_prepare_run_resets_files_and_loads_configs(unstarted_controller):
     unstarted_controller.file_io.reset_debug_file.assert_called_once_with()
     unstarted_controller.file_io.reset_results_file.assert_called_once_with()
     unstarted_controller.file_io.parse_cost_criteria_file.assert_called_once_with()
+    unstarted_controller.processor.set_cost_criteria.assert_called_once_with(CostCriteria(labor=("LABOR",)))
     unstarted_controller.file_io.parse_payment_terms_config.assert_called_once_with()
     unstarted_controller.file_io.parse_sales_reps_config.assert_called_once_with()
     assert unstarted_controller.controller.payment_terms == ["Net 30"]
@@ -958,20 +952,31 @@ def test_process_invoice_headless_is_silent_but_writes_results(unstarted_control
     unstarted_controller.display_cls.assert_not_called()
 
 
-def test_handle_save_config_cost_criteria_writes_and_reparses(controller):
+def test_handle_save_config_cost_criteria_writes_and_reloads(controller):
     """
-    Verifies that saving the cost criteria config writes the contents to disk and
-    re-parses the cost criteria into the file IO controller.
+    Verifies that saving an edited cost criteria config writes it to disk, then
+    re-parses it and hands the newly parsed criteria to the processor, so the
+    edit takes effect without a restart. Writing must come first, or the re-parse
+    would read the old file.
 
     Args:
         controller (pytest.fixture): Provides the controller and its mocks
     """
 
-    controller.controller.handle_save_config(COST_CRITERIA_PATH, "new criteria")
+    edited = CostCriteria(labor=("BAR",))
+    controller.file_io.parse_cost_criteria_file.return_value = edited
+    order = MagicMock()
+    order.attach_mock(controller.file_io.write_text_file, "write_text_file")
+    order.attach_mock(controller.file_io.parse_cost_criteria_file, "parse_cost_criteria_file")
+    order.attach_mock(controller.processor.set_cost_criteria, "set_cost_criteria")
 
-    # The contents are written, then the cost criteria are reloaded
-    controller.file_io.write_text_file.assert_called_once_with(file_path=COST_CRITERIA_PATH, contents="new criteria")
-    controller.file_io.parse_cost_criteria_file.assert_called_once_with()
+    controller.controller.handle_save_config(COST_CRITERIA_PATH, "LABOR CRITERIA:\nBAR")
+
+    assert order.mock_calls == [
+        call.write_text_file(file_path=COST_CRITERIA_PATH, contents="LABOR CRITERIA:\nBAR"),
+        call.parse_cost_criteria_file(),
+        call.set_cost_criteria(edited),
+    ]
 
 
 def test_handle_save_config_payment_terms_writes_and_reloads(controller):
@@ -1026,6 +1031,7 @@ def test_handle_save_config_unknown_path_writes_without_reparsing(controller):
     # The file is written, but no config is reloaded
     controller.file_io.write_text_file.assert_called_once_with(file_path=Path("logs/results.txt"), contents="data")
     controller.file_io.parse_cost_criteria_file.assert_not_called()
+    controller.processor.set_cost_criteria.assert_not_called()
     controller.file_io.parse_payment_terms_config.assert_not_called()
     controller.file_io.parse_sales_reps_config.assert_not_called()
 

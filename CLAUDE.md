@@ -76,6 +76,7 @@ matching `vX.Y.Z` tag.** Details in `.claude/rules/ci.md`.
 | `source/invoice_processor.py` | Parsing: `populate_invoice()` for header fields, `process_invoice()` for the line-item table, `process_end_of_invoice()` for tax and listed total |
 | `source/processor_utilities.py` | Shared parsing helpers (`search_text_by_re`, `find_sales_rep`, `format_currency`, …) |
 | `source/invoice.py` | Plain data holder for one invoice, plus `to_formatted_string()` |
+| `source/cost_criteria.py` | `CostCriteria`, the immutable value `Cost_Criteria.txt` parses into |
 | `source/constants.py` | Paths, `APP_NAME`/`VERSION`/`GITHUB_REPO`, setting keys, `DECIMAL_ZERO` |
 | `source/gui/invoice_app_display.py` | The `tk.Tk` root: main window and the File/Edit/View/Preferences/Help menu bar |
 | `source/gui/invoice_discovery_window.py` | Copying downloaded invoice PDFs into `Invoices/` without leaving the app |
@@ -112,9 +113,10 @@ Two responsibilities worth knowing before touching them:
 - Prefer extending behavior through config entries (`Cost_Criteria.txt`, `Payment_Terms.txt`,
   `Sales_Reps.txt`) or new theme/font data upstream over adding `if/elif` branches to existing
   parsing and display methods.
-- Pass a class only the narrow dependencies it needs — `InvoiceProcessor` takes `labor_criteria`,
-  `labor_exclusions` and `shipping_criteria` individually rather than the whole
-  `InvoiceAppFileIO`. Avoid god objects in constructors.
+- Pass a class only the narrow dependencies it needs, and pass config as **values, never shared
+  mutable state** — `InvoiceProcessor` receives a `CostCriteria` through `set_cost_criteria()`
+  rather than reading criteria off `InvoiceAppFileIO`, and a reload hands it a new one (#91).
+  Avoid god objects in constructors.
 - New logic goes in the class that owns that concern, not bolted onto `InvoiceAppController`. If a
   method is doing two distinct jobs (parsing *and* formatting), split it.
 - Before adding a regex, lookup or formatting routine, check `processor_utilities.py`; before
@@ -166,7 +168,7 @@ matching file is opened. Put new detail in the matching rule file rather than gr
 
 | File | Loads when you touch | Carries |
 | --- | --- | --- |
-| `rules/invoice-processing.md` | `invoice_processor.py`, `processor_utilities.py`, `invoice_app_file_io.py`, `invoice.py` | The parse pipeline, the `Decimal` rule, config file formats, error-reporting contract |
+| `rules/invoice-processing.md` | `invoice_processor.py`, `processor_utilities.py`, `invoice_app_file_io.py`, `invoice.py`, `cost_criteria.py` | The parse pipeline, the `Decimal` rule, config file formats, error-reporting contract |
 | `rules/gui.md` | `source/gui/**` | Window catalogue, menu structure, why the display has no headless logic, theme/font reconfiguration, the `after(0, …)` startup rule |
 | `rules/shared-package.md` | `invoice_app_controller.py`, `constants.py`, `requirements/**` | What each shared class takes by injection, the headless/GUI construction split, the processing hooks, patch-notes logic |
 | `rules/tests.md` | `tests/**` | Fixtures, patch targets, the tkinter-free `display` fixture, FIRST, ordering and docstring conventions |

@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from source.constants import DECIMAL_ZERO
+from source.cost_criteria import CostCriteria
 from source.invoice import Invoice
 from source.invoice_app_file_io import InvoiceAppFileIO
 from source.processor_utilities import (
@@ -31,27 +32,29 @@ FOOTER_VALUE_COUNT = 3
 
 # InvoiceProcessor class to handle all logic for text processing on invoices
 class InvoiceProcessor:
-    def __init__(
-        self,
-        file_io_controller: InvoiceAppFileIO,
-        labor_criteria: list[str],
-        labor_exclusions: list[str],
-        shipping_criteria: list[str],
-    ) -> None:
+    def __init__(self, file_io_controller: InvoiceAppFileIO) -> None:
         """
-        Initializes the InvoiceProcessor object
+        Initializes the InvoiceProcessor object. It starts with no cost criteria, so every
+        payment line classifies as material until set_cost_criteria() provides them
 
         Args:
             file_io_controller: The file IO controller to be used
-            labor_criteria: Criteria to determine if a payment line is a labor cost
-            labor_exclusions: Criteria to exclude a payment line from being a labor cost
-            shipping_criteria: Criteria to determine if a payment line is a shipping cost
         """
 
         self.file_io_controller = file_io_controller
-        self.labor_criteria = labor_criteria
-        self.labor_exclusions = labor_exclusions
-        self.shipping_criteria = shipping_criteria
+        self.cost_criteria = CostCriteria()
+
+    def set_cost_criteria(self, cost_criteria: CostCriteria) -> None:
+        """
+        Replaces the criteria used to classify payment lines. This is the only way parsed
+        criteria reach the processor, both at startup and when the user saves an edited
+        Cost_Criteria.txt
+
+        Args:
+            cost_criteria: The newly parsed cost criteria
+        """
+
+        self.cost_criteria = cost_criteria
 
     def populate_invoice(self, invoice: Invoice, sales_reps: dict[str, str], payment_terms: list[str]) -> None:
         """
@@ -234,8 +237,8 @@ class InvoiceProcessor:
 
     def search_for_labor_criteria(self, line: str) -> bool:
         """
-        Takes a given payment line and searches it for the criteria
-        and exclusions that were defined during construction
+        Takes a given payment line and searches it for the labor criteria
+        and exclusions in the current cost criteria
 
         Args:
             line: One line of text from the purchase table
@@ -245,18 +248,18 @@ class InvoiceProcessor:
         """
 
         # Check if the line contains any of the labor criteria
-        for criteria in self.labor_criteria:
+        for criteria in self.cost_criteria.labor:
             if criteria in line:
                 # A matched line still is not labor if it names an exclusion
-                return all(exclusion not in line for exclusion in self.labor_exclusions)
+                return all(exclusion not in line for exclusion in self.cost_criteria.labor_exclusions)
 
         # If no labor criteria was found, return False
         return False
 
     def search_for_shipping_criteria(self, line: str) -> bool:
         """
-        Takes a given payment line and searches it for the criteria
-        that was defined during construction
+        Takes a given payment line and searches it for the shipping criteria
+        in the current cost criteria
 
         Args:
             line: One line of text from the purchase table
@@ -266,7 +269,7 @@ class InvoiceProcessor:
         """
 
         # Check if the line contains any of the shipping criteria
-        return any(criteria in line for criteria in self.shipping_criteria)
+        return any(criteria in line for criteria in self.cost_criteria.shipping)
 
     def process_invoice(self, invoice: Invoice) -> None:
         """
