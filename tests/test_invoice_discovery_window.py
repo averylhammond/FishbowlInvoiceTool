@@ -32,7 +32,7 @@ def window(request):
 
     The copy callback's behavior can be customized per test by parametrizing the
     fixture indirectly with the keyword arguments to build its mock from (e.g.
-    @pytest.mark.parametrize("window", [{"return_value": "copied"}],
+    @pytest.mark.parametrize("window", [{"return_value": True}],
     indirect=True)); when not parametrized, the callback is a bare MagicMock.
 
     Returns:
@@ -158,7 +158,7 @@ def test_handle_browse_cancel_leaves_selection_untouched(mock_ask, _mock_default
     window.window.selection_var.set.assert_not_called()
 
 
-@pytest.mark.parametrize("window", [{"return_value": "copied"}], indirect=True)
+@pytest.mark.parametrize("window", [{"return_value": True}], indirect=True)
 def test_handle_copy_copies_each_pending_file(window):
     """
     Verifies that handle_copy copies each pending file (without overwriting) and
@@ -173,9 +173,11 @@ def test_handle_copy_copies_each_pending_file(window):
 
     window.window.handle_copy()
 
-    # Each file is copied without overwriting, and the selection is cleared
+    # Each file is copied without overwriting, reported, and the selection is cleared
     window.copy_callback.assert_any_call(Path("a.pdf"), False)
     window.copy_callback.assert_any_call(Path("b.pdf"), False)
+    window.window.status_box.insert.assert_any_call(tk.END, "Copied a.pdf.\n")
+    window.window.status_box.insert.assert_any_call(tk.END, "Copied b.pdf.\n")
     assert window.window.pending_files == []
     window.window.selection_var.set.assert_called_with("")
 
@@ -197,11 +199,11 @@ def test_handle_copy_no_files_reports_and_does_not_copy(window):
     window.copy_callback.assert_not_called()
 
 
-@pytest.mark.parametrize("window", [{"return_value": "error"}], indirect=True)
+@pytest.mark.parametrize("window", [{"return_value": False}], indirect=True)
 def test_handle_copy_reports_copy_failure(window):
     """
     Verifies that handle_copy reports a failure status (without raising) when the
-    copy callback returns "error", and still clears the pending selection.
+    copy callback returns False, and still clears the pending selection.
 
     Args:
         window (pytest.fixture): Provides the window and a copy callback that
@@ -212,13 +214,14 @@ def test_handle_copy_reports_copy_failure(window):
 
     window.window.handle_copy()
 
-    # The failed file is still attempted and the selection is cleared afterwards
+    # The failed file is attempted, reported, and the selection is cleared afterwards
     window.copy_callback.assert_called_once_with(Path("a.pdf"), False)
+    window.window.status_box.insert.assert_called_once_with(tk.END, "Failed to copy a.pdf.\n")
     assert window.window.pending_files == []
 
 
 @patch("source.gui.invoice_discovery_window.messagebox.askyesno", return_value=True)
-@pytest.mark.parametrize("window", [{"side_effect": ["exists", "copied"]}], indirect=True)
+@pytest.mark.parametrize("window", [{"side_effect": [FileExistsError(), True]}], indirect=True)
 def test_handle_copy_overwrites_when_confirmed(mock_askyesno, window):
     """
     Verifies that when a file already exists and the user confirms, handle_copy
@@ -227,7 +230,7 @@ def test_handle_copy_overwrites_when_confirmed(mock_askyesno, window):
     Args:
         mock_askyesno (unittest.mock.MagicMock): Mocks the overwrite confirmation
         window (pytest.fixture): Provides the window and a copy callback that
-            first reports the file exists, then reports the retry as successful
+            first raises FileExistsError, then reports the retry as successful
     """
 
     window.window.pending_files = [Path("a.pdf")]
@@ -238,10 +241,11 @@ def test_handle_copy_overwrites_when_confirmed(mock_askyesno, window):
     mock_askyesno.assert_called_once()
     window.copy_callback.assert_any_call(Path("a.pdf"), False)
     window.copy_callback.assert_any_call(Path("a.pdf"), True)
+    window.window.status_box.insert.assert_called_once_with(tk.END, "Copied a.pdf.\n")
 
 
 @patch("source.gui.invoice_discovery_window.messagebox.askyesno", return_value=False)
-@pytest.mark.parametrize("window", [{"return_value": "exists"}], indirect=True)
+@pytest.mark.parametrize("window", [{"side_effect": FileExistsError()}], indirect=True)
 def test_handle_copy_skips_when_overwrite_declined(mock_askyesno, window):
     """
     Verifies that when a file already exists and the user declines, handle_copy
@@ -250,16 +254,17 @@ def test_handle_copy_skips_when_overwrite_declined(mock_askyesno, window):
     Args:
         mock_askyesno (unittest.mock.MagicMock): Mocks the overwrite confirmation
         window (pytest.fixture): Provides the window and a copy callback that
-            reports the file already exists
+            raises FileExistsError
     """
 
     window.window.pending_files = [Path("a.pdf")]
 
     window.window.handle_copy()
 
-    # The file is checked once (overwrite=False) and never overwritten
+    # The file is checked once (overwrite=False), never overwritten, and reported as skipped
     mock_askyesno.assert_called_once()
     window.copy_callback.assert_called_once_with(Path("a.pdf"), False)
+    window.window.status_box.insert.assert_called_once_with(tk.END, "Skipped a.pdf (already exists).\n")
 
 
 @patch("source.gui.invoice_discovery_window.Path")

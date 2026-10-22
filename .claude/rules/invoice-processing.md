@@ -112,6 +112,12 @@ controller wires it **before** the configs are parsed, so parse failures surface
 in `try/except OSError` and returns an empty `dict`/`list` on failure rather than raising — a
 missing config degrades the run, it does not crash it. Keep that shape.
 
+The one deliberate raise is `copy_invoice_file()`'s `FileExistsError`, when the destination exists
+and `overwrite` is False: that is a question for the caller (confirm an overwrite), not a failure,
+so it is neither reported nor folded into the `False` return. **It is raised before the method's
+`try`, because `FileExistsError` is an `OSError`** and that handler would otherwise report it as a
+failed copy (#92).
+
 `list_invoice_files()` is the only place that walks `Invoices/`. It returns `*.pdf` (suffix
 matched case-insensitively), **sorted by filename**, so the integration test writes
 `logs/results.txt` in the same order on every platform.

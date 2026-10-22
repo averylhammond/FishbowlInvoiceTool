@@ -21,7 +21,7 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
         theme: Theme,
         font_family: str,
         font_size: int,
-        copy_callback: Callable[[Path, bool], str],
+        copy_callback: Callable[[Path, bool], bool],
     ) -> None:
         """
         Initializes the InvoiceDiscoveryWindow object
@@ -33,8 +33,10 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
             font_family: The font family to display the text with
             font_size: The font size to display the text with
             copy_callback: Called with a source PDF path and an overwrite flag to copy the
-                file into the Invoices/ folder. Returns "copied", "exists", or "error" so
-                this window can confirm overwrites and report each outcome to the user
+                file into the Invoices/ folder. Returns whether the copy succeeded, and
+                raises FileExistsError when the file is already there and the overwrite
+                flag is False, so this window can confirm overwrites and report each
+                outcome to the user
         """
 
         super().__init__(parent, title, theme, font_family, font_size)
@@ -233,24 +235,24 @@ class InvoiceDiscoveryWindow(ThemedSubwindow):
 
         for source_path in self.pending_files:
             # Attempt the copy without overwriting first
-            result = self.copy_callback(source_path, False)
+            try:
+                copied = self.copy_callback(source_path, False)
 
             # If a same-named file already exists, confirm before overwriting
-            if result == "exists":
+            except FileExistsError:
                 overwrite = messagebox.askyesno(
                     "File Exists",
                     f"{source_path.name} already exists in the Invoices/ folder. Overwrite it?",
                 )
-                if overwrite:
-                    result = self.copy_callback(source_path, True)
-                else:
+                if not overwrite:
                     self._append_status(f"Skipped {source_path.name} (already exists).")
                     continue
+                copied = self.copy_callback(source_path, True)
 
             # Report the outcome of the copy
-            if result == "copied":
+            if copied:
                 self._append_status(f"Copied {source_path.name}.")
-            elif result == "error":
+            else:
                 self._append_status(f"Failed to copy {source_path.name}.")
 
         # Clear the pending selection now that it has been processed

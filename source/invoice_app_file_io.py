@@ -226,37 +226,41 @@ class InvoiceAppFileIO:
             )
             return []
 
-    def copy_invoice_file(self, source_path: Path, overwrite: bool = False) -> str:
+    def copy_invoice_file(self, source_path: Path, overwrite: bool = False) -> bool:
         """
         Copies an invoice PDF into the Invoices/ directory so it is ready for
         processing, without the user having to leave the application.
 
         The overwrite decision is left to the caller: when a file of the same
-        name already exists and overwrite is False, no copy is made and "exists"
-        is returned so the UI can confirm with the user before overwriting.
+        name already exists and overwrite is False, no copy is made and
+        FileExistsError is raised so the UI can confirm with the user before
+        overwriting.
 
         Args:
             source_path: The path of the invoice PDF to copy in
             overwrite: Whether to replace an existing same-named file in the Invoices/
                 directory. Defaults to False, in which case an existing file is left
-                untouched and "exists" is returned
+                untouched and FileExistsError is raised
 
         Returns:
-            "copied" if the file was copied, "exists" if a same-named file already exists
-            and overwrite was False, or "error" if the copy failed (the failure is also
+            True if the file was copied, or False if the copy failed (the failure is also
             surfaced via report_error)
+
+        Raises:
+            FileExistsError: A same-named file already exists and overwrite was False
         """
 
         destination_path = INVOICES_DIR / source_path.name
 
+        # Leave an existing file untouched unless the caller confirmed an overwrite, so
+        # the user is never silently overwritten. Raised outside the try below:
+        # FileExistsError is an OSError, which that handler would report as a failure
+        if destination_path.exists() and not overwrite:
+            raise FileExistsError(destination_path)
+
         try:
             # Ensure the Invoices/ directory exists before copying into it
             INVOICES_DIR.mkdir(parents=True, exist_ok=True)
-
-            # Leave an existing file untouched unless the caller confirmed an
-            # overwrite, so the user is never silently overwritten
-            if destination_path.exists() and not overwrite:
-                return "exists"
 
             # copy2 preserves metadata (timestamps) and works across platforms
             shutil.copy2(source_path, destination_path)
@@ -266,10 +270,10 @@ class InvoiceAppFileIO:
                 "File Error",
                 f"Could not copy the invoice from {source_path} to {destination_path}: {error}",
             )
-            return "error"
+            return False
 
         else:
-            return "copied"
+            return True
 
     def parse_sales_reps_config(self) -> dict[str, str]:
         """
