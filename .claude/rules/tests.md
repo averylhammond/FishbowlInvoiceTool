@@ -94,7 +94,7 @@ expected value belongs at the assertion rather than hoisted into a named constan
 
 **One fixture convention: build the unit under test in a pytest fixture**, and give a test that
 needs a differently-constructed object its arguments through indirect parametrization
-(`@pytest.mark.parametrize("window", [{"return_value": "copied"}], indirect=True)`) rather than a
+(`@pytest.mark.parametrize("window", [{"return_value": True}], indirect=True)`) rather than a
 `_build_window(...)`-style helper. The helper form left this repo with the shared subwindow
 classes; do not reintroduce it. A fixture that patches widget classes `yield`s from **inside** its
 `with` block, so the patches stay live for the test body and the patched classes themselves can be

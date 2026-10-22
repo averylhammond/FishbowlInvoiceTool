@@ -76,7 +76,7 @@ class InvoiceAppDisplay(tk.Tk):
         read_file_callback: Callable[[Path], str],
         save_config_callback: Callable[[Path, str], None],
         save_settings_callback: Callable[[str, str], None],
-        copy_invoice_callback: Callable[[Path, bool], str],
+        copy_invoice_callback: Callable[[Path, bool], bool],
         check_for_updates_callback: Callable[[], None],
         view_patch_notes_callback: Callable[[], None],
         title: str,
@@ -99,7 +99,8 @@ class InvoiceAppDisplay(tk.Tk):
                 value), invoked when the user changes a theme/font/font-size preference
             copy_invoice_callback: Callback that copies a selected invoice PDF (source
                 path, overwrite flag) into the Invoices/ folder, used by the Invoice
-                Discovery window. Returns "copied", "exists", or "error"
+                Discovery window. Returns whether the copy succeeded, and raises
+                FileExistsError when the file exists and the overwrite flag is False
             check_for_updates_callback: Callback that triggers an on-demand update check,
                 invoked when the user selects "Check for Updates" from the Help menu
             view_patch_notes_callback: Callback that shows the patch notes, invoked when

@@ -114,7 +114,8 @@ Rules for this class:
 A `ThemedSubwindow` letting the user copy downloaded invoice PDFs into `Invoices/` without leaving
 the app: browse (repeatedly, accumulating into `pending_files`), copy, and a running status area
 reporting each outcome. Its `copy_callback` is `InvoiceAppFileIO.copy_invoice_file`, which returns
-`"copied"`, `"exists"` or `"error"` — `"exists"` is what drives the overwrite confirmation.
+whether the copy succeeded and raises the built-in `FileExistsError` when the file is already there
+and overwrite is off — catching that is what drives the overwrite confirmation (#92).
 
 It subclasses a shared base but **stays app-specific by decision** (issue #105): it is coupled to
 this app's single-input-folder workflow, so it was deliberately not generalized and moved

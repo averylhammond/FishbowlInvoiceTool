@@ -373,7 +373,7 @@ def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_i
     """
     Tests that copy_invoice_file() ensures the Invoices/ directory exists and
     copies the file when no same-named file is already present, returning
-    "copied".
+    True.
 
     Args:
         mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
@@ -387,10 +387,10 @@ def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_i
 
     result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"))
 
-    # The directory is ensured, the file is copied, and "copied" is returned
+    # The directory is ensured, the file is copied, and True is returned
     mock_invoices_dir.mkdir.assert_called_once_with(parents=True, exist_ok=True)
     mock_copy2.assert_called_once_with(Path("Downloads/invoice.pdf"), destination)
-    assert result == "copied"
+    assert result is True
 
 
 @patch("source.invoice_app_file_io.shutil.copy2")
@@ -398,7 +398,9 @@ def test_copy_invoice_file_copies_new_file(mock_invoices_dir, mock_copy2, file_i
 def test_copy_invoice_file_exists_without_overwrite(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() does not overwrite an existing same-named file
-    when overwrite is False, returning "exists" without copying.
+    when overwrite is False, raising FileExistsError without copying. The raise
+    must not be caught as a copy failure (FileExistsError is an OSError), so
+    nothing is reported.
 
     Args:
         mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
@@ -410,11 +412,12 @@ def test_copy_invoice_file_exists_without_overwrite(mock_invoices_dir, mock_copy
     destination = mock_invoices_dir.__truediv__.return_value
     destination.exists.return_value = True
 
-    result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"))
+    with pytest.raises(FileExistsError):
+        file_io.copy_invoice_file(Path("Downloads/invoice.pdf"))
 
-    # No copy is made and "exists" is returned so the caller can confirm
+    # No copy is made and nothing is reported, so the caller can confirm
     mock_copy2.assert_not_called()
-    assert result == "exists"
+    file_io.report_error.assert_not_called()
 
 
 @patch("source.invoice_app_file_io.shutil.copy2")
@@ -422,7 +425,7 @@ def test_copy_invoice_file_exists_without_overwrite(mock_invoices_dir, mock_copy
 def test_copy_invoice_file_overwrites_when_confirmed(mock_invoices_dir, mock_copy2, file_io):
     """
     Tests that copy_invoice_file() overwrites an existing same-named file when
-    overwrite is True, copying the file and returning "copied".
+    overwrite is True, copying the file and returning True.
 
     Args:
         mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
@@ -436,9 +439,9 @@ def test_copy_invoice_file_overwrites_when_confirmed(mock_invoices_dir, mock_cop
 
     result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"), overwrite=True)
 
-    # The file is copied over the existing one and "copied" is returned
+    # The file is copied over the existing one and True is returned
     mock_copy2.assert_called_once_with(Path("Downloads/invoice.pdf"), destination)
-    assert result == "copied"
+    assert result is True
 
 
 @patch("source.invoice_app_file_io.shutil.copy2", side_effect=OSError("disk full"))
@@ -446,7 +449,7 @@ def test_copy_invoice_file_overwrites_when_confirmed(mock_invoices_dir, mock_cop
 def test_copy_invoice_file_reports_and_returns_error_on_failure(mock_invoices_dir, _mock_copy2, file_io):
     """
     Tests that copy_invoice_file() fails gracefully, surfacing the failure through
-    the error reporter and returning "error" when the copy cannot be completed.
+    the error reporter and returning False when the copy cannot be completed.
 
     Args:
         mock_invoices_dir (unittest.mock.MagicMock): Mocks the INVOICES_DIR constant
@@ -460,8 +463,8 @@ def test_copy_invoice_file_reports_and_returns_error_on_failure(mock_invoices_di
 
     result = file_io.copy_invoice_file(Path("Downloads/invoice.pdf"))
 
-    # No exception is raised, "error" is returned, and the failure is reported
-    assert result == "error"
+    # No exception is raised, False is returned, and the failure is reported
+    assert result is False
     file_io.report_error.assert_called_once()
 
 
