@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from source.constants import DECIMAL_ZERO
+from source.cost_criteria import CostCriteria
 from source.invoice import Invoice
 from source.invoice_app_file_io import InvoiceAppFileIO
 from source.invoice_processor import InvoiceProcessor
@@ -27,17 +28,17 @@ def mock_file_io():
 @pytest.fixture
 def invoice_processor(mock_file_io):
     """
-    Returns a configured InvoiceProcessor instance
+    Returns an InvoiceProcessor instance configured with one labor criterion,
+    one labor exclusion and one shipping criterion
 
     Args:
         mock_file_io (unittest.mock.MagicMock): The mock InvoiceAppFileIO object
     """
-    return InvoiceProcessor(
-        file_io_controller=mock_file_io,
-        labor_criteria=["LABOR"],
-        labor_exclusions=["NO-LABOR"],
-        shipping_criteria=["SHIPPING"],
+    processor = InvoiceProcessor(file_io_controller=mock_file_io)
+    processor.set_cost_criteria(
+        CostCriteria(labor=("LABOR",), labor_exclusions=("NO-LABOR",), shipping=("SHIPPING",)),
     )
+    return processor
 
 
 @pytest.fixture
@@ -560,6 +561,41 @@ def test_process_end_of_invoice_reports_on_missing_label(invoice_processor, invo
     assert invoice.sales_tax == DECIMAL_ZERO
     assert invoice.listed_total == DECIMAL_ZERO
     invoice_processor.file_io_controller.report_error.assert_called_once()
+
+
+def test_init_starts_with_empty_cost_criteria(mock_file_io):
+    """
+    Verifies that a newly constructed processor has no cost criteria, so it
+    classifies nothing as labor or shipping until criteria are set.
+
+    Args:
+        mock_file_io (unittest.mock.MagicMock): The mock InvoiceAppFileIO object
+    """
+
+    processor = InvoiceProcessor(file_io_controller=mock_file_io)
+
+    assert processor.cost_criteria == CostCriteria()
+    assert processor.search_for_labor_criteria("Line 1 LABOR") is False
+    assert processor.search_for_shipping_criteria("Line 1 SHIPPING") is False
+
+
+def test_set_cost_criteria_replaces_the_criteria_in_use(invoice_processor):
+    """
+    Verifies that set_cost_criteria() replaces the criteria wholesale, so a line
+    that matched the old criteria stops matching and one that matches the new
+    criteria starts to. This is what makes an edited Cost_Criteria.txt take effect
+    without a restart.
+
+    Args:
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+    """
+
+    invoice_processor.set_cost_criteria(CostCriteria(labor=("BAR",), shipping=("FREIGHT",)))
+
+    assert invoice_processor.search_for_labor_criteria("Line 1 LABOR unit") is False
+    assert invoice_processor.search_for_labor_criteria("Line 1 BAR unit") is True
+    assert invoice_processor.search_for_shipping_criteria("Line 1 SHIPPING cost") is False
+    assert invoice_processor.search_for_shipping_criteria("Line 1 FREIGHT cost") is True
 
 
 def test_search_for_labor_criteria_true(

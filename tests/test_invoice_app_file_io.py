@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
 
+from source.cost_criteria import CostCriteria
 from source.invoice import Invoice
 from source.invoice_app_file_io import InvoiceAppFileIO
 
@@ -633,15 +634,19 @@ def test_add_cost_criteria_field_appends_lists(file_io):
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
+    entries = {"LABOR CRITERIA": [], "LABOR EXCLUSIONS": [], "SHIPPING CRITERIA": []}
+
     # Add a criterion to each list
-    file_io.add_cost_criteria_field("LABOR CRITERIA", "Labor criterion 1")
-    file_io.add_cost_criteria_field("LABOR EXCLUSIONS", "Labor exclusion 1")
-    file_io.add_cost_criteria_field("SHIPPING CRITERIA", "Shipping criterion 1")
+    file_io.add_cost_criteria_field(entries, "LABOR CRITERIA", "Labor criterion 1")
+    file_io.add_cost_criteria_field(entries, "LABOR EXCLUSIONS", "Labor exclusion 1")
+    file_io.add_cost_criteria_field(entries, "SHIPPING CRITERIA", "Shipping criterion 1")
 
     # Ensure that each element was added to the list
-    assert file_io.labor_criteria == ["Labor criterion 1"]
-    assert file_io.labor_exclusions == ["Labor exclusion 1"]
-    assert file_io.shipping_criteria == ["Shipping criterion 1"]
+    assert entries == {
+        "LABOR CRITERIA": ["Labor criterion 1"],
+        "LABOR EXCLUSIONS": ["Labor exclusion 1"],
+        "SHIPPING CRITERIA": ["Shipping criterion 1"],
+    }
 
 
 @patch.object(InvoiceAppFileIO, "print_to_debug_file")
@@ -656,8 +661,12 @@ def test_add_cost_criteria_field_unknown_category(mock_debug_print, file_io):
     """
 
     # To to add a criterion with an unknown category
+    entries = {"LABOR CRITERIA": []}
     unknown_category = "UNKNOWN CATEGORY"
-    file_io.add_cost_criteria_field(unknown_category, "some line")
+    file_io.add_cost_criteria_field(entries, unknown_category, "some line")
+
+    # The entry is dropped rather than added under a new category
+    assert entries == {"LABOR CRITERIA": []}
 
     # Expect that the mocked print_to_debug_file() will be called once with the correct
     # message
@@ -698,13 +707,14 @@ def test_parse_cost_criteria_file_calls_add_cost_criteria_field(mock_add_field, 
     # Call the method under test
     file_io.parse_cost_criteria_file()
 
-    # Define the expected calls in order
+    # Define the expected calls in order, each adding into the same entries dict
+    entries = mock_add_field.call_args.kwargs["entries"]
     expected_calls = [
-        call(category="LABOR CRITERIA", line="Labor criterion A"),
-        call(category="LABOR CRITERIA", line="Labor criterion B"),
-        call(category="LABOR EXCLUSIONS", line="Exclude this labor"),
-        call(category="SHIPPING CRITERIA", line="Ship criterion X"),
-        call(category="SHIPPING CRITERIA", line="Ship criterion Y"),
+        call(entries=entries, category="LABOR CRITERIA", line="Labor criterion A"),
+        call(entries=entries, category="LABOR CRITERIA", line="Labor criterion B"),
+        call(entries=entries, category="LABOR EXCLUSIONS", line="Exclude this labor"),
+        call(entries=entries, category="SHIPPING CRITERIA", line="Ship criterion X"),
+        call(entries=entries, category="SHIPPING CRITERIA", line="Ship criterion Y"),
     ]
 
     # Assert the correct calls were made in order
@@ -721,16 +731,16 @@ def test_parse_cost_criteria_file_calls_add_cost_criteria_field(mock_add_field, 
 def test_parse_cost_criteria_file_reports_on_error(_mock_file, file_io):
     """
     Tests that parse_cost_criteria_file() fails gracefully, surfacing the failure
-    through the error reporter instead of raising when the config file cannot be
-    read.
+    through the error reporter and returning empty criteria instead of raising
+    when the config file cannot be read.
 
     Args:
         _mock_file (unittest.mock.MagicMock): Mocks Path.open() to raise
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
-    # No exception is raised, and the failure is reported to the user
-    file_io.parse_cost_criteria_file()
+    # No exception is raised, empty criteria are returned, and the failure is reported to the user
+    assert file_io.parse_cost_criteria_file() == CostCriteria()
     file_io.report_error.assert_called_once()
 
 
@@ -747,35 +757,28 @@ SHIPPING CRITERIA:
 Ship criterion X
 """,
 )
-def test_parse_cost_criteria_file_is_idempotent(_mock_file, file_io):
+def test_parse_cost_criteria_file_returns_a_fresh_value_each_parse(_mock_file, file_io):
     """
-    Tests that parse_cost_criteria_file() clears the criteria lists in place
-    before parsing, so re-parsing (e.g. after the user saves an edited config)
-    replaces the previous contents rather than appending duplicates.
+    Tests that parse_cost_criteria_file() returns the parsed criteria as a new
+    CostCriteria on every call, holding no state of its own, so parsing twice
+    (e.g. after the user saves an edited config) yields equal, independent values
+    rather than accumulating duplicates.
 
     Args:
         _mock_file (unittest.mock.MagicMock): Mocks Path.open()
         file_io (pytest.fixture): Test fixture for InvoiceAppFileIO
     """
 
-    # Hold a reference to the original list objects to prove they are cleared in
-    # place (kept), not reassigned to new lists
-    labor_criteria_ref = file_io.labor_criteria
-    labor_exclusions_ref = file_io.labor_exclusions
-    shipping_criteria_ref = file_io.shipping_criteria
+    first = file_io.parse_cost_criteria_file()
+    second = file_io.parse_cost_criteria_file()
 
-    # Parse twice; the second parse must not accumulate duplicate entries
-    file_io.parse_cost_criteria_file()
-    file_io.parse_cost_criteria_file()
-
-    assert file_io.labor_criteria == ["Labor criterion A"]
-    assert file_io.labor_exclusions == ["Exclude this labor"]
-    assert file_io.shipping_criteria == ["Ship criterion X"]
-
-    # The same list objects are reused, so the InvoiceProcessor's references stay valid
-    assert file_io.labor_criteria is labor_criteria_ref
-    assert file_io.labor_exclusions is labor_exclusions_ref
-    assert file_io.shipping_criteria is shipping_criteria_ref
+    assert second == CostCriteria(
+        labor=("Labor criterion A",),
+        labor_exclusions=("Exclude this labor",),
+        shipping=("Ship criterion X",),
+    )
+    assert first == second
+    assert first is not second
 
 
 @patch(

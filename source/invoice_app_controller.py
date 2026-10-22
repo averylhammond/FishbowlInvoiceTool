@@ -55,13 +55,8 @@ class InvoiceAppController:
         # Create File IO Controller, which reads its file paths from source.constants
         self.file_io_controller = InvoiceAppFileIO()
 
-        # Create InvoiceProcessor, provide it with the File IO Controller and criteria for processing invoices
-        self.invoice_processor = InvoiceProcessor(
-            file_io_controller=self.file_io_controller,
-            labor_criteria=self.file_io_controller.labor_criteria,
-            labor_exclusions=self.file_io_controller.labor_exclusions,
-            shipping_criteria=self.file_io_controller.shipping_criteria,
-        )
+        # Create InvoiceProcessor. Its cost criteria arrive in _prepare_run(), once the configs are parsed
+        self.invoice_processor = InvoiceProcessor(file_io_controller=self.file_io_controller)
 
         # The parsed configs, empty until _prepare_run() reads them in
         self.payment_terms: list[str] = []
@@ -196,8 +191,8 @@ class InvoiceAppController:
 
         self.file_io_controller.reset_results_file()
 
-        # Use the File IO Controller to read in the criteria/exclusions for each cost section
-        self.file_io_controller.parse_cost_criteria_file()
+        # Read in the criteria/exclusions for each cost section and hand them to the processor
+        self._reload_cost_criteria()
 
         # Build payment terms list containing all possible payment terms that could appear on an invoice
         self.payment_terms = self.file_io_controller.parse_payment_terms_config()
@@ -497,11 +492,10 @@ class InvoiceAppController:
 
     def _reload_cost_criteria(self) -> None:
         """
-        Re-parses the cost criteria config into the File IO Controller's criteria
-        lists (cleared and repopulated in place, so the InvoiceProcessor's
-        references stay valid).
+        Re-parses the cost criteria config and hands the new criteria to the
+        InvoiceProcessor
         """
-        self.file_io_controller.parse_cost_criteria_file()
+        self.invoice_processor.set_cost_criteria(self.file_io_controller.parse_cost_criteria_file())
 
     def _reload_payment_terms(self) -> None:
         """
