@@ -55,8 +55,10 @@ infrastructure and GUI package both depend on is
 
 ## CI
 
-Five workflows in `.github/workflows/`: unit tests, code coverage and lint on `ubuntu-latest`,
-integration tests and releases on `windows-latest`. Coverage is gated at **90%**, and the lint
+Five workflows in `.github/workflows/`: unit tests and lint on `ubuntu-24.04`, code coverage on
+`ubuntu-latest`, integration tests and releases on `windows-latest`. The two `3.11.9` Linux jobs
+pin the runner image because `setup-python` has no 3.11.9 build for Ubuntu 26.04, which
+`ubuntu-latest` now resolves to — see `.claude/rules/ci.md`. Coverage is gated at **90%**, and the lint
 job fails on any `ruff check` finding or formatting difference. The integration
 check diffs `logs/results.txt` against the submodule's `canonical_correct_results.txt`, so any
 change to parsing or output formatting breaks it until that canonical file is updated.

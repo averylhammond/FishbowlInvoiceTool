@@ -11,11 +11,19 @@ Five workflows live in `.github/workflows/`. All pin Python **3.11.9** (the cove
 
 | Workflow | Trigger | Runner | Does |
 | --- | --- | --- | --- |
-| `unit-tests.yml` | PRs to `main`, manual | `ubuntu-latest` | `pytest tests/` |
-| `lint.yml` | PRs to `main`, manual | `ubuntu-latest` | `ruff check` and `ruff format --check` |
+| `unit-tests.yml` | PRs to `main`, manual | `ubuntu-24.04` | `pytest tests/` |
+| `lint.yml` | PRs to `main`, manual | `ubuntu-24.04` | `ruff check` and `ruff format --check` |
 | `code-coverage.yml` | PRs to `main`, pushes to `main`, manual | `ubuntu-latest` | `pytest --cov` with a coverage gate, uploads to Codecov |
 | `integration-tests.yml` | PRs to `main`, manual | `windows-latest` | Runs the app headless and diffs the output |
 | `release.yml` | pushes of a `v*` tag | `windows-latest` | Verifies, tests, packages and publishes the release |
+
+**The two Linux jobs that pin `"3.11.9"` also pin `runs-on: ubuntu-24.04`.** `setup-python`
+installs an exact patch version only from a prebuilt manifest, and that manifest has no 3.11.9
+for Ubuntu 26.04 — so when `ubuntu-latest` moved to 26.04, those jobs failed at "Set up Python
+environment" before running anything, while coverage (pinning only `"3.11"`) stayed green. Do not
+move them back to `ubuntu-latest` without also moving the Python pin; #98, which covers the
+`3.11` vs `3.11.9` drift, is the point to revisit both together. FishbowlInventoryTool pins its
+Linux jobs the same way.
 
 Notes that are easy to get wrong:
 
