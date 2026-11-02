@@ -6,33 +6,43 @@ paths:
 
 # CI workflows
 
-Five workflows live in `.github/workflows/`. All pin Python **3.11.9** (the coverage job pins
-`3.11`) and install `requirements/dev.txt`, except the lint job — see below.
+Five workflows live in `.github/workflows/`. All pin Python **3.11.9** (#98), cache pip against
+`requirements/dev.txt`, and install that file, except the lint job — see below.
 
 | Workflow | Trigger | Runner | Does |
 | --- | --- | --- | --- |
 | `unit-tests.yml` | PRs to `main`, manual | `ubuntu-24.04` | `pytest tests/` |
 | `lint.yml` | PRs to `main`, manual | `ubuntu-24.04` | `ruff check` and `ruff format --check` |
-| `code-coverage.yml` | PRs to `main`, pushes to `main`, manual | `ubuntu-latest` | `pytest --cov` with a coverage gate, uploads to Codecov |
+| `code-coverage.yml` | PRs to `main`, pushes to `main`, manual | `ubuntu-24.04` | `pytest --cov` with a coverage gate, uploads to Codecov |
 | `integration-tests.yml` | PRs to `main`, manual | `windows-latest` | Runs the app headless and diffs the output |
 | `release.yml` | pushes of a `v*` tag | `windows-latest` | Verifies, tests, packages and publishes the release |
 
-**The two Linux jobs that pin `"3.11.9"` also pin `runs-on: ubuntu-24.04`.** `setup-python`
-installs an exact patch version only from a prebuilt manifest, and that manifest has no 3.11.9
-for Ubuntu 26.04 — so when `ubuntu-latest` moved to 26.04, those jobs failed at "Set up Python
-environment" before running anything, while coverage (pinning only `"3.11"`) stayed green. Do not
-move them back to `ubuntu-latest` without also moving the Python pin; #98, which covers the
-`3.11` vs `3.11.9` drift, is the point to revisit both together. FishbowlInventoryTool pins its
-Linux jobs the same way.
+**The three Linux jobs pin `runs-on: ubuntu-24.04`.** `setup-python` installs an exact patch
+version only from a prebuilt manifest, and that manifest has no 3.11.9 for Ubuntu 26.04 — so when
+`ubuntu-latest` moved to 26.04, the pinned jobs failed at "Set up Python environment" before
+running anything. Do not move any of them back to `ubuntu-latest` without also moving the Python
+pin to a version the new image's manifest carries. FishbowlInventoryTool pins its Linux jobs the
+same way.
+
+**Every workflow sets `cache: 'pip'`** with `cache-dependency-path: requirements/dev.txt`. The
+cache saves the PyPI downloads, but not the `fishbowl-common` clone: pip does not cache a wheel
+built from a git tag, because a tag can move.
+
+**The four non-release workflows share a concurrency group** of
+`${{ github.workflow }}-${{ github.ref }}` with `cancel-in-progress: true`, so a newer push to a
+PR cancels the run it supersedes. `release.yml` deliberately has none: cancelling a
+half-finished release is worse than letting it run.
 
 Notes that are easy to get wrong:
 
 - **Only `release.yml` needs a write token** (`contents: write`, to publish the release).
-  `unit-tests.yml`, `lint.yml` and `code-coverage.yml` declare `contents: read` — Codecov posts
-  its PR comments through its own GitHub App, so coverage needs no write token either.
-  `integration-tests.yml` declares no `permissions` block and so gets the repository default.
+  The other four declare `contents: read` — Codecov posts its PR comments through its own GitHub
+  App, so coverage needs no write token either, and `integration-tests.yml` checks out the private
+  submodule with `CUSTOMER_DATA_PAT` rather than `GITHUB_TOKEN`.
 - **The coverage gate is `fail_under = 90` in `pyproject.toml`**, not a workflow flag, so a local
-  `pytest --cov` enforces it too. It fails the job (and blocks the PR once the check is required
+  `pytest --cov` enforces it too. `code-coverage.yml` runs `pytest --cov=source`, which names
+  the measured package directly, so the `omit` list only drops the in-package files that are
+  deliberately unmeasured. It fails the job (and blocks the PR once the check is required
   in branch protection) whenever total coverage drops below 90%. The Codecov
   upload step is `if: always()` so the report still lands when the gate fails — that is exactly
   when the PR comment is most useful. `CODECOV_TOKEN` is the repo upload token.

@@ -8,6 +8,16 @@ on:
   # Allow for the job to be ran manually from the GitHub Actions UI
   workflow_dispatch:
 
+# Read-only access is all this job needs: the private submodule is checked out with
+# CUSTOMER_DATA_PAT, not GITHUB_TOKEN, and nothing is written back.
+permissions:
+  contents: read
+
+# Cancel a still-running check when a newer push to the same ref supersedes it
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integration-tests:
 
@@ -33,6 +43,8 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: "3.11.9"
+        cache: 'pip'
+        cache-dependency-path: requirements/dev.txt
 
     # Install project dependencies
     - name: Install dependencies
