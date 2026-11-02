@@ -74,6 +74,7 @@ source venv/Scripts/activate   # Windows; use venv/bin/activate on Linux/Mac
 ```bash
 pip install -r requirements/dev.txt      # release.txt plus pytest and pytest-cov
 pip install -r requirements/release.txt  # runtime dependencies only
+pip install -r requirements/package.txt  # release.txt plus PyInstaller, for packaging
 ```
 
 > **Note:** on Linux, `tkinter` is not part of the standard library install and must be
@@ -133,8 +134,9 @@ Package a release build locally:
 ./scripts/package_release.sh false   # pass true to also bundle sample invoices
 ```
 
-This builds the executable with PyInstaller into `release/FishbowlInvoiceTool/` and zips
-it. On Windows with [Inno Setup](https://jrsoftware.org/isinfo.php) installed it
+This installs `requirements/package.txt` (the runtime dependencies plus a pinned
+PyInstaller) into a fresh virtual environment, builds the executable into
+`release/FishbowlInvoiceTool/` and zips it. On Windows with [Inno Setup](https://jrsoftware.org/isinfo.php) installed it
 additionally builds `release/FishbowlInvoiceTool_Setup.exe` from `scripts/installer.iss`;
 that step is skipped on Linux or when Inno Setup is absent.
 

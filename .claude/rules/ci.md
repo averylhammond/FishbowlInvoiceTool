@@ -57,8 +57,9 @@ Notes that are easy to get wrong:
    so a release missing its section would ship silently and only surface when a customer updated
    into it.
 
-It then reruns the unit and integration tests against the tagged commit, `choco install
-innosetup`, packages, and writes `SHA256SUMS.txt` with `sha256sum` **from inside `release/`** so
+It then reruns the unit and integration tests against the tagged commit, installs Inno Setup via
+Chocolatey (pinned with `--version`, plus `--allow-downgrade` since `windows-latest` preinstalls
+Inno Setup and an unconstrained install is a no-op on whatever the image carries), packages, and writes `SHA256SUMS.txt` with `sha256sum` **from inside `release/`** so
 the names in it are bare and match the asset names on the Release. The updater verifies the
 installer against that file **before executing it**, so a release missing that asset offers only
 the manual download — graceful degradation, not a failure. The Release is created with

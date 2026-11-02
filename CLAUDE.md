@@ -49,7 +49,8 @@ infrastructure and GUI package both depend on is
 - Lint: `ruff check .` (add `--fix` to apply the safe fixes, `--statistics` for a summary)
 - Format: `ruff format .` (`--check` to verify without writing, as CI does)
 - Package a release: `./scripts/package_release.sh false` (pass `true` to also bundle sample
-  invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
+  invoices). Installs `requirements/package.txt` (`release.txt` plus a pinned PyInstaller) into a
+  fresh venv, builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
   with Inno Setup installed it also builds `release/FishbowlInvoiceTool_Setup.exe`.
 
 ## CI

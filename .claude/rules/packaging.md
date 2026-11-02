@@ -10,8 +10,10 @@ paths:
 both when a `v*` tag is pushed (see `rules/ci.md` for the workflow side).
 
 `package_release.sh <populate_invoices>` takes `true`/`false` — whether to bundle sample
-invoices. It creates its own fresh venv so only release dependencies are packaged, builds a
-PyInstaller **onefile** executable named `AutoInvoiceProc`, and zips
+invoices. It creates its own fresh venv and installs `requirements/package.txt` into it — `-r
+release.txt` plus a **pinned** PyInstaller, kept out of `release.txt` and `dev.txt` because it is
+neither a runtime nor a development dependency — so only release dependencies are packaged. It
+builds a PyInstaller **onefile** executable named `AutoInvoiceProc`, and zips
 `release/FishbowlInvoiceTool/`. On Windows with Inno Setup present it additionally builds the
 installer; that step is skipped on Linux or when `ISCC.exe` is absent. It detects CI via `CI=true`
 and skips the local-developer working-tree cleanup there.
@@ -47,9 +49,10 @@ Several things in the `.iss` exist for the in-app updater and must not be "simpl
   in-place upgrade keeps the same path, so nothing else tips it off. `InitializeSetup` in the
   `.iss` unsets them. The deeper fix belongs upstream in `fishbowl_common`'s `UpdateInstaller`,
   which should hand the installer a sanitized environment rather than its own; this one also
-  covers users upgrading from an app version released before that lands. Note
-  `package_release.sh` leaves PyInstaller unpinned, which is how a bootloader change landed
-  mid-release-series (see issue #99).
+  covers users upgrading from an app version released before that lands. That bootloader change
+  landed mid-release-series because PyInstaller was unpinned; it is now pinned in
+  `requirements/package.txt` (#99), so an upgrade is an explicit commit — re-test a real silent
+  upgrade whenever you bump it.
 - **`PATCH_NOTES.md` ships in the payload and must be replaced on upgrade.**
   `package_release.sh` copies it next to `USER_GUIDE.txt`, and its `[Files]` entry is flagged
   plain `ignoreversion` — deliberately **not** the `onlyifdoesntexist uninsneveruninstall` the
