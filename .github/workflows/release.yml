@@ -34,6 +34,8 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: "3.11.9"
+        cache: 'pip'
+        cache-dependency-path: requirements/dev.txt
 
     # Install project dependencies (dev set, needed to run the tests below)
     - name: Install dependencies

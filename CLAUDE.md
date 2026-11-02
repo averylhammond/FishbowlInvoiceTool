@@ -33,7 +33,7 @@ infrastructure and GUI package both depend on is
 - Virtual env: `python -m venv venv`, then `source venv/Scripts/activate` (Windows) or
   `source venv/bin/activate` (Linux/Mac).
 - Install deps: `pip install -r requirements/dev.txt` (pulls in `release.txt` plus
-  pytest/pytest-cov). CI pins Python `3.11.9`.
+  pytest/pytest-cov). Every CI workflow pins Python `3.11.9`.
 
 ## Common Commands
 
@@ -44,7 +44,7 @@ infrastructure and GUI package both depend on is
 - Run a single test file: `pytest tests/test_invoice.py`
 - Run a single test:
   `pytest tests/test_processor_utilities.py::test_search_text_by_re_order_number_correct_format`
-- Run with coverage (matches CI): `pytest --cov=./ --cov-report=xml tests/` — the 90% gate is
+- Run with coverage (matches CI): `pytest --cov=source --cov-report=xml tests/` — the 90% gate is
   `fail_under` in `pyproject.toml`, so it applies locally too
 - Lint: `ruff check .` (add `--fix` to apply the safe fixes, `--statistics` for a summary)
 - Format: `ruff format .` (`--check` to verify without writing, as CI does)
@@ -55,10 +55,11 @@ infrastructure and GUI package both depend on is
 
 ## CI
 
-Five workflows in `.github/workflows/`: unit tests and lint on `ubuntu-24.04`, code coverage on
-`ubuntu-latest`, integration tests and releases on `windows-latest`. The two `3.11.9` Linux jobs
-pin the runner image because `setup-python` has no 3.11.9 build for Ubuntu 26.04, which
-`ubuntu-latest` now resolves to — see `.claude/rules/ci.md`. Coverage is gated at **90%**, and the lint
+Five workflows in `.github/workflows/`: unit tests, lint and code coverage on `ubuntu-24.04`,
+integration tests and releases on `windows-latest`. All five pin Python `3.11.9`, and the three
+Linux jobs pin the runner image because `setup-python` has no 3.11.9 build for Ubuntu 26.04, which
+`ubuntu-latest` now resolves to. The four non-release workflows cancel a superseded run through a
+shared concurrency group — see `.claude/rules/ci.md`. Coverage is gated at **90%**, and the lint
 job fails on any `ruff check` finding or formatting difference. The integration
 check diffs `logs/results.txt` against the submodule's `canonical_correct_results.txt`, so any
 change to parsing or output formatting breaks it until that canonical file is updated.

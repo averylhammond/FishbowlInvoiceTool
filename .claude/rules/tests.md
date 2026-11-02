@@ -11,7 +11,7 @@ suite and the jobs in `.github/workflows/` invoke it as `pytest tests/` with no 
 `tests/__init__.py` is empty but load-bearing: with it present, pytest's prepend import mode puts
 the repo root on `sys.path`, which is what makes `from source... import` resolve. There is no
 `conftest.py`; pytest and coverage configuration lives in `pyproject.toml`, whose coverage section
-measures `./source` and omits `main.py`, `tests/`, the venvs, both `__init__.py` files and
+measures `./source` (as CI's `--cov=source` does) and omits only both `__init__.py` files and
 `source/constants.py`, and whose `fail_under = 90` is the gate CI relies on. The two `__init__.py`
 files are empty and `constants.py` holds no logic, so none of them has behaviour to measure.
 
