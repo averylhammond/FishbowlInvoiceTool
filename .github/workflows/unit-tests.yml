@@ -17,7 +17,10 @@ jobs:
 
     # Give the job a name to link into the Github Rules UI
     name: Unit Test CI Check
-    runs-on: ubuntu-latest
+
+    # Pinned rather than ubuntu-latest: setup-python publishes no 3.11.9 build for
+    # Ubuntu 26.04, which ubuntu-latest moved to
+    runs-on: ubuntu-24.04
 
     # Checkout repo. The unit tests touch no real files, so the private
     # submodule holding the test data is deliberately not checked out.

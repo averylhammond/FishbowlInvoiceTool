@@ -49,13 +49,16 @@ infrastructure and GUI package both depend on is
 - Lint: `ruff check .` (add `--fix` to apply the safe fixes, `--statistics` for a summary)
 - Format: `ruff format .` (`--check` to verify without writing, as CI does)
 - Package a release: `./scripts/package_release.sh false` (pass `true` to also bundle sample
-  invoices). Builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
+  invoices). Installs `requirements/package.txt` (`release.txt` plus a pinned PyInstaller) into a
+  fresh venv, builds via PyInstaller into `release/FishbowlInvoiceTool/` and zips it; on Windows
   with Inno Setup installed it also builds `release/FishbowlInvoiceTool_Setup.exe`.
 
 ## CI
 
-Five workflows in `.github/workflows/`: unit tests, code coverage and lint on `ubuntu-latest`,
-integration tests and releases on `windows-latest`. Coverage is gated at **90%**, and the lint
+Five workflows in `.github/workflows/`: unit tests and lint on `ubuntu-24.04`, code coverage on
+`ubuntu-latest`, integration tests and releases on `windows-latest`. The two `3.11.9` Linux jobs
+pin the runner image because `setup-python` has no 3.11.9 build for Ubuntu 26.04, which
+`ubuntu-latest` now resolves to — see `.claude/rules/ci.md`. Coverage is gated at **90%**, and the lint
 job fails on any `ruff check` finding or formatting difference. The integration
 check diffs `logs/results.txt` against the submodule's `canonical_correct_results.txt`, so any
 change to parsing or output formatting breaks it until that canonical file is updated.
