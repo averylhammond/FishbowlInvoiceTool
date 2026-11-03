@@ -33,8 +33,10 @@ to quantize, and `DECIMAL_ZERO` from `source/constants.py` as the zero literal.
    `search_for_labor_criteria()` and `search_for_shipping_criteria()`, adding to
    `labor_cost` / `shipping_cost` / **`material_cost` as the fallback**, and to `subtotal` in
    every case. Material is the default branch, not a matched category.
-4. **`process_end_of_invoice()`** fires on the `Total:Subtotal` marker and reads sales tax and the
-   listed total. See the footer rule below.
+4. **`process_end_of_invoice()`** fires on the line that starts with `FOOTER_VALUE_LABEL`
+   (`"Sales Tax:"`) and reads sales tax and the listed total. See the footer rule below. **An
+   invoice whose footer is never reached is reported** through `report_error`, since its totals
+   would otherwise agree at `$0.00` and the mismatch warning would not fire.
 
 The controller then compares the computed total against the listed one and warns on a mismatch.
 
@@ -55,8 +57,10 @@ pypdf's default extraction emits the footer's label column before its value colu
 reads:
 
 ```
-Total:Subtotal:
-Sales Tax:$1,234.56   <- the last label, then the SUBTOTAL
+Total:
+Subtotal:
+Sales Tax:            <- the last label
+$1,234.56             <- subtotal
 $0.00                 <- sales tax
 $1,281.10             <- listed total
 ```
@@ -67,6 +71,13 @@ first `FOOTER_VALUE_COUNT` amounts after it in order — subtotal, sales tax, li
 pairing a label with the amount on its own line would read the subtotal as the sales tax. It used
 to read `splitlines()[2]` and `[3]`, which a single extra line in the footer would have shifted
 (#93).
+
+**The exact line breaks are pypdf's, and they change between releases.** Before pypdf 5.1.0 the
+labels came out as `Total:Subtotal:` on one line and the subtotal on the `Sales Tax:` line; the
+trigger used to be the literal `Total:Subtotal`, so the bump to 6.x silently zeroed every total
+(#100). The same release moved the PO number onto its own line, which is why its regex now takes
+the rest of the line. Anchor on a label at the start of a line, never on two labels being joined,
+and bump the pypdf pin only through the integration test.
 
 The first amount, the invoice's own listed subtotal, is deliberately discarded — `invoice.subtotal`
 is summed from the payment lines, and reporting where the two disagree is the point of the app.

@@ -1,2 +1,2 @@
 fishbowl-common[gui] @ git+https://github.com/averylhammond/fishbowl-common.git@v1.7.0
-pypdf==4.0.0
+pypdf==6.21.4
