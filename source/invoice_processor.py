@@ -17,13 +17,18 @@ from source.processor_utilities import (
 # before its value column, so this label is followed by every footer amount in
 # order -- subtotal, sales tax, listed total -- rather than by its own value:
 #
-#     Total:Subtotal:
-#     Sales Tax:$1,234.56   <- the last label, then the SUBTOTAL
+#     Total:
+#     Subtotal:
+#     Sales Tax:            <- the last label
+#     $1,234.56             <- subtotal
 #     $46.54                <- sales tax
 #     $1,281.10             <- listed total
 #
 # Anchoring here and reading the amounts in order is therefore what locates them
-# by label. Matching an amount on the label's own line would read the subtotal.
+# by label. It is also the line that starts the footer: process_invoice() hands
+# off to process_end_of_invoice() on the line that begins with it. Both survive a
+# change in how pypdf lays out the label column -- before 5.1.0 it emitted
+# "Total:Subtotal:" on one line and the subtotal on this label's line (#100).
 FOOTER_VALUE_LABEL = "Sales Tax:"
 
 # How many amounts the footer lists: subtotal, sales tax, and the listed total
@@ -82,10 +87,10 @@ class InvoiceProcessor:
         # Customer name will also match "Customer: " to the string, so trim it off
         invoice.customer_name = search_text_by_re(text=first_page, regex=r"Customer: .+").replace("Customer: ", "")
 
-        # PO Number will also match "PO Number: " to the string, so trim it off
-        # It will also match other strings, so need to take the last element only
-        invoice.po_number = (search_text_by_re(text=first_page, regex=r"PO Number: .+S")[:-1]).replace(
-            "PO Number: ", ""
+        # PO Number will also match "PO Number: " to the string, so trim it off.
+        # The value runs to the end of its line, since "." stops at the newline
+        invoice.po_number = (
+            search_text_by_re(text=first_page, regex=r"PO Number: .*").replace("PO Number: ", "").strip()
         )
         invoice.payment_terms = find_payment_terms(text=first_page, payment_terms=payment_terms)
         invoice.sales_rep = find_sales_rep(text=first_page, sales_reps=sales_reps)
@@ -198,8 +203,8 @@ class InvoiceProcessor:
 
     def process_end_of_invoice(self, text: str, starting_line: str, invoice: Invoice) -> None:
         """
-        Takes the ending of the invoice starting at "Total:subtotal" and searches for
-        the sales tax and the listed total on the invoice
+        Takes the ending of the invoice starting at the footer's last label and searches
+        for the sales tax and the listed total on the invoice
 
         Args:
             text: The invoice page to be processed
@@ -282,6 +287,9 @@ class InvoiceProcessor:
         # Keep track of next expected payment line number
         next_line_num = 1
 
+        # Whether the footer was reached, so an invoice without one is reported
+        footer_found = False
+
         # Loop through each page to read purchase table
         for page in invoice.page_contents:
             # At this point, can disregard everything before the purchase table
@@ -303,6 +311,16 @@ class InvoiceProcessor:
                     )
                     next_line_num += 1  # Update next_line_num
 
-                # "Total:Subtotal" is the beginning of the end of the invoice
-                if "Total:Subtotal" in line:
+                # The footer's last label is the beginning of the end of the invoice
+                if line.startswith(FOOTER_VALUE_LABEL):
                     self.process_end_of_invoice(text=page, starting_line=line, invoice=invoice)
+                    footer_found = True
+
+        # Without a footer the sales tax and listed total stay at zero, and so does the
+        # mismatch warning, since nothing is compared. Report it instead -- this is how a
+        # change in pypdf's text layout would otherwise slip through silently (#100)
+        if not footer_found:
+            self.file_io_controller.report_error(
+                "Invoice Parse Error",
+                f"Could not find the sales tax and listed total on invoice {invoice.order_number}.",
+            )

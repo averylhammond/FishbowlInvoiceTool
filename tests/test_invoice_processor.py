@@ -49,14 +49,16 @@ def invoice():
     mock_invoice = Invoice()
     mock_invoice.page_contents = [
         "Customer: Acme Corp\n"
-        "PO Number: PO12345S\n"
+        "PO Number: PO12345\n"
         "S12345\n"
         "01/01/2025\n"
         "Ordered Total Price\n"
         "1 LABOR install\n"
         "2 SHIPPING charges\n"
-        "Total:Subtotal:\n"
-        "Sales Tax:$10.00\n"
+        "Total:\n"
+        "Subtotal:\n"
+        "Sales Tax:\n"
+        "$10.00\n"
         "$2.00\n"
         "$12.00\n"
     ]
@@ -106,7 +108,7 @@ def test_populate_invoice_populates_fields(
         "S12345",
         "01/01/2025",
         "Customer: Acme Corp",
-        "PO Number: PO12345S",
+        "PO Number: PO12345",
     ]
 
     sales_reps = {"REP1": "Rep Name"}
@@ -457,16 +459,16 @@ def test_process_end_of_invoice_sets_values(invoice_processor, invoice):
 
     # Simulated end-of-invoice text. The footer's labels are emitted before its
     # amounts, so the label is followed by the subtotal, the sales tax and the total
-    text = "Some other content\nTotal:Subtotal:\nSales Tax:$100.00\n$8.50\n$108.50\nPage 1 of 2"
+    text = "Some other content\nTotal:\nSubtotal:\nSales Tax:\n$100.00\n$8.50\n$108.50\nPage 1 of 2"
 
     # Call the method with a known start point
     invoice_processor.process_end_of_invoice(
         text=text,
-        starting_line="Total:Subtotal:",
+        starting_line="Sales Tax:",
         invoice=invoice,
     )
 
-    # Verify parsed fields, the amount on the label's own line being the subtotal
+    # Verify parsed fields, the first amount after the label being the subtotal
     assert invoice.sales_tax == Decimal("8.50")
     assert invoice.listed_total == Decimal("108.50")
 
@@ -489,12 +491,12 @@ def test_process_end_of_invoice_ignores_unexpected_extra_line(invoice_processor,
 
     invoice.subtotal = Decimal("100.00")
 
-    # Footer carrying an extra line between the marker and the labelled amounts
-    text = "Total:Subtotal:\nDiscount:\nSales Tax:$100.00\n$8.50\n$108.50\nPage 1 of 2"
+    # Footer carrying an extra line between the label and its amounts
+    text = "Total:\nSubtotal:\nSales Tax:\nDiscount:\n$100.00\n$8.50\n$108.50\nPage 1 of 2"
 
     invoice_processor.process_end_of_invoice(
         text=text,
-        starting_line="Total:Subtotal:",
+        starting_line="Sales Tax:",
         invoice=invoice,
     )
 
@@ -517,11 +519,11 @@ def test_process_end_of_invoice_reports_on_non_numeric_total(invoice_processor, 
     invoice.subtotal = Decimal("100.00")
 
     # Footer whose listed total is not a number
-    text = "Total:Subtotal:\nSales Tax:$100.00\n$8.50\n$SEE ATTACHED\nPage 1 of 2"
+    text = "Total:\nSubtotal:\nSales Tax:\n$100.00\n$8.50\n$SEE ATTACHED\nPage 1 of 2"
 
     invoice_processor.process_end_of_invoice(
         text=text,
-        starting_line="Total:Subtotal:",
+        starting_line="Sales Tax:",
         invoice=invoice,
     )
 
@@ -549,11 +551,11 @@ def test_process_end_of_invoice_reports_on_missing_label(invoice_processor, invo
     invoice.subtotal = Decimal("100.00")
 
     # Footer carrying amounts but no label to anchor them to
-    text = "Total:Subtotal:\n$100.00\n$8.50\n$108.50\nPage 1 of 2"
+    text = "Total:\nSubtotal:\n$100.00\n$8.50\n$108.50\nPage 1 of 2"
 
     invoice_processor.process_end_of_invoice(
         text=text,
-        starting_line="Total:Subtotal:",
+        starting_line="Total:",
         invoice=invoice,
     )
 
@@ -695,8 +697,36 @@ def test_process_invoice_calls_internal_methods(mock_process_end, mock_process_l
     invoice_processor.process_invoice(invoice)
 
     # Verify that process_payment_line is called for every line after "Ordered Total Price"
-    # and before "Total:Subtotal"
+    # and before the footer
     assert mock_process_line.call_count == 2
 
-    # Verify that process_end_of_invoice is called exactly once with the correct starting line
-    assert mock_process_end.call_count == 1
+    # Verify that process_end_of_invoice is called exactly once, on the footer's last label
+    mock_process_end.assert_called_once_with(text=invoice.page_contents[0], starting_line="Sales Tax:", invoice=invoice)
+
+    # Verify that a footer that was found reports no error
+    invoice_processor.file_io_controller.report_error.assert_not_called()
+
+
+@patch.object(InvoiceProcessor, "process_payment_line")
+@patch.object(InvoiceProcessor, "process_end_of_invoice")
+def test_process_invoice_reports_missing_footer(mock_process_end, _mock_process_line, invoice_processor, invoice):
+    """
+    Verifies that an invoice whose footer is never found is reported rather than left
+    with a silently zero sales tax and listed total, which is how a change in pypdf's
+    text layout would otherwise surface (#100)
+
+    Args:
+        mock_process_end (unittest.mock.MagicMock): Mocked process_end_of_invoice
+        _mock_process_line (unittest.mock.MagicMock): Mocked process_payment_line
+        invoice_processor (pytest.fixture): InvoiceProcessor instance under test
+        invoice (pytest.fixture): Invoice with page contents
+    """
+
+    # Drop the footer's last label, as a page laid out some other way would
+    invoice.page_contents = [invoice.page_contents[0].replace("Sales Tax:\n", "")]
+
+    invoice_processor.process_invoice(invoice)
+
+    # Verify the footer was never processed, and that its absence was surfaced to the user
+    mock_process_end.assert_not_called()
+    invoice_processor.file_io_controller.report_error.assert_called_once()
